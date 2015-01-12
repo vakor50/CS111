@@ -34,25 +34,25 @@
 
 enum token_type
 {
-	WORD_TOKEN,
-	SEMICOLON_TOKEN,
-	PIPE_TOKEN,
-	LEFT_PAREN_TOKEN,
-	RIGHT_PAREN_TOKEN,
-	GREATER_TOKEN,
-	LESS_TOKEN,
-	COMMENT_TOKEN,
-	NEWLINE_TOKEN,
-	MISC_TOKEN,
-	NULL_TOKEN,
-	IF_TOKEN,
-	THEN_TOKEN,
-	ELSE_TOKEN,
-	FI_TOKEN,
-	UNTIL_TOKEN,
-	WHILE_TOKEN,
-	DO_TOKEN,
-	DONE_TOKEN
+	WORD_TOKEN,				//words
+	SEMICOLON_TOKEN,		//;
+	PIPE_TOKEN,				//|
+	PAREN_OPEN_TOKEN,		//(
+	PAREN_CLOSE_TOKEN,		//)
+	LESS_TOKEN,				//<
+	GREATER_TOKEN,			//>
+	COMMENT_TOKEN,			//#
+	NEWLINE_TOKEN,			//'\n'
+	MISC_TOKEN,				//Misc
+	NULL_TOKEN,				//NULL
+	IF_TOKEN,				//"if"
+	THEN_TOKEN,				//"then"
+	ELSE_TOKEN,				//"else"
+	FI_TOKEN,				//"fi"
+	UNTIL_TOKEN,			//"until"
+	WHILE_TOKEN,			//"while"
+	DO_TOKEN,				//"do"
+	DONE_TOKEN				//"done"
 };
 
 

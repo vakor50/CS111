@@ -28,8 +28,6 @@
 /* FIXME: You may need to add #include directives, macro definitions,
    static function definitions, etc.  */
 
-
-
 /* FIXME: Define the type 'struct command_stream' here.  This should
    complete the incomplete type declaration in command.h.  */
 
@@ -74,9 +72,9 @@ is_valid_char(char input)
 		case '@':
 		case '^':
 		case '_':
-			 return true;
+		 	return true;
 		default: 
-			 return false;
+		 	return false;
 	}
 }
 
@@ -98,9 +96,10 @@ tokenize (char *buffer)
 	int buffer_counter = 0;
 	int line_num = 1;
 	char next_char, next_char_two, next_char_three;
-	bool is_special_letter = false;
 	token_stream_t new_stream;
 	bool input_done = false;
+	int skip_char = 1;
+	char *place_holder;
 
 	if (buffer[buffer_counter] == '\0' || buffer == NULL)
 		return NULL;
@@ -109,106 +108,138 @@ tokenize (char *buffer)
 	{
 		token_t current_token;
 		next_char = buffer[buffer_counter];
+		skip_char = 1;
 		
 		if (is_valid_char(next_char))
 		{
-			if (buffer[buffer_counter+1] != '\0' && buffer[buffer_counter+2] != '\0')
+			while (is_valid_char(buffer[buffer_counter+skip_char]))
 			{
-				next_char_two = buffer[buffer_counter+1];
-				next_char_three = buffer[buffer_counter+2];
-
-				switch(next_char)
-				{
-					case 'i':
-						if (next_char_two == 'f')
-						{
-
-						}
-						is_special_letter = true;
-						break;
-					case 't':
-						is_special_letter = true;
-						break;
-					case 'e':
-						is_special_letter = true;
-						break;
-					case 'f':
-						is_special_letter = true;
-						break;
-					case 'w':
-						is_special_letter = true;
-						break;
-					case 'u':
-						is_special_letter = true;
-						break;
-					case 'd':
-						is_special_letter = true;
-						break;
-					default: 
-						is_special_letter = false;
-						break;
-				}
-			}				
-			
-			/*Check for word here*/
-			if (!is_special_letter)
-			{
-
+				skip_char++;
 			}
 
+			for (int i = 0; i < skip_char; i++)
+			{
+				place_holder[i] = tolower(buffer[buffer_counter+i]);
+			}
+
+			if (strcmp(place_holder,"if") == 0)
+			{
+				current_token->type = IF_TOKEN;
+				strcpy(current_token->content, IF_STR);
+			} 
+			else if (strcmp(place_holder,"then") == 0)
+			{
+				current_token->type = THEN_TOKEN;
+				strcpy(current_token->content, THEN_STR);
+			} 
+			else if (strcmp(place_holder,"else") == 0)
+			{
+				current_token->type = ELSE_TOKEN;
+				strcpy(current_token->content, ELSE_STR);
+			} 
+			else if (strcmp(place_holder,"fi") == 0)
+			{
+				current_token->type = FI_TOKEN;
+				strcpy(current_token->content, FI_STR);
+			} 
+			else if (strcmp(place_holder,"while") == 0)
+			{
+				current_token->type = WHILE_TOKEN;
+				strcpy(current_token->content, WHILE_STR);
+			} 
+			else if (strcmp(place_holder,"until") == 0)
+			{
+				current_token->type = UNTIL_TOKEN;
+				strcpy(current_token->content, UNTIL_STR);
+			} 
+			else if (strcmp(place_holder,"do") == 0)
+			{
+				current_token->type = DO_TOKEN;
+				strcpy(current_token->content, DO_STR);
+			} 
+			else if (strcmp(place_holder,"done") == 0)
+			{
+				current_token->type = DONE_TOKEN;
+				strcpy(current_token->content, DONE_STR);
+			} 
+			else
+			{
+				current_token->type = WORD_TOKEN;
+				current_token->content = buffer.substr(buffer_counter,skip_char)
+			}
+			buffer_counter+=skip_char;
+			current_token->line_num = line_num;
 		}
 		else
 		{
 			switch(next_char)
 			{
 				case SEMICOLON_CHAR:
-					
+					current_token->type = SEMICOLON_TOKEN;
+					current_token->content[0] = SEMICOLON_CHAR;
+					current_token->line_num = line_num;
+					buffer_counter++;
 					break;
 				case PIPE_CHAR:
-					
+					current_token->type = PIPE_TOKEN;
+					current_token->content[0] = PIPE_CHAR;
+					current_token->line_num = line_num;
+					buffer_counter++;
 					break;
 				case PAREN_OPEN_CHAR:
-					
+					current_token->type = PAREN_OPEN_TOKEN;
+					current_token->content[0] = PAREN_OPEN_CHAR;
+					current_token->line_num = line_num;
+					buffer_counter++;
 					break;
 				case PAREN_CLOSE_CHAR:
-					
+					current_token->type = PAREN_CLOSE_TOKEN;
+					current_token->content[0] = PAREN_CLOSE_CHAR;
+					current_token->line_num = line_num;
+					buffer_counter++;
+					break;
 					break;	
 				case LESS_CHAR: 
-					
+					current_token->type = LESS_TOKEN;
+					current_token->content[0] = LESS_CHAR;
+					current_token->line_num = line_num;
+					buffer_counter++;
 					break;       
 				case GREATER_CHAR: 
-					
-					break;      
-				case COMMENT_CHAR:
-					
-					break;    
-				case NEWLINE_CHAR:
-					
+					current_token->type = GREATER_TOKEN;
+					current_token->content[0] = LESS_CHAR;
+					current_token->line_num = line_num;
+					buffer_counter++;
 					break;
+				case NEWLINE_CHAR:
+					current_token->type = LESS_TOKEN;
+					current_token->content[0] = NEWLINE_CHAR;
+					current_token->line_num = line_num;
+					while (buffer[buffer_counter+skip_char] == '\n')
+					{
+						skip_char++;
+						line_num++;
+					}
+					line_num++;
+					buffer_counter+=(skip_char);
+					break;
+				/*This ignores comments and does not place them into the token stream*/
+				case COMMENT_CHAR:
+					while (buffer[buffer_counter+skip_char] != '\n' && buffer[buffer_counter+skip_char] != '\0')
+					{
+						skip_char++;
+					}
+					buffer_counter+=(skip_char);
 				case ' ':
 				case '\t':
-					/*free memory*/
+					/*Free the memory of the Token*/
 					break;
 				default:
+					/*Undefined Character*/
+					fprintf(stderr, "Undefined Character at line %i", line_num);
+					exit(1);
 			}
 		}
-
-
-#define IF_STR				"if"
-#define THEN_STR            "then"
-#define ELSE_STR			"else"
-#define FI_STR				"fi"
-#define WHILE_STR			"while"
-#define UNTIL_STR			"until"
-#define DO_STR				"do"
-#define DONE_STR			"done"
-
-
-		}
-
-
-
-		buffer_counter++;
 	}
 
 }
