@@ -15,8 +15,52 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#define SEMICOLON_CHAR		';'
+#define PIPE_CHAR			'|'
+#define PAREN_OPEN_CHAR		'('
+#define PAREN_CLOSE_CHAR	')'
+#define LESS_CHAR           '<'
+#define GREATER_CHAR        '>'
+#define COMMENT_CHAR        '#'
+#define NEWLINE_CHAR        '\n'
+#define IF_STR				"if"
+#define THEN_STR            "then"
+#define ELSE_STR			"else"
+#define FI_STR				"fi"
+#define WHILE_STR			"while"
+#define UNTIL_STR			"until"
+#define DO_STR				"do"
+#define DONE_STR			"done"
+
+enum token_type
+{
+	WORD_TOKEN,
+	SEMICOLON_TOKEN,
+	PIPE_TOKEN,
+	LEFT_PAREN_TOKEN,
+	RIGHT_PAREN_TOKEN,
+	GREATER_TOKEN,
+	LESS_TOKEN,
+	COMMENT_TOKEN,
+	NEWLINE_TOKEN,
+	MISC_TOKEN,
+	NULL_TOKEN,
+	IF_TOKEN,
+	THEN_TOKEN,
+	ELSE_TOKEN,
+	FI_TOKEN,
+	UNTIL_TOKEN,
+	WHILE_TOKEN,
+	DO_TOKEN,
+	DONE_TOKEN
+};
+
+
 typedef struct command *command_t;
 typedef struct command_stream *command_stream_t;
+
+typedef struct token *token_t;
+typedef struct token_stream *token_stream_t;
 
 /* Create a command stream from GETBYTE and ARG.  A reader of
    the command stream will invoke GETBYTE (ARG) to get the next byte.
