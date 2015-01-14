@@ -232,7 +232,7 @@ token_stream_to_command_stream(token_stream_t input)
 		else
 			next_token = NULL;
 
-		token_stack_t temp_stack = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack = (token_stack_t) checked_malloc(sizeof(token_stack));
 		temp_stack->m_token = current_token;
 		temp_stack->m_command = temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
 		temp_stack->is_command = 0;
