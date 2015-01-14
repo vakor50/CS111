@@ -33,10 +33,10 @@
 
 struct command_stream
 {
+	bool is_read;	
 	command_t m_command;
-	command_stream_t next_stream;
-	command_stream_t prev_stream;
-	bool is_read;
+	struct command_stream_t next_stream;
+	struct command_stream_t prev_stream;
 };
 
 struct token
@@ -48,18 +48,18 @@ struct token
 
 struct token_stream
 {
-	token_t *m_token;
 	int iterator;
 	int size;
+	token_t *m_token;
 };
 
 struct token_stack
 {
+	bool is_command;
 	token_t m_token;
 	command_t m_command;
-	bool is_command;
-	token_stack_t next_token_stack;
-	token_stack_t prev_token_stack;
+	struct token_stack_t next_token_stack;
+	struct token_stack_t prev_token_stack;
 };
 
 token_stack_t global_stack;
