@@ -33,7 +33,7 @@
 
 struct command_stream
 {
-	bool is_read;	
+	int is_read;
 	struct command_t m_command;
 	struct command_stream_t next_stream;
 	struct command_stream_t prev_stream;
@@ -55,7 +55,7 @@ struct token_stream
 
 struct token_stack
 {
-	bool is_command;
+	int is_command;
 	struct token_t m_token;
 	struct command_t m_command;
 	struct token_stack_t next_token_stack;
@@ -79,7 +79,7 @@ push_token_stack(token_stack_t item)
 		temp_stack = item;
 		temp_stack->next_token_stack = NULL;
 		temp_stack->prev_token_stack = global_stack;
-		global_stack- = temp_stack;
+		global_stack = temp_stack;
 	}
 }
 
@@ -101,18 +101,17 @@ command_t
 create_command()
 {
 	command_t new_command;
-	new_command->type = NULL;
 	new_command->status = -1;
 	new_command->input = NULL;
 	new_command->output = NULL;
 	new_command->u.word = NULL;
 }
 
-bool
+int
 is_valid_char(char input)
 {
 	if (isalnum(input))
-    return true;
+    return 1;
 	switch (input) 
 	{
 		case '!':
@@ -126,9 +125,9 @@ is_valid_char(char input)
 		case '@':
 		case '^':
 		case '_':
-		 	return true;
+		 	return 1;
 		default: 
-		 	return false;
+		 	return 0;
 	}
 }
 
@@ -237,19 +236,19 @@ token_stream_to_command_stream(token_stream_t input)
 		token_stack_t temp_stack;
 		temp_stack->m_token = current_token;
 		temp_stack->m_command = temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
-		temp_stack->is_command = false;
+		temp_stack->is_command = 0;
 
 		token_stack_t temp_stack_2;
 		temp_stack_2->m_token = current_token;
 		temp_stack_2->m_command = temp_stack_2->next_token_stack = temp_stack_2->prev_token_stack = NULL;
-		temp_stack_2->is_command = false;
+		temp_stack_2->is_command = 0;
 
 		token_stack_t temp_stack_3,temp_stack_4,temp_stack_5,temp_stack_7,temp_stack_8,temp_stack_9, temp_stack_10;
 
 		token_stack_t temp_stack_6;
 		temp_stack_6->m_token = current_token;
 		temp_stack_6->m_command = temp_stack_6->next_token_stack = temp_stack_6->prev_token_stack = NULL;
-		temp_stack_6->is_command = false;
+		temp_stack_6->is_command = 0;
 
 		current_stack = global_stack;
 		prev_stack = global_stack->prev_token_stack;
@@ -264,7 +263,7 @@ token_stream_to_command_stream(token_stream_t input)
 		switch(current_token->type)
 		{
 			case LESS_TOKEN:
-				if (curent_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command == true) && next_token != NULL && next_token == WORD_TOKEN)
+				if (curent_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
 				{
 					current_stack->m_command->input = input->m_token[i+1]->content;
 					i++;
@@ -273,7 +272,7 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 				break;
 			case GREATER_TOKEN:
-				if (curent_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command == true) && next_token != NULL && next_token == WORD_TOKEN)
+				if (curent_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
 				{
 					current_stack->m_command->output = input->m_token[i+1]->content;
 					i++;
@@ -295,7 +294,7 @@ token_stream_to_command_stream(token_stream_t input)
 					temp_command->type = SIMPLE_COMMAND;
 					temp_command->u.word = current_token->content;
 					temp_stack->m_command = temp_command;
-					temp_stack->is_command = true;
+					temp_stack->is_command = 1;
 					push_token_stack(temp_stack);
 				}
 				break;
@@ -317,7 +316,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 					temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
-					temp_stack_4->is_command = true;
+					temp_stack_4->is_command = 1;
 					if (temp_stack_4->m_token->type == PIPE_TOKEN)
 						temp_stack_4->m_command->type = PIPE_COMMAND;
 					else
@@ -374,7 +373,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_3 = pop_token_stack();
 						temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 						temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
-						temp_stack_4->is_command = true;
+						temp_stack_4->is_command = 1;
 						if (temp_stack_4->m_token->type == PIPE_TOKEN)
 							temp_stack_4->m_command->type = PIPE_COMMAND;
 						else
@@ -408,7 +407,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_3 = pop_token_stack();
 						temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 						temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
-						temp_stack_4->is_command = true;
+						temp_stack_4->is_command = 1;
 						if (temp_stack_4->m_token->type == PIPE_TOKEN)
 							temp_stack_4->m_command->type = PIPE_COMMAND;
 						else
@@ -436,7 +435,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[1] = temp_stack_5->m_command;
 						temp_command->u.command[2] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
-						temp_stack_10->is_command = true;
+						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
 					else
@@ -453,7 +452,7 @@ token_stream_to_command_stream(token_stream_t input)
 					temp_command->u.command[0] = temp_stack_5->m_command;
 					temp_command->u.command[1] = temp_stack_3->m_command;
 					temp_stack_10->m_command = temp_command;
-					temp_stack_10->is_command = true;
+					temp_stack_10->is_command = 1;
 					push_token_stack(temp_stack_10);
 				} 
 				else
@@ -476,7 +475,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_3 = pop_token_stack();
 						temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 						temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
-						temp_stack_4->is_command = true;
+						temp_stack_4->is_command = 1;
 						if (temp_stack_4->m_token->type == PIPE_TOKEN)
 							temp_stack_4->m_command->type = PIPE_COMMAND;
 						else
@@ -499,7 +498,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[0] = temp_stack_5->m_command;
 						temp_command->u.command[1] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
-						temp_stack_10->is_command = true;
+						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
 					else if (temp_stack_7->m_token->type == UNTIL_TOKEN)
@@ -509,7 +508,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[0] = temp_stack_5->m_command;
 						temp_command->u.command[1] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
-						temp_stack_10->is_command = true;
+						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
 					else
@@ -534,7 +533,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_3 = pop_token_stack();
 						temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 						temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
-						temp_stack_4->is_command = true;
+						temp_stack_4->is_command = 1;
 						temp_stack_4->m_command->type = SEQUENCE_COMMAND;
 						push_token_stack(temp_stack_4);
 						temp_stack_2 = global_stack;
@@ -544,7 +543,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					temp_command_stream = (command_stream_t) checked_malloc(sizeof(command_stream));
 					temp_command_stream->m_command = pop_token_stack()->m_command;
-					temp_command_stream->is_read = false;
+					temp_command_stream->is_read = 0;
 					if (global_stream == NULL)
 						global_stream = temp_command_stream;
 					else
@@ -930,7 +929,7 @@ read_command_stream (command_stream_t s)
   /* FIXME: Replace this with your implementation too.  */
 	if (!s->is_read)
 	{
-		s->is_read = true;
+		s->is_read++;
 		return s->m_command;
 	}
 	else if (s->next_stream != NULL)
