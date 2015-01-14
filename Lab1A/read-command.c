@@ -249,8 +249,8 @@ token_stream_to_command_stream(token_stream_t input)
 		temp_stack_6->m_command = temp_stack_6->next_token_stack = temp_stack_6->prev_token_stack = NULL;
 		temp_stack_6->is_command = 0;
 
-		current_stack = global_stack;
-		prev_stack = global_stack->prev_token_stack;
+		token_stack_t current_stack = global_stack;
+		token_stack_t prev_stack = global_stack->prev_token_stack;
 
 		command_t temp_command;
 
@@ -262,7 +262,7 @@ token_stream_to_command_stream(token_stream_t input)
 		switch(current_token->type)
 		{
 			case LESS_TOKEN:
-				if (curent_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
+				if (current_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
 				{
 					current_stack->m_command->input = input->m_token[i+1]->content;
 					i++;
@@ -271,7 +271,7 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 				break;
 			case GREATER_TOKEN:
-				if (curent_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
+				if (current_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
 				{
 					current_stack->m_command->output = input->m_token[i+1]->content;
 					i++;
@@ -358,7 +358,7 @@ token_stream_to_command_stream(token_stream_t input)
 			case ELSE_TOKEN:
 			case DO_TOKEN:
 				temp_stack_2 = current_stack;
-				while ((stack_precedence(temp_stack_2) > current_precedence(current_token->type)))
+				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
 					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
 					{
@@ -460,7 +460,7 @@ token_stream_to_command_stream(token_stream_t input)
 			case DONE_TOKEN:
 				loop_counter--;
 				temp_stack_2 = current_stack;
-				while ((stack_precedence(temp_stack_2) > current_precedence(current_token->type)))
+				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
 					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
 					{
@@ -518,7 +518,7 @@ token_stream_to_command_stream(token_stream_t input)
 				break;
 			case NEWLINE_TOKEN:
 				temp_stack_2 = current_stack;
-				while ((stack_precedence(temp_stack_2) > current_precedence(current_token->type)))
+				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
 					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
 					{
@@ -540,7 +540,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				if (!paren_counter && !loop_counter)
 				{
-					temp_command_stream = (command_stream_t) checked_malloc(sizeof(command_stream));
+					temp_command_stream = (command_stream_t) checked_malloc(sizeof(command_stream_t));
 					temp_command_stream->m_command = pop_token_stack()->m_command;
 					temp_command_stream->is_read = 0;
 					if (global_stream == NULL)
@@ -575,7 +575,8 @@ tokenize (char *buffer)
 	int token_counter = 0;
 	int skip_char = 1;
 	char *place_holder;
-	bool ignored = false;
+	int ignored = 0;
+	int i = 0;
 
 	if (buffer[buffer_counter] == '\0' || buffer == NULL)
 		return NULL;
@@ -586,7 +587,7 @@ tokenize (char *buffer)
 		current_token->content = (char*) checked_malloc(1);
 		next_char = buffer[buffer_counter];
 		skip_char = 1;
-		ignored=false;
+		ignored=0;
 		
 		if (is_valid_char(next_char))
 		{
@@ -595,7 +596,7 @@ tokenize (char *buffer)
 				skip_char++;
 			}
 			current_token->content = (char*) checked_grow_alloc(current_token->content, (size_t) skip_char);
-			for (int i = 0; i < skip_char; i++)
+			for (i = 0; i < skip_char; i++)
 			{
 				place_holder[i] = tolower(buffer[buffer_counter+i]);
 			}
@@ -643,7 +644,7 @@ tokenize (char *buffer)
 			else
 			{
 				current_token->type = WORD_TOKEN;
-				current_token->content = buffer.substr(buffer_counter,skip_char)
+				current_token->content = buffer->substr(buffer_counter,skip_char);
 			}
 		}
 		else
@@ -675,7 +676,7 @@ tokenize (char *buffer)
 					current_token->content[0] = LESS_CHAR;
 					break;
 				case NEWLINE_CHAR:
-					ignored = true;
+					ignored = 1;
 					current_token->type = LESS_TOKEN;
 					current_token->content[0] = NEWLINE_CHAR;
 					current_token->line_num = line_num;
@@ -696,7 +697,7 @@ tokenize (char *buffer)
 					buffer_counter+=(skip_char);
 				case ' ':
 				case '\t':
-					ignored = true;
+					ignored = 1;
 					/*Free the memory of the Token*/
 					break;
 				default:
@@ -718,7 +719,7 @@ tokenize (char *buffer)
 }
 
 
-bool
+int
 valid_token_stream(token_stream_t input)
 {
 	int paren_counter = 0, if_counter = 0, then_counter = 0, else_counter = 0, fi_counter = 0;
@@ -898,7 +899,7 @@ make_command_stream (int (*get_next_byte) (void *),
 	size_t buffer_size = 1024;
 	size_t counter = 0;
 	char *buffer = (char*) checked_malloc(buffer_size);
-	next_char = get_next_byte(get_next_byte_argument);
+	char next_char = get_next_byte(get_next_byte_argument);
 	while (next_char != EOF)
 	{
 		buffer[counter++] = next_char;
