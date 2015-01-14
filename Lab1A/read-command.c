@@ -571,8 +571,7 @@ tokenize (char *buffer)
 	char next_char, next_char_two, next_char_three;
 	token_stream_t new_stream;
 	token_t test_token;
-	new_stream->m_token = test_token;
-	//new_stream->m_token->content = (char*) checked_malloc(2*sizeof(char));
+	new_stream->m_token = (token_t) checked_malloc(100*sizeof(token));
 	new_stream->size = 0;
 	int token_counter = 0;
 	int skip_char = 1;
@@ -586,7 +585,7 @@ tokenize (char *buffer)
 	while (buffer[buffer_counter] != '\0')
 	{
 		token_t current_token;
-		current_token->content = (char*) checked_malloc(1);
+		current_token->content = (char*) checked_malloc(sizeof(char));
 		next_char = buffer[buffer_counter];
 		skip_char = 1;
 		ignored=0;
@@ -679,7 +678,7 @@ tokenize (char *buffer)
 					break;
 				case NEWLINE_CHAR:
 					ignored = 1;
-					current_token->type = LESS_TOKEN;
+					current_token->type = NEWLINE_TOKEN;
 					current_token->content[0] = NEWLINE_CHAR;
 					current_token->line_num = line_num;
 					while (buffer[buffer_counter+skip_char] == '\n')
