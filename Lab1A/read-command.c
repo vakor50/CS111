@@ -392,7 +392,7 @@ token_stream_to_command_stream(token_stream_t input)
 			case FI_TOKEN:
 				loop_counter--;
 				temp_stack_2 = current_stack;
-				while ((stack_precedence(temp_stack_2) > current_precedence(current_token->type)))
+				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
 					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
 					{
@@ -644,7 +644,7 @@ tokenize (char *buffer)
 			else
 			{
 				current_token->type = WORD_TOKEN;
-				current_token->content = buffer->substr(buffer_counter,skip_char);
+				current_token->content = buffer.substr(buffer_counter,skip_char);
 			}
 		}
 		else
@@ -724,11 +724,12 @@ valid_token_stream(token_stream_t input)
 {
 	int paren_counter = 0, if_counter = 0, then_counter = 0, else_counter = 0, fi_counter = 0;
 	int while_counter = 0, until_counter = 0, do_counter = 0, done_counter = 0;
-	int j = 0, current_line_num;
+	int i = 0, j = 0, current_line_num;
 	token_t current_token = NULL;
 	token_t prev_token = NULL, next_token = NULL;
 
-	for (int i = 0; i < input->size; i++)
+
+	for (i = 0; i < input->size; i++)
 	{
 		current_token = input->m_token[i];
 		if (i == 0)
@@ -756,7 +757,7 @@ valid_token_stream(token_stream_t input)
 
 	prev_token = NULL;
 
-	for (int i = 0; i < input->size; i++)
+	for (i = 0; i < input->size; i++)
 	{
 		paren_counter = 0, if_counter = 0, then_counter = 0, else_counter = 0, fi_counter = 0;
 		while_counter = 0, until_counter = 0, do_counter = 0, done_counter = 0;
@@ -767,7 +768,7 @@ valid_token_stream(token_stream_t input)
 		if ((i+1) != input->size)
 			next_token = input->m_token[i+1];
 
-		switch(current_token)
+		switch(current_token->type)
 		{
 			case WORD_TOKEN:
 				continue;
@@ -800,7 +801,7 @@ valid_token_stream(token_stream_t input)
 				break;
 			case PAREN_OPEN_TOKEN:
 				j = i;
-				while (j < current_token->size)
+				while (j < input->size)
 				{
 					if (input->m_token[i]->type == PAREN_OPEN_TOKEN)
 					{
@@ -845,11 +846,11 @@ valid_token_stream(token_stream_t input)
 					}
 				}
 				if (prev_token->type == LESS_TOKEN || prev_token->type == GREATER_TOKEN)
-					fprintf(stderr, "%d: Invalid Newline",current_token]->line_num);
+					fprintf(stderr, "%d: Invalid Newline",current_token->line_num);
 				break;
 			case IF_TOKEN:
 				j = i;
-				while (j < current_token->size)
+				while (j < input->size)
 				{
 					if (input->m_token[i]->type == IF_TOKEN)
 					{
