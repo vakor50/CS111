@@ -234,19 +234,22 @@ token_stream_to_command_stream(token_stream_t input)
 
 		token_stack_t temp_stack;
 		temp_stack->m_token = current_token;
-		temp_stack->m_command = temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
+		temp_stack->m_command = NULL;
+		temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
 		temp_stack->is_command = 0;
 
 		token_stack_t temp_stack_2;
 		temp_stack_2->m_token = current_token;
-		temp_stack_2->m_command = temp_stack_2->next_token_stack = temp_stack_2->prev_token_stack = NULL;
+		temp_stack_2->m_command = NULL;
+		temp_stack_2->next_token_stack = temp_stack_2->prev_token_stack = NULL;
 		temp_stack_2->is_command = 0;
 
 		token_stack_t temp_stack_3,temp_stack_4,temp_stack_5,temp_stack_7,temp_stack_8,temp_stack_9, temp_stack_10;
 
 		token_stack_t temp_stack_6;
 		temp_stack_6->m_token = current_token;
-		temp_stack_6->m_command = temp_stack_6->next_token_stack = temp_stack_6->prev_token_stack = NULL;
+		temp_stack_6->m_command = NULL;
+		temp_stack_6->next_token_stack = temp_stack_6->prev_token_stack = NULL;
 		temp_stack_6->is_command = 0;
 
 		token_stack_t current_stack = global_stack;
@@ -262,7 +265,7 @@ token_stream_to_command_stream(token_stream_t input)
 		switch(current_token->type)
 		{
 			case LESS_TOKEN:
-				if (current_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
+				if (current_stack != NULL && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command)) && next_token != NULL && next_token == WORD_TOKEN)
 				{
 					current_stack->m_command->input = input->m_token[i+1]->content;
 					i++;
