@@ -570,6 +570,8 @@ tokenize (char *buffer)
 	int line_num = 1;
 	char next_char, next_char_two, next_char_three;
 	token_stream_t new_stream;
+	token_t test_token;
+	new_stream->m_token = test_token;
 	new_stream->m_token->content = (char*) checked_malloc(2*sizeof(char));
 	new_stream->size = 0;
 	int token_counter = 0;
