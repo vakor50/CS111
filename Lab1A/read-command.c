@@ -232,19 +232,19 @@ token_stream_to_command_stream(token_stream_t input)
 		else
 			next_token = NULL;
 
-		token_stack_t temp_stack = (token_stack_t) checked_malloc(sizeof(token_stack));
+		token_stack_t temp_stack;
 		temp_stack->m_token = current_token;
 		temp_stack->m_command = temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
 		temp_stack->is_command = 0;
 
-		token_stack_t temp_stack_2 = (token_stack_t) checked_malloc(sizeof(struct token_stack));;
+		token_stack_t temp_stack_2;
 		temp_stack_2->m_token = current_token;
 		temp_stack_2->m_command = temp_stack_2->next_token_stack = temp_stack_2->prev_token_stack = NULL;
 		temp_stack_2->is_command = 0;
 
 		token_stack_t temp_stack_3,temp_stack_4,temp_stack_5,temp_stack_7,temp_stack_8,temp_stack_9, temp_stack_10;
 
-		token_stack_t temp_stack_6  = (token_stack_t) checked_malloc(sizeof(struct token_stack));;
+		token_stack_t temp_stack_6;
 		temp_stack_6->m_token = current_token;
 		temp_stack_6->m_command = temp_stack_6->next_token_stack = temp_stack_6->prev_token_stack = NULL;
 		temp_stack_6->is_command = 0;
@@ -252,12 +252,12 @@ token_stream_to_command_stream(token_stream_t input)
 		token_stack_t current_stack = global_stack;
 		token_stack_t prev_stack = global_stack->prev_token_stack;
 
-		command_t temp_command = (command_t) checked_malloc(sizeof(struct command));
+		command_t temp_command;
 
-		command_stream_t temp_command_stream = (command_stream_t) checked_malloc(sizeof(struct command_stream));
+		command_stream_t temp_command_stream;
 		temp_command_stream->m_command = temp_command_stream->next_stream = temp_command_stream->prev_stream = NULL;
 
-		command_stream_t temp_command_stream_2 = (command_stream_t) checked_malloc(sizeof(struct command_stream));
+		command_stream_t temp_command_stream_2;
 
 		switch(current_token->type)
 		{
@@ -280,7 +280,7 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 				break;
 			case WORD_TOKEN:
-				//HAVE TO DEAL WITH NULL BYTESSSSSSS
+				//HAVE TO DEAL WTIH NULL
 				if ((current_stack != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND))
 				{
 					strcat(" ", current_token->content);
