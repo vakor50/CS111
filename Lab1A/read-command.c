@@ -90,8 +90,8 @@ pop_token_stack()
 	if (global_stack != NULL)
 	{
 		temp_stack = global_stack;
-		temp_stack->next_token = temp_stack->prev_token = NULL;
-		global_stack= global_stack->prev_token_stack;
+		temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
+		global_stack = global_stack->prev_token_stack;
 		global_stack->next_token_stack = NULL;
 	}
 	return temp_stack;
@@ -101,12 +101,11 @@ command_t
 create_command()
 {
 	command_t new_command;
-	new_command->command_type = NULL;
+	new_command->type = NULL;
 	new_command->status = -1;
 	new_command->input = NULL;
 	new_command->output = NULL;
 	new_command->u.word = NULL;
-	new_command->u.command = NULL;
 }
 
 bool
@@ -186,10 +185,14 @@ stack_precedence (token_type type)
 }
 
 
+
 command_stream_t
 token_stream_to_command_stream(token_stream_t input)
 {
-	for (int i = 0; i < input->size; i++)
+	int i = 0;
+	token_t current_token = NULL;
+
+	for (i = 0; i < input->size; i++)
 	{
 		current_token = input->m_token[i];
 		if (i == 0)
@@ -215,14 +218,13 @@ token_stream_to_command_stream(token_stream_t input)
 		}
 	}
 
-	token_t current_token = NULL;
 	token_t prev_token = NULL;
 	token_t next_token = NULL;
 	int paren_counter = 0;
 	int loop_counter = 0;
 	int str_length = 0;
 
-	for (int i = 0; i < input->size; i++)
+	for (i = 0; i < input->size; i++)
 	{
 		current_token = input->m_token[i];
 		if (i > 0)
