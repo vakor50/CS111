@@ -34,9 +34,9 @@
 struct command_stream
 {
 	int is_read;
-	struct command_t m_command;
-	struct command_stream_t next_stream;
-	struct command_stream_t prev_stream;
+	command_t m_command;
+	command_stream_t next_stream;
+	command_stream_t prev_stream;
 };
 
 struct token
@@ -50,16 +50,16 @@ struct token_stream
 {
 	int iterator;
 	int size;
-	struct token_t *m_token;
+	token_t *m_token;
 };
 
 struct token_stack
 {
 	int is_command;
-	struct token_t m_token;
-	struct command_t m_command;
-	struct token_stack_t next_token_stack;
-	struct token_stack_t prev_token_stack;
+	token_t m_token;
+	command_t m_command;
+	token_stack_t next_token_stack;
+	token_stack_t prev_token_stack;
 };
 
 token_stack_t global_stack;
@@ -132,7 +132,7 @@ is_valid_char(char input)
 }
 
 int
-current_precedence (token_type type)
+current_precedence (enum token_type type)
 {
 	switch (type)
 	{
@@ -159,7 +159,7 @@ current_precedence (token_type type)
 }
 
 int
-stack_precedence (token_type type)
+stack_precedence (enum token_type type)
 {
 	switch (type)
 	{
@@ -190,6 +190,8 @@ token_stream_to_command_stream(token_stream_t input)
 {
 	int i = 0;
 	token_t current_token = NULL;
+	token_t prev_token = NULL;
+	token_t next_token = NULL;
 
 	for (i = 0; i < input->size; i++)
 	{
@@ -216,9 +218,6 @@ token_stream_to_command_stream(token_stream_t input)
 				break;
 		}
 	}
-
-	token_t prev_token = NULL;
-	token_t next_token = NULL;
 	int paren_counter = 0;
 	int loop_counter = 0;
 	int str_length = 0;
