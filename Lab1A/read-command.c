@@ -644,7 +644,7 @@ tokenize (char *buffer)
 			else
 			{
 				current_token->type = WORD_TOKEN;
-				current_token->content = buffer.substr(buffer_counter,skip_char);
+				strncpy(current_token->content, buffer+buffer_counter, skip_char);
 			}
 		}
 		else
