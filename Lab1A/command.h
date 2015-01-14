@@ -34,6 +34,7 @@
 
 enum token_type
 {
+	COMPLETE_TOKEN,			//A command that has been completed for the stack
 	WORD_TOKEN,				//words
 	SEMICOLON_TOKEN,		//;
 	PIPE_TOKEN,				//|
@@ -43,8 +44,6 @@ enum token_type
 	GREATER_TOKEN,			//>
 	COMMENT_TOKEN,			//#
 	NEWLINE_TOKEN,			//'\n'
-	MISC_TOKEN,				//Misc
-	NULL_TOKEN,				//NULL
 	IF_TOKEN,				//"if"
 	THEN_TOKEN,				//"then"
 	ELSE_TOKEN,				//"else"
