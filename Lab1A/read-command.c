@@ -592,6 +592,7 @@ tokenize (char *buffer)
 	new_stream->size = 0;
 	int token_counter = 0;
 	int skip_char = 1;
+	size_t skip_size = 1;
 	size_t place_holder_size = 16;
 	char *place_holder = (char*) checked_malloc(place_holder_size);
 	int ignored = 0;
@@ -614,7 +615,8 @@ tokenize (char *buffer)
 			{
 				skip_char++;
 			}
-			current_token->content = (char*) checked_grow_alloc(current_token->content, &skip_char);
+			skip_size = skip_char+2;
+			current_token->content = (char*) checked_grow_alloc(current_token->content, &skip_size);
 			for (i = 0; i < skip_char; i++)
 			{
 				if (i == (int) place_holder_size)
@@ -622,7 +624,7 @@ tokenize (char *buffer)
 					place_holder_size*=2;
 					place_holder = (char*) checked_grow_alloc(place_holder, &place_holder_size);
 				}
-				place_holder[i] = tolower(buffer[buffer_counter+i]);
+				place_holder[i] = buffer[buffer_counter+i];
 			}
 
 			if (strcmp(place_holder,"if") == 0)
