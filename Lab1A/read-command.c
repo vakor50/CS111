@@ -608,6 +608,12 @@ tokenize (char *buffer)
 
 	while (buffer[buffer_counter] != '\0')
 	{
+		printf("%c\n",buffer[buffer_counter++]);
+	} buffer_counter = 0;
+	exit(1);
+
+	while (buffer[buffer_counter] != '\0')
+	{
 		printf(stdout,"%s ",buffer[buffer_counter]);
 		token_t current_token = (token_t) checked_malloc(sizeof(struct token)); // fixed?
 		current_token->content = (char*) checked_malloc(sizeof(char));
@@ -944,13 +950,8 @@ make_command_stream (int (*get_next_byte) (void *),
 	while (next_char != EOF)
 	{
 		buffer[counter++] = next_char;
-	    printf("looped once: %c \n", buffer[(counter-1)]);
-	    printf("bufferSize: %d \n", (int) buffer_size);
 		if (counter == buffer_size)
-		{
 			buffer = (char*) checked_grow_alloc(buffer, &buffer_size);
-			printf("called checked_realloc: %d\n", (int) buffer_size);
-		}
 		next_char = get_next_byte(get_next_byte_argument);
 	}
 	if (buffer_size == counter)
@@ -958,7 +959,7 @@ make_command_stream (int (*get_next_byte) (void *),
 	buffer[counter] = '\0';
 
 	/*Tokenizing the input*/
-	//token_stream_t current_stream = tokenize(buffer);
+	token_stream_t current_stream = tokenize(buffer);
 
 	/*Check if all tokens are valid*/
 	//if (valid_token_stream(current_stream))
