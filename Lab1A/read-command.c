@@ -608,6 +608,7 @@ tokenize (char *buffer)
 
 	while (buffer[buffer_counter] != '\0')
 	{
+		printf("%s ",buffer[buffer_counter]);
 		token_t current_token = (token_t) checked_malloc(sizeof(struct token)); // fixed?
 		current_token->content = (char*) checked_malloc(sizeof(char));
 		next_char = buffer[buffer_counter];
