@@ -583,6 +583,8 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
 					{
+						if (temp_stack_2->prev == NULL)
+							break;
 						temp_stack_2 = temp_stack_2->prev_token_stack;
 						continue;
 					}
