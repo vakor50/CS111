@@ -745,6 +745,8 @@ tokenize (char *buffer)
 			new_stream->m_token[token_counter++] = current_token;
 			new_stream->size++;
 		}
+		free(current_token->content);
+		free(current_token);
 		free(place_holder);
 	}
 	return new_stream;
