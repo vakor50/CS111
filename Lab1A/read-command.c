@@ -664,7 +664,10 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 						temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
 						temp_stack_4->is_command = 1;
-						temp_stack_4->m_command->type = SEQUENCE_COMMAND;
+						if (temp_stack_4->m_token->type == PIPE_TOKEN)
+								temp_stack_4->m_command->type = PIPE_COMMAND;
+							else
+								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
 						push_token_stack(temp_stack_4);
 						temp_stack_2 = global_stack;
 					}
@@ -673,6 +676,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					temp_command_stream = (command_stream_t) checked_malloc(sizeof(struct command_stream));
 					temp_command_stream->m_command = pop_token_stack()->m_command;
+					print_command2(temp_command_stream->m_command);
 					temp_command_stream->is_read = 0;
 					if (global_stream == NULL)
 						global_stream = temp_command_stream;
