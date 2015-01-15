@@ -421,8 +421,54 @@ token_stream_to_command_stream(token_stream_t input)
 						else
 						{
 							temp_stack_5 = pop_token_stack();
+							if (temp_stack_5->m_token != NULL)
+								printf("%s 5 token \n",type_to_string(temp_stack_5->m_token->type));
 							temp_stack_4 = pop_token_stack();
+							if (temp_stack_4->m_token != NULL)
+								printf("%s 4 token\n",type_to_string(temp_stack_4->m_token->type));
 							temp_stack_3 = pop_token_stack();
+							if (temp_stack_3->m_token != NULL)
+								printf("%s 3 token\n",type_to_string(temp_stack_3->m_token->type));
+
+							if (temp_stack_5->m_command != NULL)
+							{
+								if (temp_stack_5->m_command->word != NULL)
+								{
+									j = 0;
+									while (temp_command->u.word[j] != NULL)
+									{
+										printf("%s 5 word \n",temp_stack_5->m_command->word[j++]));
+									}
+									
+								}
+							}
+
+							if (temp_stack_4->m_command != NULL)
+							{
+								if (temp_stack_4->m_command->word != NULL)
+								{
+									j = 0;
+									while (temp_command->u.word[j] != NULL)
+									{
+										printf("%s 5 word \n",temp_stack_4->m_command->word[j++]));
+									}
+									
+								}
+							}
+
+							if (temp_stack_3->m_command != NULL)
+							{
+								if (temp_stack_3->m_command->word != NULL)
+								{
+									j = 0;
+									while (temp_command->u.word[j] != NULL)
+									{
+										printf("%s 5 word \n",temp_stack_3->m_command->word[j++]));
+									}
+									
+								}
+							}
+
 							//temp_stack_4->m_command = (command_t) checked_malloc(sizeof(struct command));
 							if (temp_stack_4 == NULL)
 							{
