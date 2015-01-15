@@ -799,8 +799,6 @@ valid_token_stream(token_stream_t input)
 	token_t current_token = NULL;
 	token_t prev_token = NULL, next_token = NULL;
 
-	printf("REACHED HERE");
-
 	for (i = 0; i < input->size; i++)
 	{
 		current_token = input->m_token[i];
@@ -826,17 +824,15 @@ valid_token_stream(token_stream_t input)
 			default:
 				break;
 		}
-		printf("%s\n", type_to_string(current_token->type));
 	}	
-
-	printf("REACHED HERE");
-
-	exit(1);
 
 	prev_token = NULL;
 
+	printf("%d\n",input->size);
+	
 	for (i = 0; i < input->size; i++)
 	{
+		printf("%d ",i);
 		paren_counter = 0, if_counter = 0, then_counter = 0, else_counter = 0, fi_counter = 0;
 		while_counter = 0, until_counter = 0, do_counter = 0, done_counter = 0;
 		current_token = input->m_token[i];
@@ -845,6 +841,8 @@ valid_token_stream(token_stream_t input)
 			prev_token = input->m_token[i-1];
 		if ((i+1) != input->size)
 			next_token = input->m_token[i+1];
+
+		printf("%s\n",type_to_string(current_token->type));
 
 		switch(current_token->type)
 		{
