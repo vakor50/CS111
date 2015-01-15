@@ -932,6 +932,34 @@ valid_token_stream(token_stream_t input)
 	return 1;
 }
 
+char*
+type_to_string(enum token_type type)
+{
+	switch(type)
+	{
+		case COMPLETE_TOKEN: return "COMPLETE_TOKEN";			//A command that has been completed for the stack
+		case WORD_TOKEN: return "WORD_TOKEN";				//words
+		case SEMICOLON_TOKEN: return "SEMICOLON_TOKEN";		//;
+		case PIPE_TOKEN: return "PIPE_TOKEN";				//|
+		case PAREN_OPEN_TOKEN: return "PAREN_OPEN_TOKEN";		//(
+		case PAREN_CLOSE_TOKEN: return "PAREN_CLOSE_TOKEN";		//)
+		case LESS_TOKEN: return "LESS_TOKEN";				//<
+		case GREATER_TOKEN: return "GREATER_TOKEN";			//>
+		case COMMENT_TOKEN: return "COMMENT_TOKEN";			//#
+		case NEWLINE_TOKEN: return "NEWLINE_TOKEN";			//'\n'
+		case IF_TOKEN: return "IF_TOKEN";				//"if"
+		case THEN_TOKEN: return "THEN_TOKEN";				//"then"
+		case ELSE_TOKEN: return "ELSE_TOKEN";				//"else"
+		case FI_TOKEN: return "FI_TOKEN";				//"fi"
+		case UNTIL_TOKEN: return "UNTIL_TOKEN";			//"until"
+		case WHILE_TOKEN: return "WHILE_TOKEN";			//"while"
+		case DO_TOKEN: return "DO_TOKEN";				//"do"
+		case DONE_TOKEN: return "DONE_TOKEN";
+		default:
+			return "FAIIIIILLELEEEELDLDLDLD ;P";		//"done"
+	}
+}
+
 command_stream_t
 make_command_stream (int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
@@ -958,6 +986,13 @@ make_command_stream (int (*get_next_byte) (void *),
 
 	/*Tokenizing the input*/
 	token_stream_t current_stream = tokenize(buffer);
+
+	int i = 0;
+	for (i = 0; i < current_stream->size; i++)
+	{
+		printf("%s ",type_to_string(current_stream->m_token[i]->type));
+		printf("%s\n",current_stream->m_token[i]->content);
+	}
 
 	/*Check if all tokens are valid*/
 	//if (valid_token_stream(current_stream))
