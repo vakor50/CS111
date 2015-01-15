@@ -742,11 +742,13 @@ tokenize (char *buffer)
 					current_token->type = NEWLINE_TOKEN;
 					current_token->content[0] = NEWLINE_CHAR;
 					current_token->line_num = line_num;
+					printf("%d\n",buffer_counter);
 					while (buffer[buffer_counter+skip_char] == '\n')
 					{
 						skip_char++;
 						line_num++;
 					}
+					printf("%d\n",buffer_counter);
 					line_num++;
 					buffer_counter+=(skip_char);
 					new_stream->m_token[token_counter++] = current_token;
