@@ -608,19 +608,16 @@ tokenize (char *buffer)
 
 	while (buffer[buffer_counter] != '\0')
 	{
-		printf("%c\n",buffer[buffer_counter++]);
-	} buffer_counter = 0;
-	exit(1);
-
-	while (buffer[buffer_counter] != '\0')
-	{
-		printf(stdout,"%s ",buffer[buffer_counter]);
+		printf("%c\n",buffer[buffer_counter]);
 		token_t current_token = (token_t) checked_malloc(sizeof(struct token)); // fixed?
 		current_token->content = (char*) checked_malloc(sizeof(char));
 		next_char = buffer[buffer_counter];
 		place_holder = (char*) checked_malloc(place_holder_size);
 		skip_char = 1;
 		ignored = 0;
+
+		if (buffer_counter == 10)
+			exit(1);
 		
 		if (is_valid_char(next_char))
 		{
@@ -638,6 +635,7 @@ tokenize (char *buffer)
 					place_holder = (char*) checked_grow_alloc(place_holder, &place_holder_size);
 				}
 				place_holder[i] = buffer[buffer_counter+i];
+				printf("%c\n",place_holder[i]);
 			}
 
 			if (strcmp(place_holder,"if") == 0)
