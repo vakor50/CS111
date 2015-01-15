@@ -305,14 +305,14 @@ token_stream_to_command_stream(token_stream_t input)
 		switch(current_token->type)
 		{
 			case LESS_TOKEN:
-				if (current_stack != NULL && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command)) && next_token != NULL && next_token->type == WORD_TOKEN)
+				if (current_stack != NULL && ((current_stack->m_command != NULL) && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command))) && next_token != NULL && next_token->type == WORD_TOKEN)
 				{
 					current_stack->m_command->input = input->m_token[i+1]->content;
 					i++;
 				}
 				break;
 			case GREATER_TOKEN:
-				if (current_stack != NULL && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command)) && next_token != NULL && next_token->type == WORD_TOKEN)
+				if (current_stack != NULL && ((current_stack->m_command != NULL) && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command))) && next_token != NULL && next_token->type == WORD_TOKEN)
 				{
 					current_stack->m_command->output = input->m_token[i+1]->content;
 					i++;
@@ -320,7 +320,7 @@ token_stream_to_command_stream(token_stream_t input)
 				break;
 			case WORD_TOKEN:
 				//HAVE TO DEAL WTIH NULL
-				if ((current_stack != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND))
+				if ((current_stack != NULL) && (current_stack->m_command != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND))
 				{
 					j = 0;
 					while (temp_command->u.word[j] != NULL)
@@ -351,7 +351,7 @@ token_stream_to_command_stream(token_stream_t input)
 			case PAREN_CLOSE_TOKEN:
 				paren_counter--;
 				temp_stack_5 = pop_token_stack();
-				if ((global_stack != NULL) && (global_stack->m_token->type != PAREN_OPEN_TOKEN))
+				if ((global_stack != NULL) && (global_stack->m_token == NULL || global_stack->m_token->type != PAREN_OPEN_TOKEN))
 				{
 					temp_stack_4 = pop_token_stack();
 					temp_stack_3 = pop_token_stack();
