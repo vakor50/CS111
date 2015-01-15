@@ -264,8 +264,8 @@ token_stream_to_command_stream(token_stream_t input)
 
 		command_t temp_command;
 
-		command_stream_t temp_command_stream;
-		temp_command_stream->m_command = create_command();
+		command_stream_t temp_command_stream = (command_stream_t) checked_malloc(sizeof(struct command_stream));
+		temp_command_stream->m_command = NULL;
 		temp_command_stream->next_stream = temp_command_stream->prev_stream = NULL;
 
 		command_stream_t temp_command_stream_2;
@@ -594,7 +594,7 @@ tokenize (char *buffer)
 	int skip_char = 1;
 	size_t skip_size = 1;
 	size_t place_holder_size = 16;
-	char *place_holder = (char*) checked_malloc(place_holder_size);
+	char *place_holder;
 	int ignored = 0;
 	int i = 0;
 
@@ -606,8 +606,9 @@ tokenize (char *buffer)
 		token_t current_token = (token_t) checked_malloc(sizeof(struct token)); // fixed?
 		current_token->content = (char*) checked_malloc(sizeof(char));
 		next_char = buffer[buffer_counter];
+		place_holder = (char*) checked_malloc(place_holder_size);
 		skip_char = 1;
-		ignored=0;
+		ignored = 0;
 		
 		if (is_valid_char(next_char))
 		{
@@ -740,6 +741,7 @@ tokenize (char *buffer)
 			new_stream->m_token[token_counter++] = current_token;
 			new_stream->size++;
 		}
+		free(place_holder);
 	}
 	return new_stream;
 }
