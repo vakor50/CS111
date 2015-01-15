@@ -873,7 +873,7 @@ valid_token_stream(token_stream_t input)
 						case PAREN_CLOSE_TOKEN:
 							break;
 						default:
-							fprintf(stderr, "%d: Invalid Newline",current_token->line_num);
+							fprintf(stderr, "%d: Invalid Pipe",current_token->line_num);
 					}
 				if (next_token->type == PIPE_TOKEN)
 					fprintf(stderr, "%d: Invalid Pipe",current_token->line_num);
@@ -926,7 +926,7 @@ valid_token_stream(token_stream_t input)
 					}
 				}
 				if (prev_token->type == LESS_TOKEN || prev_token->type == GREATER_TOKEN)
-					fprintf(stderr, "%d: Invalid Newline",current_token->line_num);
+					fprintf(stderr, "%d: Invalid Newline2",current_token->line_num);
 				break;
 			case IF_TOKEN:
 			case THEN_TOKEN:
