@@ -65,6 +65,9 @@ struct token_stack
 token_stack_t global_stack;
 command_stream_t global_stream;
 
+static void command_indented_print (int indent, command_t c);
+void print_command (command_t c);
+
 void
 push_token_stack(token_stack_t item)
 {
@@ -579,7 +582,6 @@ token_stream_to_command_stream(token_stream_t input)
 				temp_stack_2 = current_stack;
 				if (temp_stack_2 == NULL)
 					break;
-				printf("%s\n",type_to_string(temp_stack_2->m_token->type));
 				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
 					if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
@@ -623,6 +625,8 @@ token_stream_to_command_stream(token_stream_t input)
 			default:
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 		}
+		if (temp_stack_2->m_command != NULL)
+			print_command(temp_stack_2->command);
 	}
 	return global_stream;
 }
@@ -1005,4 +1009,71 @@ read_command_stream (command_stream_t s)
 
   error (1, 0, "command reading not yet implemented");
   return 0;
+}
+
+
+static void
+command_indented_print (int indent, command_t c)
+{
+  switch (c->type)
+    {
+    case IF_COMMAND:
+    case UNTIL_COMMAND:
+    case WHILE_COMMAND:
+      printf ("%*s%s\n", indent, "",
+	      (c->type == IF_COMMAND ? "if"
+	       : c->type == UNTIL_COMMAND ? "until" : "while"));
+      command_indented_print (indent + 2, c->u.command[0]);
+      printf ("\n%*s%s\n", indent, "", c->type == IF_COMMAND ? "then" : "do");
+      command_indented_print (indent + 2, c->u.command[1]);
+      if (c->type == IF_COMMAND && c->u.command[2])
+	{
+	  printf ("\n%*selse\n", indent, "");
+	  command_indented_print (indent + 2, c->u.command[2]);
+	}
+      printf ("\n%*s%s", indent, "", c->type == IF_COMMAND ? "fi" : "done");
+      break;
+
+    case SEQUENCE_COMMAND:
+    case PIPE_COMMAND:
+      {
+	command_indented_print (indent + 2 * (c->u.command[0]->type != c->type),
+				c->u.command[0]);
+	char separator = c->type == SEQUENCE_COMMAND ? ';' : '|';
+	printf (" \\\n%*s%c\n", indent, "", separator);
+	command_indented_print (indent + 2 * (c->u.command[1]->type != c->type),
+				c->u.command[1]);
+	break;
+      }
+
+    case SIMPLE_COMMAND:
+      {
+	char **w = c->u.word;
+	printf ("%*s%s", indent, "", *w);
+	while (*++w)
+	  printf (" %s", *w);
+	break;
+      }
+
+    case SUBSHELL_COMMAND:
+      printf ("%*s(\n", indent, "");
+      command_indented_print (indent + 1, c->u.command[0]);
+      printf ("\n%*s)", indent, "");
+      break;
+
+    default:
+      abort ();
+    }
+
+  if (c->input)
+    printf ("<%s", c->input);
+  if (c->output)
+    printf (">%s", c->output);
+}
+
+void
+print_command (command_t c)
+{
+  command_indented_print (2, c);
+  putchar ('\n');
 }
