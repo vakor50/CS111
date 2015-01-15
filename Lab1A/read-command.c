@@ -616,7 +616,7 @@ tokenize (char *buffer)
 		skip_char = 1;
 		ignored = 0;
 
-		if (buffer_counter >= 6)
+		if (buffer_counter >= 7)
 			exit(1);
 		
 		if (is_valid_char(next_char))
@@ -624,6 +624,7 @@ tokenize (char *buffer)
 			while (is_valid_char(buffer[buffer_counter+skip_char]))
 			{
 				skip_char++;
+				printf("%d\n",skip_char);
 			}
 			skip_size = skip_char+2;
 			current_token->content = (char*) checked_grow_alloc(current_token->content, &skip_size);
