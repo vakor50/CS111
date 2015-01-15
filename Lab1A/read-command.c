@@ -638,7 +638,6 @@ tokenize (char *buffer)
 
 	while (buffer[buffer_counter] != '\0')
 	{
-		printf("%d\n",buffer_counter);
 		token_t current_token = (token_t) checked_malloc(sizeof(struct token)); // fixed?
 		current_token->content = (char*) checked_malloc(sizeof(char));
 		next_char = buffer[buffer_counter];
@@ -831,12 +830,9 @@ valid_token_stream(token_stream_t input)
 	}	
 
 	prev_token = NULL;
-
-	printf("%d\n",input->size);
 	
 	for (i = 0; i < input->size; i++)
 	{
-		printf("%d ",i);
 		paren_counter = 0, if_counter = 0, then_counter = 0, else_counter = 0, fi_counter = 0;
 		while_counter = 0, until_counter = 0, do_counter = 0, done_counter = 0;
 		current_token = input->m_token[i];
@@ -847,8 +843,6 @@ valid_token_stream(token_stream_t input)
 			next_token = input->m_token[i+1];
 		else
 			next_token = NULL;
-
-		printf("%s\n",type_to_string(current_token->type));
 
 		switch(current_token->type)
 		{
@@ -975,14 +969,9 @@ make_command_stream (int (*get_next_byte) (void *),
 	/*Tokenizing the input*/
 	token_stream_t current_stream = tokenize(buffer);
 
-	int i;
-	for (i = 0; i < current_stream->size; i++)
-		printf("%s\n",type_to_string(current_stream->m_token[i]->type));
-
 	/*Check if all tokens are valid*/
-	printf("%d\n",valid_token_stream(current_stream));
-	//if (valid_token_stream(current_stream))
-	//	token_stream_to_command_stream(current_stream);
+	if (valid_token_stream(current_stream))
+		token_stream_to_command_stream(current_stream);
 
 	return global_stream;
 }
