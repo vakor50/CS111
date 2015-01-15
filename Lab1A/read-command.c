@@ -427,7 +427,7 @@ token_stream_to_command_stream(token_stream_t input)
 							if (temp_stack_4->m_command == NULL)
 							{
 								printf("Command is Null");
-								exit();
+								exit(1);
 							}
 							else
 								printf("We're good.");
