@@ -937,14 +937,14 @@ make_command_stream (int (*get_next_byte) (void *),
      You can also use external functions defined in the GNU C Library.  */
 	
 	/*Reading in the input*/
-	size_t buffer_size = 1024;
+	size_t buffer_size = 512;
 	size_t counter = 0;
 	char *buffer = (char*) checked_malloc(buffer_size);
 	char next_char = get_next_byte(get_next_byte_argument);
 	while (next_char != EOF)
 	{
 		buffer[counter++] = next_char;
-	    printf("looped once: %c \n", next_char);
+	    printf("looped once: %c \n", buffer[(counter-1)]);
 	    printf("bufferSize: %d \n", (int) buffer_size);
 		if (counter == buffer_size)
 		{
