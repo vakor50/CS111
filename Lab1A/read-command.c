@@ -1023,13 +1023,13 @@ command_indented_print2 (int indent, command_t c)
       printf ("%*s%s\n", indent, "",
 	      (c->type == IF_COMMAND ? "if"
 	       : c->type == UNTIL_COMMAND ? "until" : "while"));
-      command_indented_print (indent + 2, c->u.command[0]);
+      command_indented_print2 (indent + 2, c->u.command[0]);
       printf ("\n%*s%s\n", indent, "", c->type == IF_COMMAND ? "then" : "do");
-      command_indented_print (indent + 2, c->u.command[1]);
+      command_indented_print2 (indent + 2, c->u.command[1]);
       if (c->type == IF_COMMAND && c->u.command[2])
 	{
 	  printf ("\n%*selse\n", indent, "");
-	  command_indented_print (indent + 2, c->u.command[2]);
+	  command_indented_print2 (indent + 2, c->u.command[2]);
 	}
       printf ("\n%*s%s", indent, "", c->type == IF_COMMAND ? "fi" : "done");
       break;
@@ -1037,11 +1037,11 @@ command_indented_print2 (int indent, command_t c)
     case SEQUENCE_COMMAND:
     case PIPE_COMMAND:
       {
-	command_indented_print (indent + 2 * (c->u.command[0]->type != c->type),
+	command_indented_print2 (indent + 2 * (c->u.command[0]->type != c->type),
 				c->u.command[0]);
 	char separator = c->type == SEQUENCE_COMMAND ? ';' : '|';
 	printf (" \\\n%*s%c\n", indent, "", separator);
-	command_indented_print (indent + 2 * (c->u.command[1]->type != c->type),
+	command_indented_print2 (indent + 2 * (c->u.command[1]->type != c->type),
 				c->u.command[1]);
 	break;
       }
@@ -1057,7 +1057,7 @@ command_indented_print2 (int indent, command_t c)
 
     case SUBSHELL_COMMAND:
       printf ("%*s(\n", indent, "");
-      command_indented_print (indent + 1, c->u.command[0]);
+      command_indented_print2 (indent + 1, c->u.command[0]);
       printf ("\n%*s)", indent, "");
       break;
 
@@ -1074,6 +1074,6 @@ command_indented_print2 (int indent, command_t c)
 void
 print_command2 (command_t c)
 {
-  command_indented_print (2, c);
+  command_indented_print2 (2, c);
   putchar ('\n');
 }
