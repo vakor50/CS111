@@ -270,6 +270,8 @@ token_stream_to_command_stream(token_stream_t input)
 
 		command_stream_t temp_command_stream_2;
 
+		size_t word_size = 0;
+
 		switch(current_token->type)
 		{
 			case LESS_TOKEN:
@@ -307,6 +309,8 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					temp_command = create_command();
 					temp_command->type = SIMPLE_COMMAND;
+					word_size = strlen(current_token->content);
+					temp_command->u.word = (char**) checked_malloc(word_size*sizeof(char*));
 					temp_command->u.word[0] = current_token->content;
 					temp_stack->m_command = temp_command;
 					temp_stack->is_command = 1;
