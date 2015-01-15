@@ -92,7 +92,8 @@ pop_token_stack()
 		temp_stack = global_stack;
 		temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
 		global_stack = global_stack->prev_token_stack;
-		global_stack->next_token_stack = NULL;
+		if (global_stack != NULL)
+			global_stack->next_token_stack = NULL;
 	}
 	return temp_stack;
 }
