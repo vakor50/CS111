@@ -100,7 +100,8 @@ pop_token_stack()
 command_t
 create_command()
 {
-	command_t new_command = (command_t) checked_malloc(sizeof(struct command));
+	//command_t new_command = (command_t) checked_malloc(sizeof(struct command));
+	command_t new_command = checked_malloc(sizeof(struct command));
 	new_command->status = -1;
 	new_command->input = NULL;
 	new_command->output = NULL;
@@ -614,13 +615,13 @@ tokenize (char *buffer)
 			{
 				skip_char++;
 			}
-			current_token->content = (char*) checked_grow_alloc(current_token->content, (size_t) &skip_char);
+			current_token->content = (char*) checked_grow_alloc(current_token->content, (size_t) skip_char);
 			for (i = 0; i < skip_char; i++)
 			{
 				if (i == (int) place_holder_size)
 				{
 					place_holder_size*=2;
-					place_holder = checked_grow_alloc(place_holder, &place_holder_size);
+					place_holder = (char*) checked_grow_alloc(place_holder, &place_holder_size);
 				}
 				place_holder[i] = tolower(buffer[buffer_counter+i]);
 			}
