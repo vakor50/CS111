@@ -802,7 +802,6 @@ valid_token_stream(token_stream_t input)
 	for (i = 0; i < input->size; i++)
 	{
 		current_token = input->m_token[i];
-		printf("%s ", type_to_string(current_token->type));
 		if (i == 0)
 			continue;
 		prev_token = input->m_token[i-1];
@@ -895,7 +894,7 @@ valid_token_stream(token_stream_t input)
 				break;
 			case LESS_TOKEN:
 			case GREATER_TOKEN:
-				if (prev_token->type != WORD_TOKEN || next_token->type != WORD_TOKEN)
+				if (next_token->type != WORD_TOKEN)
 				{
 					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 				}
@@ -925,34 +924,6 @@ valid_token_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid Newline",current_token->line_num);
 				break;
 			case IF_TOKEN:
-				j = i;
-				while (j < input->size)
-				{
-					if (input->m_token[i]->type == IF_TOKEN)
-					{
-						if_counter++;
-						current_line_num = input->m_token[i]->line_num;
-					}
-					if (input->m_token[i]->type == THEN_TOKEN)
-					{
-						then_counter++;
-						current_line_num = input->m_token[i]->line_num;
-					}
-					if (input->m_token[i]->type == ELSE_TOKEN)
-					{
-						else_counter++;
-						current_line_num = input->m_token[i]->line_num;
-					}
-					if (input->m_token[i]->type == FI_TOKEN)
-					{
-						if_counter--;
-						then_counter--;
-						else_counter--;
-						current_line_num = input->m_token[i]->line_num;
-					}
-				}
-				if (paren_counter != 0)
-					fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
 				break;
 			case UNTIL_TOKEN:
 				break;
