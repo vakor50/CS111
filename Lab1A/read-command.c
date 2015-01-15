@@ -879,7 +879,7 @@ valid_token_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid Pipe",current_token->line_num);
 				break;
 			case PAREN_OPEN_TOKEN:
-				j = i+1;
+				j = i;
 				while (j < input->size)
 				{
 					if (input->m_token[j]->type == PAREN_OPEN_TOKEN)
