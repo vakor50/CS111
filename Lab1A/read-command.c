@@ -971,6 +971,10 @@ make_command_stream (int (*get_next_byte) (void *),
 	/*Tokenizing the input*/
 	token_stream_t current_stream = tokenize(buffer);
 
+	int i;
+	for (i = 0; i < current_stream->size; i++)
+		printf("%s\n",type_to_string(current_stream->m_token[i]->type));
+
 	/*Check if all tokens are valid*/
 	printf("%d\n",valid_token_stream(current_stream));
 	//if (valid_token_stream(current_stream))
