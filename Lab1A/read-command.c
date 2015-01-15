@@ -566,6 +566,8 @@ token_stream_to_command_stream(token_stream_t input)
 				break;
 			case NEWLINE_TOKEN:
 				temp_stack_2 = current_stack;
+				if (temp_stack_2 == NULL)
+					break;
 				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
 					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
@@ -756,6 +758,8 @@ tokenize (char *buffer)
 					{
 						skip_char++;
 					}
+					if ((token_counter > 0) && (new_stream->m_token[token_counter-1]->type == NEWLINE_TOKEN))
+						skip_char++;
 					buffer_counter+=(skip_char);
 					ignored = 1;
 					break;
@@ -875,20 +879,16 @@ valid_token_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid Pipe",current_token->line_num);
 				break;
 			case PAREN_OPEN_TOKEN:
-				j = i;
-				printf("%d\n",j);
+				j = i+1;
 				while (j < input->size)
 				{
-					printf("%d\n",j);
-					if (input->m_token[i]->type == PAREN_OPEN_TOKEN)
+					if (input->m_token[j]->type == PAREN_OPEN_TOKEN)
 					{
 						paren_counter++;
-						current_line_num = input->m_token[i]->line_num;
 					}
-					if (input->m_token[i]->type == PAREN_CLOSE_TOKEN)
+					if (input->m_token[j]->type == PAREN_CLOSE_TOKEN)
 					{
 						paren_counter--;
-						current_line_num = input->m_token[i]->line_num;
 					}
 					j++;
 				}
