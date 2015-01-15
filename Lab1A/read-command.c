@@ -308,8 +308,6 @@ token_stream_to_command_stream(token_stream_t input)
 					current_stack->m_command->input = input->m_token[i+1]->content;
 					i++;
 				}
-				if (prev_token->type != WORD_TOKEN || next_token->type != WORD_TOKEN)
-					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 				break;
 			case GREATER_TOKEN:
 				if (current_stack != NULL && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command)) && next_token != NULL && next_token->type == WORD_TOKEN)
@@ -317,8 +315,6 @@ token_stream_to_command_stream(token_stream_t input)
 					current_stack->m_command->output = input->m_token[i+1]->content;
 					i++;
 				}
-				if (prev_token->type != WORD_TOKEN || next_token->type != WORD_TOKEN)
-					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 				break;
 			case WORD_TOKEN:
 				//HAVE TO DEAL WTIH NULL
@@ -353,7 +349,7 @@ token_stream_to_command_stream(token_stream_t input)
 			case PAREN_CLOSE_TOKEN:
 				paren_counter--;
 				temp_stack_5 = pop_token_stack();
-				if (global_stack->m_token->type != PAREN_OPEN_TOKEN)
+				if ((global_stack != NULL) && (global_stack->m_token->type != PAREN_OPEN_TOKEN))
 				{
 					temp_stack_4 = pop_token_stack();
 					temp_stack_3 = pop_token_stack();
@@ -375,7 +371,7 @@ token_stream_to_command_stream(token_stream_t input)
 					temp_stack_6->m_command->u.command[0] = temp_stack_3->m_command;
 					temp_stack_6->m_command->type = SUBSHELL_COMMAND;
 				}
-				if (global_stack->m_token->type == PAREN_OPEN_TOKEN)
+				if ((global_stack != NULL) && (global_stack->m_token->type == PAREN_OPEN_TOKEN))
 					pop_token_stack();
 				else
 					fprintf(stderr, "%d: Invalid ')' Subshell Token", current_token->line_num);
@@ -406,27 +402,30 @@ token_stream_to_command_stream(token_stream_t input)
 			case ELSE_TOKEN:
 			case DO_TOKEN:
 				temp_stack_2 = current_stack;
-				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
+				if (temp_stack_2 != NULL)
 				{
-					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						temp_stack_2 = temp_stack_2->prev_token_stack;
-						continue;
-					}
-					else
-					{
-						temp_stack_5 = pop_token_stack();
-						temp_stack_4 = pop_token_stack();
-						temp_stack_3 = pop_token_stack();
-						temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
-						temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
-						temp_stack_4->is_command = 1;
-						if (temp_stack_4->m_token->type == PIPE_TOKEN)
-							temp_stack_4->m_command->type = PIPE_COMMAND;
+						if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+						{
+							temp_stack_2 = temp_stack_2->prev_token_stack;
+							continue;
+						}
 						else
-							temp_stack_4->m_command->type = SEQUENCE_COMMAND;
-						push_token_stack(temp_stack_4);
-						temp_stack_2 = global_stack;
+						{
+							temp_stack_5 = pop_token_stack();
+							temp_stack_4 = pop_token_stack();
+							temp_stack_3 = pop_token_stack();
+							temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
+							temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
+							temp_stack_4->is_command = 1;
+							if (temp_stack_4->m_token->type == PIPE_TOKEN)
+								temp_stack_4->m_command->type = PIPE_COMMAND;
+							else
+								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
+							push_token_stack(temp_stack_4);
+							temp_stack_2 = global_stack;
+						}
 					}
 				}
 				push_token_stack(temp_stack);
@@ -440,29 +439,34 @@ token_stream_to_command_stream(token_stream_t input)
 			case FI_TOKEN:
 				loop_counter--;
 				temp_stack_2 = current_stack;
-				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
+				if (temp_stack_2 != NULL)
 				{
-					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						temp_stack_2 = temp_stack_2->prev_token_stack;
-						continue;
-					}
-					else
-					{
-						temp_stack_5 = pop_token_stack();
-						temp_stack_4 = pop_token_stack();
-						temp_stack_3 = pop_token_stack();
-						temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
-						temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
-						temp_stack_4->is_command = 1;
-						if (temp_stack_4->m_token->type == PIPE_TOKEN)
-							temp_stack_4->m_command->type = PIPE_COMMAND;
+						if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+						{
+							temp_stack_2 = temp_stack_2->prev_token_stack;
+							continue;
+						}
 						else
-							temp_stack_4->m_command->type = SEQUENCE_COMMAND;
-						push_token_stack(temp_stack_4);
-						temp_stack_2 = global_stack;
+						{
+							temp_stack_5 = pop_token_stack();
+							temp_stack_4 = pop_token_stack();
+							temp_stack_3 = pop_token_stack();
+							temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
+							temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
+							temp_stack_4->is_command = 1;
+							if (temp_stack_4->m_token->type == PIPE_TOKEN)
+								temp_stack_4->m_command->type = PIPE_COMMAND;
+							else
+								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
+							push_token_stack(temp_stack_4);
+							temp_stack_2 = global_stack;
+						}
 					}
 				}
+				else
+					fprintf(stderr, "%d: Invalid FI",current_token->line_num);
 
 				temp_stack_3 = pop_token_stack();
 				temp_stack_4 = pop_token_stack();
@@ -508,29 +512,34 @@ token_stream_to_command_stream(token_stream_t input)
 			case DONE_TOKEN:
 				loop_counter--;
 				temp_stack_2 = current_stack;
-				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
+				if (temp_stack_2 != NULL)
 				{
-					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						temp_stack_2 = temp_stack_2->prev_token_stack;
-						continue;
-					}
-					else
-					{
-						temp_stack_5 = pop_token_stack();
-						temp_stack_4 = pop_token_stack();
-						temp_stack_3 = pop_token_stack();
-						temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
-						temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
-						temp_stack_4->is_command = 1;
-						if (temp_stack_4->m_token->type == PIPE_TOKEN)
-							temp_stack_4->m_command->type = PIPE_COMMAND;
+						if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+						{
+							temp_stack_2 = temp_stack_2->prev_token_stack;
+							continue;
+						}
 						else
-							temp_stack_4->m_command->type = SEQUENCE_COMMAND;
-						push_token_stack(temp_stack_4);
-						temp_stack_2 = global_stack;
+						{
+							temp_stack_5 = pop_token_stack();
+							temp_stack_4 = pop_token_stack();
+							temp_stack_3 = pop_token_stack();
+							temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
+							temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
+							temp_stack_4->is_command = 1;
+							if (temp_stack_4->m_token->type == PIPE_TOKEN)
+								temp_stack_4->m_command->type = PIPE_COMMAND;
+							else
+								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
+							push_token_stack(temp_stack_4);
+							temp_stack_2 = global_stack;
+						}
 					}
 				}
+				else
+					fprintf(stderr, "%d: Invalid DONE",current_token->line_num);
 
 				temp_stack_3 = pop_token_stack();
 				temp_stack_4 = pop_token_stack();
@@ -609,7 +618,6 @@ token_stream_to_command_stream(token_stream_t input)
 			default:
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 		}
-
 	}
 	return global_stream;
 }
