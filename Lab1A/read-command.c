@@ -966,7 +966,7 @@ read_command_stream (command_stream_t s)
 		s->is_read++;
 		return s->m_command;
 	}
-	else if (s->next_stream != NULL)
+	else if ((s != NULL) && (s->next_stream != NULL))
 			return read_command_stream(s->next_stream);
 	else
 		return NULL;
