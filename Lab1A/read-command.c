@@ -100,11 +100,12 @@ pop_token_stack()
 command_t
 create_command()
 {
-	command_t new_command;
+	command_t new_command = (command_t) checked_malloc(sizeof(struct command));
 	new_command->status = -1;
 	new_command->input = NULL;
 	new_command->output = NULL;
 	new_command->u.word = NULL;
+	return new_command;
 }
 
 int
@@ -232,25 +233,31 @@ token_stream_to_command_stream(token_stream_t input)
 		else
 			next_token = NULL;
 
-		token_stack_t temp_stack;
+		token_stack_t temp_stack = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack->m_token = current_token;
 		temp_stack->m_command = NULL;
 		temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
 		temp_stack->is_command = 0;
 
-		token_stack_t temp_stack_2;
+		token_stack_t temp_stack_2 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack_2->m_token = current_token;
 		temp_stack_2->m_command = NULL;
 		temp_stack_2->next_token_stack = temp_stack_2->prev_token_stack = NULL;
 		temp_stack_2->is_command = 0;
 
-		token_stack_t temp_stack_3,temp_stack_4,temp_stack_5,temp_stack_7,temp_stack_8,temp_stack_9, temp_stack_10;
+		token_stack_t temp_stack_3,temp_stack_4,temp_stack_5,temp_stack_7,temp_stack_8,temp_stack_9
 
-		token_stack_t temp_stack_6;
+		token_stack_t temp_stack_6 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack_6->m_token = current_token;
 		temp_stack_6->m_command = NULL;
 		temp_stack_6->next_token_stack = temp_stack_6->prev_token_stack = NULL;
 		temp_stack_6->is_command = 0;
+
+		token_stack_t temp_stack_10 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		temp_stack_10->m_token = current_token;
+		temp_stack_10->m_command = NULL;
+		temp_stack_10->next_token_stack = temp_stack_10->prev_token_stack = NULL;
+		temp_stack_10->is_command = 0;
 
 		token_stack_t current_stack = global_stack;
 		//token_stack_t prev_stack = global_stack->prev_token_stack;
@@ -570,6 +577,7 @@ token_stream_to_command_stream(token_stream_t input)
 		}
 
 	}
+	return global_stream;
 }
 
 token_stream_t
@@ -584,7 +592,8 @@ tokenize (char *buffer)
 	new_stream->size = 0;
 	int token_counter = 0;
 	int skip_char = 1;
-	char *place_holder;
+	size_t place_holder_size = 16;
+	char *place_holder = (char*) checked_malloc(place_holder_size);
 	int ignored = 0;
 	int i = 0;
 
@@ -608,6 +617,11 @@ tokenize (char *buffer)
 			current_token->content = (char*) checked_grow_alloc(current_token->content, skip_char*sizeof(char));
 			for (i = 0; i < skip_char; i++)
 			{
+				if (i == (int) place_holder_size)
+				{
+					place_holder_size*=2;
+					place_holder = checked_grow_alloc(place_holder, place_holder_size);
+				}
 				place_holder[i] = tolower(buffer[buffer_counter+i]);
 			}
 
@@ -725,7 +739,7 @@ tokenize (char *buffer)
 			new_stream->size++;
 		}
 	}
-
+	return new_stream;
 }
 
 
@@ -896,6 +910,7 @@ valid_token_stream(token_stream_t input)
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 		}
 	}
+	return 1;
 }
 
 command_stream_t
