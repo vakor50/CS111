@@ -188,7 +188,7 @@ stack_precedence (enum token_type type)
 command_stream_t
 token_stream_to_command_stream(token_stream_t input)
 {
-	int i = 0;
+	int i = 0, j = 0;
 	token_t current_token = NULL;
 	token_t prev_token = NULL;
 	token_t next_token = NULL;
@@ -258,14 +258,15 @@ token_stream_to_command_stream(token_stream_t input)
 		command_t temp_command;
 
 		command_stream_t temp_command_stream;
-		temp_command_stream->m_command = temp_command_stream->next_stream = temp_command_stream->prev_stream = NULL;
+		temp_command_stream->m_command = NULL;
+		temp_command_stream->next_stream = temp_command_stream->prev_stream = NULL;
 
 		command_stream_t temp_command_stream_2;
 
 		switch(current_token->type)
 		{
 			case LESS_TOKEN:
-				if (current_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
+				if (current_stack != NULL && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command)) && next_token != NULL && next_token->type == WORD_TOKEN)
 				{
 					current_stack->m_command->input = input->m_token[i+1]->content;
 					i++;
@@ -274,7 +275,7 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 				break;
 			case GREATER_TOKEN:
-				if (current_stack != NULL && (current_stack->m_command->type == SIMPLE_COMMAND || current_stack->is_command) && next_token != NULL && next_token == WORD_TOKEN)
+				if (current_stack != NULL && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command)) && next_token != NULL && next_token->type == WORD_TOKEN)
 				{
 					current_stack->m_command->output = input->m_token[i+1]->content;
 					i++;
@@ -286,16 +287,20 @@ token_stream_to_command_stream(token_stream_t input)
 				//HAVE TO DEAL WTIH NULL
 				if ((current_stack != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND))
 				{
-					strcat(" ", current_token->content);
-					str_length = (int) strlen(current_token->content) + (int) strlen(current_stack->m_command->u.word);
-					current_stack->m_command->u.word = (char*) checked_grow_alloc(current_stack->m_command->u.word, (size_t) str_length);
-					strcat(current_stack->m_command->u.word, current_token->content);
+					j = 0;
+					while (temp_command->u.word[j] != NULL)
+						j++;
+					current_stack->m_command->u.word = current_token->content;
+					//strcat(" ", current_token->content);
+					//str_length = (int) strlen(current_token->content) + (int) strlen(current_stack->m_command->u.word);
+					//current_stack->m_command->u.word = (char*) checked_grow_alloc(current_stack->m_command->u.word, (size_t) str_length);
+					//strcat(current_stack->m_command->u.word, current_token->content);
 				}
 				else
 				{
 					temp_command = create_command();
 					temp_command->type = SIMPLE_COMMAND;
-					temp_command->u.word = current_token->content;
+					temp_command->u.word[0] = current_token->content;
 					temp_stack->m_command = temp_command;
 					temp_stack->is_command = 1;
 					push_token_stack(temp_stack);
@@ -573,7 +578,7 @@ tokenize (char *buffer)
 	int buffer_counter = 0;
 	int line_num = 1;
 	char next_char;
-	token_stream_t new_stream = (token_stream*) checked_malloc(sizeof(struct token_stream)); // FIXED?
+	token_stream_t new_stream = (token_stream_t) checked_malloc(sizeof(struct token_stream)); // FIXED?
 	token_t *token_array = (token_t*) checked_malloc(100*sizeof(token_t));
 	new_stream->m_token = token_array;
 	new_stream->size = 0;
