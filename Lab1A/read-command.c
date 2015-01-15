@@ -65,8 +65,8 @@ struct token_stack
 token_stack_t global_stack;
 command_stream_t global_stream;
 
-static void command_indented_print (int indent, command_t c);
-void print_command (command_t c);
+static void command_indented_print2 (int indent, command_t c);
+void print_command2 (command_t c);
 
 void
 push_token_stack(token_stack_t item)
@@ -626,7 +626,7 @@ token_stream_to_command_stream(token_stream_t input)
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 		}
 		if (temp_stack_2->m_command != NULL)
-			print_command(temp_stack_2->m_command);
+			print_command2(temp_stack_2->m_command);
 	}
 	return global_stream;
 }
@@ -1013,7 +1013,7 @@ read_command_stream (command_stream_t s)
 
 
 static void
-command_indented_print (int indent, command_t c)
+command_indented_print2 (int indent, command_t c)
 {
   switch (c->type)
     {
@@ -1072,7 +1072,7 @@ command_indented_print (int indent, command_t c)
 }
 
 void
-print_command (command_t c)
+print_command2 (command_t c)
 {
   command_indented_print (2, c);
   putchar ('\n');
