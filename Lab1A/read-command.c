@@ -254,6 +254,7 @@ token_stream_to_command_stream(token_stream_t input)
 	for (i = 0; i < input->size; i++)
 	{
 		current_token = input->m_token[i];
+		printf("%d %s\n",i, type_to_string(current_token->type));
 		if (i > 0)
 			prev_token = input->m_token[i-1];
 		if (i < (input->size-1))
