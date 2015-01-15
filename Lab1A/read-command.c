@@ -591,8 +591,7 @@ tokenize (char *buffer)
 	int line_num = 1;
 	char next_char;
 	token_stream_t new_stream = (token_stream_t) checked_malloc(sizeof(struct token_stream)); // FIXED?
-	size_t *token_array_size;
-	*token_array_size = 64*sizeof(token_t);
+	size_t token_array_size = 64*sizeof(token_t);
 	token_t *token_array = (token_t*) checked_malloc(token_array_size);
 	new_stream->m_token = token_array;
 	new_stream->size = 0;
@@ -744,10 +743,10 @@ tokenize (char *buffer)
 			current_token->content[skip_char]='\0';
 			current_token->line_num = line_num;
 			buffer_counter+=skip_char;
-			if ((*token_array_size) <= (token_counter*sizeof(token_t)))
+			if ((token_array_size) <= (token_counter*sizeof(token_t)))
 			{
-				*token_array_size *= 2;
-				new_stream->m_token = checked_grow_alloc(new_stream->m_token, token_array_size);
+				token_array_size *= 2;
+				new_stream->m_token = checked_grow_alloc(new_stream->m_token, &token_array_size);
 			}
 			new_stream->m_token[token_counter++] = current_token;
 			new_stream->size++;
