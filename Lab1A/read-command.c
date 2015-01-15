@@ -183,7 +183,7 @@ current_precedence (enum token_type type)
     	case PAREN_OPEN_TOKEN:
 			return 7;
 	    default:
-			return -1;
+			return 9;
 	}
 }
 
@@ -407,7 +407,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+						if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
 						{
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
@@ -444,7 +444,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+						if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
 						{
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
@@ -517,7 +517,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+						if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
 						{
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
@@ -578,9 +578,10 @@ token_stream_to_command_stream(token_stream_t input)
 				temp_stack_2 = current_stack;
 				if (temp_stack_2 == NULL)
 					break;
+				printf("%s\n",type_to_string(temp_stack_2->m_token->type));
 				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
-					if (temp_stack_2->m_command->type == SIMPLE_COMMAND)
+					if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
 					{
 						temp_stack_2 = temp_stack_2->prev_token_stack;
 						continue;
