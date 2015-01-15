@@ -944,9 +944,12 @@ make_command_stream (int (*get_next_byte) (void *),
 	while (next_char != EOF)
 	{
 		buffer[counter++] = next_char;
+	    printf("looped once: %c \n", value);
+	    printf("bufferSize: %d \n", (int) bufferSize);
 		if (counter == buffer_size)
 		{
 			buffer = (char*) checked_grow_alloc(buffer, &buffer_size);
+			printf("called checked_realloc: %d\n", (int) bufferSize);
 		}
 		next_char = get_next_byte(get_next_byte_argument);
 	}
@@ -954,19 +957,12 @@ make_command_stream (int (*get_next_byte) (void *),
 		buffer = (char*) checked_grow_alloc(buffer, &buffer_size);
 	buffer[counter] = '\0';
 
-	int count = 0;
-	while(buffer[count] != '\0')
-	{
-		printf("%c ", buffer[count]);
-		count++;
-	}
-
 	/*Tokenizing the input*/
-	token_stream_t current_stream = tokenize(buffer);
+	//token_stream_t current_stream = tokenize(buffer);
 
 	/*Check if all tokens are valid*/
-	if (valid_token_stream(current_stream))
-		token_stream_to_command_stream(current_stream);
+	//if (valid_token_stream(current_stream))
+	//	token_stream_to_command_stream(current_stream);
 
 	return global_stream;
 }
