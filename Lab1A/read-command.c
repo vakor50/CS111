@@ -923,6 +923,7 @@ valid_token_stream(token_stream_t input)
 							break;
 						default:
 							fprintf(stderr, "%d: Invalid Newline",current_token->line_num);
+							fprintf(stderr, "%s: Invalid Token",type_to_string(next_token->type));
 					}
 				}
 				if (prev_token->type == LESS_TOKEN || prev_token->type == GREATER_TOKEN)
