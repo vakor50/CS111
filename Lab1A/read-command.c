@@ -707,7 +707,7 @@ tokenize (char *buffer)
 					break;       
 				case GREATER_CHAR: 
 					current_token->type = GREATER_TOKEN;
-					current_token->content[0] = LESS_CHAR;
+					current_token->content[0] = GREATER_CHAR;
 					break;
 				case NEWLINE_CHAR:
 					ignored = 1;
@@ -721,6 +721,8 @@ tokenize (char *buffer)
 					}
 					line_num++;
 					buffer_counter+=(skip_char);
+					new_stream->m_token[token_counter++] = current_token;
+					new_stream->size++;
 					break;
 				/*This ignores comments and does not place them into the token stream*/
 				case COMMENT_CHAR:
