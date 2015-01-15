@@ -616,7 +616,7 @@ tokenize (char *buffer)
 		skip_char = 1;
 		ignored = 0;
 
-		if (buffer_counter == 10)
+		if (buffer_counter >= 1)
 			exit(1);
 		
 		if (is_valid_char(next_char))
