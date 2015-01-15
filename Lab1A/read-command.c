@@ -445,12 +445,14 @@ token_stream_to_command_stream(token_stream_t input)
 
 							if (temp_stack_4->m_command != NULL)
 							{
+								printf("4 word \n");
 								if (temp_stack_4->m_command->u.word != NULL)
 								{
 									j = 0;
 									while (temp_command->u.word[j] != NULL)
 									{
-										printf("%s 5 word \n",temp_stack_4->m_command->u.word[j++]);
+										printf("41 word \n");
+										printf("%s 4 word \n",temp_stack_4->m_command->u.word[j++]);
 									}
 									
 								}
@@ -458,12 +460,14 @@ token_stream_to_command_stream(token_stream_t input)
 
 							if (temp_stack_3->m_command != NULL)
 							{
+								printf("3 word \n");
 								if (temp_stack_3->m_command->u.word != NULL)
 								{
 									j = 0;
 									while (temp_command->u.word[j] != NULL)
 									{
-										printf("%s 5 word \n",temp_stack_3->m_command->u.word[j++]);
+										printf("31 word \n");
+										printf("%s 3 word \n",temp_stack_3->m_command->u.word[j++]);
 									}
 									
 								}
