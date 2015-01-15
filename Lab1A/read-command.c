@@ -876,8 +876,10 @@ valid_token_stream(token_stream_t input)
 				break;
 			case PAREN_OPEN_TOKEN:
 				j = i;
+				printf("%d\n",j);
 				while (j < input->size)
 				{
+					printf("%d\n",j);
 					if (input->m_token[i]->type == PAREN_OPEN_TOKEN)
 					{
 						paren_counter++;
@@ -891,6 +893,8 @@ valid_token_stream(token_stream_t input)
 				}
 				if (paren_counter != 0)
 					fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
+				break;
+			case PAREN_CLOSE_TOKEN:
 				break;
 			case LESS_TOKEN:
 			case GREATER_TOKEN:
@@ -924,10 +928,13 @@ valid_token_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid Newline",current_token->line_num);
 				break;
 			case IF_TOKEN:
-				break;
+			case THEN_TOKEN:
+			case ELSE_TOKEN:
+			case FI_TOKEN:
 			case UNTIL_TOKEN:
-				break;
 			case WHILE_TOKEN:
+			case DO_TOKEN:
+			case DONE_TOKEN:
 				break;
 			default:
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
