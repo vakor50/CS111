@@ -615,16 +615,12 @@ tokenize (char *buffer)
 		place_holder = (char*) checked_malloc(place_holder_size);
 		skip_char = 1;
 		ignored = 0;
-
-		if (buffer_counter >= 30)
-			exit(1);
 		
 		if (is_valid_char(next_char))
 		{
 			while (is_valid_char(buffer[buffer_counter+skip_char]))
 			{
 				skip_char++;
-				printf("%d\n",skip_char);
 			}
 			skip_size = skip_char+2;
 			current_token->content = (char*) checked_grow_alloc(current_token->content, &skip_size);
@@ -636,7 +632,7 @@ tokenize (char *buffer)
 					place_holder = (char*) checked_grow_alloc(place_holder, &place_holder_size);
 				}
 				place_holder[i] = buffer[buffer_counter+i];
-				printf("%c\n",place_holder[i]);
+				//printf("%c\n",place_holder[i]);
 			}
 
 			if (strcmp(place_holder,"if") == 0)
