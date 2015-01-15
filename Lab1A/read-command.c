@@ -771,6 +771,7 @@ valid_token_stream(token_stream_t input)
 	token_t current_token = NULL;
 	token_t prev_token = NULL, next_token = NULL;
 
+	printf("REACHED HERE");
 
 	for (i = 0; i < input->size; i++)
 	{
@@ -799,6 +800,8 @@ valid_token_stream(token_stream_t input)
 		}
 		printf("%s\n", type_to_string(current_token->type));
 	}	
+
+	printf("REACHED HERE");
 
 	exit(1);
 
