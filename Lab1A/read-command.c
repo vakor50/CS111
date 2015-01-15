@@ -220,7 +220,7 @@ token_stream_to_command_stream(token_stream_t input)
 	}
 	int paren_counter = 0;
 	int loop_counter = 0;
-	int str_length = 0;
+	//int str_length = 0;
 
 	for (i = 0; i < input->size; i++)
 	{
@@ -253,7 +253,7 @@ token_stream_to_command_stream(token_stream_t input)
 		temp_stack_6->is_command = 0;
 
 		token_stack_t current_stack = global_stack;
-		token_stack_t prev_stack = global_stack->prev_token_stack;
+		//token_stack_t prev_stack = global_stack->prev_token_stack;
 
 		command_t temp_command;
 
@@ -290,7 +290,7 @@ token_stream_to_command_stream(token_stream_t input)
 					j = 0;
 					while (temp_command->u.word[j] != NULL)
 						j++;
-					current_stack->m_command->u.word = current_token->content;
+					current_stack->m_command->u.word[j] = current_token->content;
 					//strcat(" ", current_token->content);
 					//str_length = (int) strlen(current_token->content) + (int) strlen(current_stack->m_command->u.word);
 					//current_stack->m_command->u.word = (char*) checked_grow_alloc(current_stack->m_command->u.word, (size_t) str_length);
@@ -549,7 +549,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				if (!paren_counter && !loop_counter)
 				{
-					temp_command_stream = (command_stream_t) checked_malloc(sizeof(command_stream_t));
+					temp_command_stream = (command_stream_t) checked_malloc(sizeof(command_stream));
 					temp_command_stream->m_command = pop_token_stack()->m_command;
 					temp_command_stream->is_read = 0;
 					if (global_stream == NULL)
@@ -605,7 +605,7 @@ tokenize (char *buffer)
 			{
 				skip_char++;
 			}
-			current_token->content = (char*) checked_grow_alloc(current_token->content, (size_t) skip_char);
+			current_token->content = (char*) checked_grow_alloc(current_token->content, skip_char*sizeof(char));
 			for (i = 0; i < skip_char; i++)
 			{
 				place_holder[i] = tolower(buffer[buffer_counter+i]);
