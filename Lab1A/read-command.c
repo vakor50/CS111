@@ -325,6 +325,7 @@ token_stream_to_command_stream(token_stream_t input)
 				//HAVE TO DEAL WTIH NULL
 				if ((current_stack != NULL) && (current_stack->m_command != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND))
 				{
+					printf("REACHED HERE, command before is a word\n");
 					j = 0;
 					while (temp_command->u.word[j] != NULL)
 						j++;
@@ -336,6 +337,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else
 				{
+					printf("REACHED HERE, command before is not a word\n");
 					temp_command = create_command();
 					temp_command->type = SIMPLE_COMMAND;
 					word_size = strlen(current_token->content);
@@ -421,6 +423,7 @@ token_stream_to_command_stream(token_stream_t input)
 							temp_stack_5 = pop_token_stack();
 							temp_stack_4 = pop_token_stack();
 							temp_stack_3 = pop_token_stack();
+							temp_stack_4->m_command = (command_t) checked_malloc(sizeof(struct command));
 							temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 							temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
 							temp_stack_4->is_command = 1;
@@ -625,8 +628,8 @@ token_stream_to_command_stream(token_stream_t input)
 			default:
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 		}
-		if (temp_stack_2->m_command != NULL)
-			print_command2(temp_stack_2->m_command);
+		//if (temp_stack_2->m_command != NULL)
+		//	print_command2(temp_stack_2->m_command);
 	}
 	return global_stream;
 }
