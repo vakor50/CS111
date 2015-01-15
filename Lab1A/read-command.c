@@ -944,12 +944,12 @@ make_command_stream (int (*get_next_byte) (void *),
 	while (next_char != EOF)
 	{
 		buffer[counter++] = next_char;
-	    printf("looped once: %c \n", value);
-	    printf("bufferSize: %d \n", (int) bufferSize);
+	    printf("looped once: %c \n", next_char);
+	    printf("bufferSize: %d \n", (int) buffer_size);
 		if (counter == buffer_size)
 		{
 			buffer = (char*) checked_grow_alloc(buffer, &buffer_size);
-			printf("called checked_realloc: %d\n", (int) bufferSize);
+			printf("called checked_realloc: %d\n", (int) buffer_size);
 		}
 		next_char = get_next_byte(get_next_byte_argument);
 	}
