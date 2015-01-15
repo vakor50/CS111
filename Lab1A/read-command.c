@@ -608,7 +608,6 @@ tokenize (char *buffer)
 
 	while (buffer[buffer_counter] != '\0')
 	{
-		printf("%c\n",buffer[buffer_counter]);
 		token_t current_token = (token_t) checked_malloc(sizeof(struct token)); // fixed?
 		current_token->content = (char*) checked_malloc(sizeof(char));
 		next_char = buffer[buffer_counter];
@@ -776,6 +775,7 @@ valid_token_stream(token_stream_t input)
 	for (i = 0; i < input->size; i++)
 	{
 		current_token = input->m_token[i];
+		printf("%s ", type_to_string(current_token->type));
 		if (i == 0)
 			continue;
 		prev_token = input->m_token[i-1];
@@ -797,7 +797,10 @@ valid_token_stream(token_stream_t input)
 			default:
 				break;
 		}
+		printf("%s\n", type_to_string(current_token->type));
 	}	
+
+	exit(1);
 
 	prev_token = NULL;
 
