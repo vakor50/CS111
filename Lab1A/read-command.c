@@ -549,7 +549,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				if (!paren_counter && !loop_counter)
 				{
-					temp_command_stream = (command_stream_t) checked_malloc(sizeof(command_stream));
+					temp_command_stream = (command_stream_t) checked_malloc(sizeof(struct command_stream));
 					temp_command_stream->m_command = pop_token_stack()->m_command;
 					temp_command_stream->is_read = 0;
 					if (global_stream == NULL)
