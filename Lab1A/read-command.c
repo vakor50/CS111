@@ -961,7 +961,7 @@ command_t
 read_command_stream (command_stream_t s)
 {
   /* FIXME: Replace this with your implementation too.  */
-	if (!s->is_read)
+	if ((s != NULL) && !(s->is_read))
 	{
 		s->is_read++;
 		return s->m_command;
