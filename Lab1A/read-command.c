@@ -608,7 +608,7 @@ tokenize (char *buffer)
 
 	while (buffer[buffer_counter] != '\0')
 	{
-		printf("%s ",buffer[buffer_counter]);
+		printf(stdout,"%s ",buffer[buffer_counter]);
 		token_t current_token = (token_t) checked_malloc(sizeof(struct token)); // fixed?
 		current_token->content = (char*) checked_malloc(sizeof(char));
 		next_char = buffer[buffer_counter];
@@ -953,6 +953,13 @@ make_command_stream (int (*get_next_byte) (void *),
 	if (buffer_size == counter)
 		buffer = (char*) checked_grow_alloc(buffer, &buffer_size);
 	buffer[counter] = '\0';
+
+	int count = 0;
+	while(buffer[count] != '\0')
+	{
+		printf("%c ", buffer[count]);
+		count++;
+	}
 
 	/*Tokenizing the input*/
 	token_stream_t current_stream = tokenize(buffer);
