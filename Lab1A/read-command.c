@@ -845,6 +845,8 @@ valid_token_stream(token_stream_t input)
 			prev_token = input->m_token[i-1];
 		if ((i+1) != input->size)
 			next_token = input->m_token[i+1];
+		else
+			next_token = NULL;
 
 		printf("%s\n",type_to_string(current_token->type));
 
