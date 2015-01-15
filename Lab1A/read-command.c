@@ -890,6 +890,7 @@ valid_token_stream(token_stream_t input)
 						paren_counter--;
 						current_line_num = input->m_token[i]->line_num;
 					}
+					j++;
 				}
 				if (paren_counter != 0)
 					fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
