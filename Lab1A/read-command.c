@@ -616,7 +616,7 @@ tokenize (char *buffer)
 		skip_char = 1;
 		ignored = 0;
 
-		if (buffer_counter >= 7)
+		if (buffer_counter >= 30)
 			exit(1);
 		
 		if (is_valid_char(next_char))
@@ -733,8 +733,11 @@ tokenize (char *buffer)
 						skip_char++;
 					}
 					buffer_counter+=(skip_char);
+					ignored = 1;
+					break;
 				case ' ':
 				case '\t':
+					buffer_counter++;
 					ignored = 1;
 					/*Free the memory of the Token*/
 					break;
