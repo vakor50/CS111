@@ -632,7 +632,6 @@ tokenize (char *buffer)
 					place_holder = (char*) checked_grow_alloc(place_holder, &place_holder_size);
 				}
 				place_holder[i] = buffer[buffer_counter+i];
-				//printf("%c\n",place_holder[i]);
 			}
 
 			if (strcmp(place_holder,"if") == 0)
@@ -649,7 +648,7 @@ tokenize (char *buffer)
 			{
 				current_token->type = ELSE_TOKEN;
 				strcpy(current_token->content, ELSE_STR);
-			} 
+			}
 			else if (strcmp(place_holder,"fi") == 0)
 			{
 				current_token->type = FI_TOKEN;
@@ -989,14 +988,8 @@ make_command_stream (int (*get_next_byte) (void *),
 	/*Tokenizing the input*/
 	token_stream_t current_stream = tokenize(buffer);
 
-	int i = 0;
-	for (i = 0; i < current_stream->size; i++)
-	{
-		printf("%s ",type_to_string(current_stream->m_token[i]->type));
-		printf("%s\n",current_stream->m_token[i]->content);
-	}
-
 	/*Check if all tokens are valid*/
+	printf("%d\n",valid_token_stream(current_stream));
 	//if (valid_token_stream(current_stream))
 	//	token_stream_to_command_stream(current_stream);
 
