@@ -265,7 +265,7 @@ token_stream_to_command_stream(token_stream_t input)
 		command_t temp_command;
 
 		command_stream_t temp_command_stream;
-		temp_command_stream->m_command = NULL;
+		temp_command_stream->m_command = create_command();
 		temp_command_stream->next_stream = temp_command_stream->prev_stream = NULL;
 
 		command_stream_t temp_command_stream_2;
