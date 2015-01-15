@@ -408,7 +408,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
+						if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 						{
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
@@ -445,7 +445,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
+						if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 						{
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
@@ -518,7 +518,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 					{
-						if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
+						if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 						{
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
@@ -582,7 +582,7 @@ token_stream_to_command_stream(token_stream_t input)
 				printf("%s\n",type_to_string(temp_stack_2->m_token->type));
 				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
-					if (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command)
+					if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 					{
 						if (temp_stack_2->prev_token_stack == NULL)
 							break;
