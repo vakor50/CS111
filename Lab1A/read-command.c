@@ -614,13 +614,13 @@ tokenize (char *buffer)
 			{
 				skip_char++;
 			}
-			current_token->content = (char*) checked_grow_alloc(current_token->content, skip_char*sizeof(char));
+			current_token->content = (char*) checked_grow_alloc(current_token->content, (size_t) &skip_char);
 			for (i = 0; i < skip_char; i++)
 			{
 				if (i == (int) place_holder_size)
 				{
 					place_holder_size*=2;
-					place_holder = checked_grow_alloc(place_holder, place_holder_size);
+					place_holder = checked_grow_alloc(place_holder, &place_holder_size);
 				}
 				place_holder[i] = tolower(buffer[buffer_counter+i]);
 			}
