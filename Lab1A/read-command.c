@@ -573,7 +573,7 @@ tokenize (char *buffer)
 	int buffer_counter = 0;
 	int line_num = 1;
 	char next_char;
-	token_stream_t new_stream = (token_stream_t) checked_malloc(sizeof(struct token_stream)); // FIXED?
+	token_stream_t new_stream = (token_stream*) checked_malloc(sizeof(struct token_stream)); // FIXED?
 	token_t *token_array = (token_t*) checked_malloc(100*sizeof(token_t));
 	new_stream->m_token = token_array;
 	new_stream->size = 0;
