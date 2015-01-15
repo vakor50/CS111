@@ -626,7 +626,7 @@ token_stream_to_command_stream(token_stream_t input)
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 		}
 		if (temp_stack_2->m_command != NULL)
-			print_command(temp_stack_2->command);
+			print_command(temp_stack_2->m_command);
 	}
 	return global_stream;
 }
