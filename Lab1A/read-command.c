@@ -619,7 +619,7 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid Done", temp_stack_4->m_token->line_num);
 				break;
 			case NEWLINE_TOKEN:
-				switch (next_token->type)
+				/*switch (next_token->type)
 				{
 					case IF_TOKEN:
 					case UNTIL_TOKEN:
@@ -633,7 +633,7 @@ token_stream_to_command_stream(token_stream_t input)
 					default:
 						break;
 
-				}
+				}*/
 				temp_stack_2 = current_stack;
 				if (temp_stack_2 == NULL)
 					break;
