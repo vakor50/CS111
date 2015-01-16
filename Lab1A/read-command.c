@@ -325,7 +325,6 @@ token_stream_to_command_stream(token_stream_t input)
 				//HAVE TO DEAL WTIH NULL
 				if ((current_stack != NULL) && (current_stack->m_command != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND))
 				{
-					printf("REACHED HERE, command before is a word\n");
 					j = 0;
 					while (temp_command->u.word[j] != NULL)
 						j++;
@@ -338,7 +337,6 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else
 				{
-					printf("REACHED HERE, command before is not a word\n");
 					temp_command = create_command();
 					temp_command->type = SIMPLE_COMMAND;
 					word_size = strlen(current_token->content);
@@ -423,69 +421,9 @@ token_stream_to_command_stream(token_stream_t input)
 						else
 						{
 							temp_stack_5 = pop_token_stack();
-							if (temp_stack_5->m_token != NULL)
-								printf("%s 5 token \n",type_to_string(temp_stack_5->m_token->type));
 							temp_stack_4 = pop_token_stack();
-							if (temp_stack_4->m_token != NULL)
-								printf("%s 4 token\n",type_to_string(temp_stack_4->m_token->type));
 							temp_stack_3 = pop_token_stack();
-							if (temp_stack_3->m_token != NULL)
-								printf("%s 3 token\n",type_to_string(temp_stack_3->m_token->type));
 
-							/*if (temp_stack_5->m_command != NULL)
-							{
-								if (temp_stack_5->m_command->u.word != NULL)
-								{
-									j = 0;
-									while (temp_command->u.word[j] != NULL)
-									{
-										printf("%s 5 word \n",temp_stack_5->m_command->u.word[j++]);
-									}
-									
-								}
-							}
-
-							if (temp_stack_4->m_command != NULL)
-							{
-								printf("4 word \n");
-								if (temp_stack_4->m_command->u.word != NULL)
-								{
-									j = 0;
-									while (temp_command->u.word[j] != NULL)
-									{
-										printf("41 word \n");
-										printf("%s 4 word \n",temp_stack_4->m_command->u.word[j++]);
-									}
-									
-								}
-							}
-
-							if (temp_stack_3->m_command != NULL)
-							{
-								printf("3 word \n");
-								if (temp_stack_3->m_command->u.word != NULL)
-								{
-									j = 0;
-									while (temp_command->u.word[j] != NULL)
-									{
-										printf("31 word \n");
-										printf("%s 3 word \n",temp_stack_3->m_command->u.word[j++]);
-									}
-									
-								}
-							}*/
-
-							//temp_stack_4->m_command = (command_t) checked_malloc(sizeof(struct command));
-							/*if (temp_stack_4 == NULL)
-							{
-								printf("Stack is Null");
-							}
-							if (temp_stack_4->m_command == NULL)
-							{
-								printf("Command is Null");
-							}
-							else
-								printf("We're good.");*/
 							if (temp_stack_4->m_command == NULL)
 								temp_stack_4->m_command = (command_t) checked_malloc(sizeof(struct command));
 							temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
@@ -553,7 +491,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_8 = pop_token_stack();
 						temp_stack_9 = pop_token_stack();
 						if (temp_stack_9->m_token->type != IF_TOKEN)
-							fprintf(stderr, "%d: Invalid If", temp_stack_9->m_token->line_num);
+							fprintf(stderr, "%d: Invalid If1", temp_stack_9->m_token->line_num);
 						temp_command = create_command();
 						temp_command->type = IF_COMMAND;
 						temp_command->u.command[0] = temp_stack_8->m_command;
@@ -564,7 +502,7 @@ token_stream_to_command_stream(token_stream_t input)
 						push_token_stack(temp_stack_10);
 					}
 					else
-						fprintf(stderr, "%d: Invalid If", temp_stack_4->m_token->line_num);
+						fprintf(stderr, "%d: Invalid If2", temp_stack_4->m_token->line_num);
 				}
 				else if (temp_stack_4->m_token->type == THEN_TOKEN)
 				{
@@ -581,7 +519,7 @@ token_stream_to_command_stream(token_stream_t input)
 					push_token_stack(temp_stack_10);
 				} 
 				else
-					fprintf(stderr, "%d: Invalid If", temp_stack_4->m_token->line_num);
+					fprintf(stderr, "%d: Invalid If3", temp_stack_4->m_token->line_num);
 				break;
 			case DONE_TOKEN:
 				loop_counter--;
