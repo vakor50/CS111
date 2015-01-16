@@ -26,21 +26,22 @@ We broke this process into several main steps:
 - We then needed to check that these functions were in the valid order and of valid content
   Function: valid_token_stream
   
-- In order to check the tokens created commands correctly, and to create the command_stream_t we
-  implemented a shift-reduce stack that we would use to check tokens or commands currently on the
-  stack in order to pop them off to create commands.
-  - stack takes in pointers to tokens which can hold both tokens and commands for the reason that
-    if we had created a command, it could be pushed back onto the stack.
+- In order to check the token created commands correctly, and to create the command_stream_t we
+  implemented a shift-reduce stack using a new data structure, token_stack. We would use the stack
+  to check tokens or commands currently on the stack in order to pop them off to create commands.
+  - token_stack takes in pointers both tokens and commands for the reason that if we had created 
+    a command, it could be pushed back onto the stack.
   - to create commands, we checked the previous commands, popped off the necessary elements on the 
-    stack, combined them into a command and pushed the command back onto the stack
+    stack, combined them into a command and pushed the command back onto the token_stack
   - we performed the previous while checking that the commands and tokens followed the POSIX shell 
     grammar outlined in the project spec
   Function: token_stream_to_command_stream
   
 - Once we had created our command_stream_t, we had to implement read_command_stream, which we did
   by checking if the stream wasn't empty and hadn't already been read, then we returning the 
-  first command, otherwise if the stream isn't null and next element isnt null we recursively 
+  first command, otherwise if the stream isn't null and next element isn't null we recursively 
   read the next stream in our command stream
   Function: read_command_stream
 
 Limitations:
+No known limitations yet
