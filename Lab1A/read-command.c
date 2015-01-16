@@ -369,9 +369,10 @@ token_stream_to_command_stream(token_stream_t input)
 			case PAREN_CLOSE_TOKEN:
 				paren_counter--;
 				temp_stack_5 = pop_token_stack();
+				if (temp_stack_5 != NULL && temp_stack_5->m_token->type == PAREN_OPEN_TOKEN)
+					continue;
 				token_t new_token = (token_t) checked_malloc(sizeof(struct token));
 				new_token->type = COMPLETE_TOKEN;
-				/*NNEEEeeeeddd to CHECCCKCKCKCKCKCKCKCKCKCCCCCCCCCCCCCKKCKCKCKCKCKC*/
 				if ((global_stack != NULL) && (global_stack->m_token == NULL || global_stack->m_token->type != PAREN_OPEN_TOKEN))
 				{
 					temp_stack_4 = pop_token_stack();
@@ -394,7 +395,7 @@ token_stream_to_command_stream(token_stream_t input)
 					
 					temp_stack_6->m_command->u.command[0] = temp_stack_4->m_command;
 				}	
-				else
+				else if (temp_stack_5 != NULL)
 				{
 					temp_stack_6->m_command->u.command[0] = temp_stack_3->m_command;
 				}
@@ -530,16 +531,31 @@ token_stream_to_command_stream(token_stream_t input)
 
 				temp_stack_3 = pop_token_stack();
 				temp_stack_4 = pop_token_stack();
+				if (temp_stack_4 == NULL || temp_stack_3 == NULL)
+				{
+					fprintf(stderr, "%d: Invalid If", temp_stack_2->m_token->line_num);
+					exit(1);
+				}
 				if (temp_stack_4->m_token->type == ELSE_TOKEN)
 				{
 					else_counter--;
 					temp_stack_5 = pop_token_stack();
 					temp_stack_7 = pop_token_stack();
+					if (temp_stack_7 == NULL || temp_stack_5 == NULL)
+					{
+						fprintf(stderr, "%d: Invalid ELSE", temp_stack_4->m_token->line_num);
+						exit(1);
+					}
 					if (temp_stack_7->m_token->type == THEN_TOKEN)
 					{
 						then_counter--;
 						temp_stack_8 = pop_token_stack();
 						temp_stack_9 = pop_token_stack();
+						if (temp_stack_9 == NULL || temp_stack_8 == NULL)
+						{
+							fprintf(stderr, "%d: Invalid Then", temp_stack_7->m_token->line_num);
+							exit(1);
+						}
 						if (temp_stack_9->m_token->type != IF_TOKEN)
 						{
 							fprintf(stderr, "%d: Invalid If", temp_stack_9->m_token->line_num);
@@ -557,7 +573,7 @@ token_stream_to_command_stream(token_stream_t input)
 					}
 					else
 					{
-						fprintf(stderr, "%d: Invalid If", temp_stack_4->m_token->line_num);
+						fprintf(stderr, "%d: Invalid Else", temp_stack_4->m_token->line_num);
 						exit(1);
 					}
 				}
@@ -566,11 +582,11 @@ token_stream_to_command_stream(token_stream_t input)
 					then_counter--;
 					temp_stack_5 = pop_token_stack();
 					temp_stack_7 = pop_token_stack();
-					if (temp_stack_7->m_token->type != IF_TOKEN)
+					if ((temp_stack_5 == NULL) || (temp_stack_7 == NULL) || (temp_stack_7->m_token->type != IF_TOKEN))
 					{
-							fprintf(stderr, "%d: Invalid Then", temp_stack_7->m_token->line_num);
+							fprintf(stderr, "%d: Invalid Then", temp_stack_4->m_token->line_num);
 							exit(1);
-					}
+					} 
 					temp_command = create_command();
 					temp_command->type = IF_COMMAND;
 					temp_command->u.command[0] = temp_stack_5->m_command;
@@ -631,11 +647,21 @@ token_stream_to_command_stream(token_stream_t input)
 
 				temp_stack_3 = pop_token_stack();
 				temp_stack_4 = pop_token_stack();
+				if (temp_stack_4 == NULL || temp_stack_3 == NULL)
+				{
+					fprintf(stderr, "%d: Invalid Done", temp_stack_2->m_token->line_num);
+					exit(1);
+				}
 				if (temp_stack_4->m_token->type == DO_TOKEN)
 				{
 					do_counter--;
 					temp_stack_5 = pop_token_stack();
 					temp_stack_7 = pop_token_stack();
+					if (temp_stack_5 == NULL || temp_stack_7 == NULL)
+					{
+						fprintf(stderr, "%d: Invalid Do", temp_stack_4->m_token->line_num);
+						exit(1);
+					}
 					if (temp_stack_7->m_token->type == WHILE_TOKEN)
 					{
 						temp_command = create_command();
@@ -1019,7 +1045,7 @@ valid_token_stream(token_stream_t input)
 							fprintf(stderr, "%d: Invalid Pipe",current_token->line_num);
 							exit(1);
 					}
-				if (next_token->type == PIPE_TOKEN)
+				if ((prev_token == NULL) || (next_token->type == PIPE_TOKEN))
 				{
 					fprintf(stderr, "%d: Invalid Pipe",current_token->line_num);
 					exit(1);
@@ -1049,7 +1075,7 @@ valid_token_stream(token_stream_t input)
 				break;
 			case LESS_TOKEN:
 			case GREATER_TOKEN:
-				if ((next_token == NULL) || (next_token->type != WORD_TOKEN))
+				if ((prev_token == NULL) || (next_token == NULL) || (next_token->type != WORD_TOKEN))
 				{
 					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 					exit(1);
