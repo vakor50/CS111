@@ -362,6 +362,8 @@ token_stream_to_command_stream(token_stream_t input)
 			case PAREN_CLOSE_TOKEN:
 				paren_counter--;
 				temp_stack_5 = pop_token_stack();
+				token_t new_token = (token_t) checked_malloc(sizeof(struct token));
+				new_token->type = COMPLETE_TOKEN;
 				/*NNEEEeeeeddd to CHECCCKCKCKCKCKCKCKCKCKCCCCCCCCCCCCCKKCKCKCKCKCKC*/
 				if ((global_stack != NULL) && (global_stack->m_token == NULL || global_stack->m_token->type != PAREN_OPEN_TOKEN))
 				{
@@ -384,16 +386,20 @@ token_stream_to_command_stream(token_stream_t input)
 					if (temp_stack_6->m_command == NULL)
 						temp_stack_6->m_command = (command_t) checked_malloc(sizeof(struct command));
 					temp_stack_6->m_command->u.command[0] = temp_stack_4->m_command;
+					temp_stack_6->m_command->u.command[1] = NULL;
 					temp_stack_6->m_command->type = SUBSHELL_COMMAND;
 					temp_stack_6->is_command = 1;
+					temp_stack_6->m_token = new_token;
 				}	
 				else
 				{
 					if (temp_stack_6->m_command == NULL)
 						temp_stack_6->m_command = (command_t) checked_malloc(sizeof(struct command));
 					temp_stack_6->m_command->u.command[0] = temp_stack_3->m_command;
+					temp_stack_6->m_command->u.command[1] = NULL;
 					temp_stack_6->m_command->type = SUBSHELL_COMMAND;
 					temp_stack_6->is_command = 1;
+					temp_stack_6->m_token = new_token;
 				}
 				//temp_stack_6->m_token->type = COMPLETE_TOKEN;
 				if ((global_stack != NULL) && (global_stack->m_token->type == PAREN_OPEN_TOKEN))
