@@ -220,31 +220,6 @@ token_stream_to_command_stream(token_stream_t input)
 	token_t prev_token = NULL;
 	token_t next_token = NULL;
 
-	for (i = 0; i < input->size; i++)
-	{
-		current_token = input->m_token[i];
-		if (i == 0)
-			continue;
-		prev_token = input->m_token[i-1];
-		switch(input->m_token[i]->type)
-		{
-			case IF_TOKEN:
-			case UNTIL_TOKEN:
-			case WHILE_TOKEN:
-			case THEN_TOKEN:
-			case ELSE_TOKEN:
-			case FI_TOKEN:
-			case DO_TOKEN:
-			case DONE_TOKEN:
-				if (prev_token->type == WORD_TOKEN)
-				{
-					current_token->type = WORD_TOKEN;
-				}
-				break;
-			default:
-				break;
-		}
-	}
 	int paren_counter = 0;
 	int loop_counter = 0;
 	int do_counter = 0;
@@ -442,11 +417,32 @@ token_stream_to_command_stream(token_stream_t input)
 			case ELSE_TOKEN:
 			case DO_TOKEN:
 				if (current_token->type == THEN_TOKEN)
+				{
+					if (!loop_counter)
+					{
+						fprintf(stderr, "%d: Invalid Then",current_token->line_num);
+						exit(1);
+					}
 					then_counter++;
+				}
 				if (current_token->type == ELSE_TOKEN)
+				{
+					if (!loop_counter)
+					{
+						fprintf(stderr, "%d: Invalid Else",current_token->line_num);
+						exit(1);
+					}
 					else_counter++;
+				}
 				if (current_token->type == DO_TOKEN)
+				{
+					if (!loop_counter)
+					{
+						fprintf(stderr, "%d: Invalid Do",current_token->line_num);
+						exit(1);
+					}
 					do_counter++;
+				}
 
 				temp_stack_2 = current_stack;
 				if (temp_stack_2 != NULL)
@@ -955,7 +951,6 @@ tokenize (char *buffer)
 			new_stream->m_token[token_counter++] = current_token;
 			new_stream->size++;
 		}
-		free(place_holder);
 	}
 	return new_stream;
 }
