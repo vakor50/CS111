@@ -251,12 +251,11 @@ token_stream_to_command_stream(token_stream_t input)
 	}
 	int paren_counter = 0;
 	int loop_counter = 0;
-	//int str_length = 0;
 
 	for (i = 0; i < input->size; i++)
 	{
 		current_token = input->m_token[i];
-		printf("%d %s\n",i, type_to_string(current_token->type));
+		//printf("%d %s\n",i, type_to_string(current_token->type));
 		if (i > 0)
 			prev_token = input->m_token[i-1];
 		if (i < (input->size-1))
@@ -619,21 +618,6 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid Done", temp_stack_4->m_token->line_num);
 				break;
 			case NEWLINE_TOKEN:
-				/*switch (next_token->type)
-				{
-					case IF_TOKEN:
-					case UNTIL_TOKEN:
-					case WHILE_TOKEN:
-					case THEN_TOKEN:
-					case ELSE_TOKEN:
-					case FI_TOKEN:
-					case DO_TOKEN:
-					case DONE_TOKEN:
-						continue;
-					default:
-						break;
-
-				}*/
 				temp_stack_2 = current_stack;
 				if (temp_stack_2 == NULL)
 					break;
@@ -669,7 +653,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					temp_command_stream = (command_stream_t) checked_malloc(sizeof(struct command_stream));
 					temp_command_stream->m_command = pop_token_stack()->m_command;
-					print_command2(temp_command_stream->m_command);
+					//print_command2(temp_command_stream->m_command);
 					temp_command_stream->is_read = 0;
 					if (global_stream == NULL)
 						global_stream = temp_command_stream;
@@ -687,8 +671,6 @@ token_stream_to_command_stream(token_stream_t input)
 			default:
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 		}
-		//if (temp_stack_2->m_command != NULL)
-		//	print_command2(temp_stack_2->m_command);
 	}
 	return global_stream;
 }
