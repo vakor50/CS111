@@ -251,6 +251,9 @@ token_stream_to_command_stream(token_stream_t input)
 	}
 	int paren_counter = 0;
 	int loop_counter = 0;
+	int do_counter = 0;
+	int then_counter = 0;
+	int else_counter = 0;
 
 	for (i = 0; i < input->size; i++)
 	{
@@ -307,6 +310,11 @@ token_stream_to_command_stream(token_stream_t input)
 			case LESS_TOKEN:
 				if (current_stack != NULL && ((current_stack->m_command != NULL) && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command))) && next_token != NULL && next_token->type == WORD_TOKEN)
 				{
+					if (current_stack->m_command->output != NULL)
+					{
+						fprintf(stderr, "%d: Invalid '<' Token", current_token->line_num);
+						exit(1);
+					}
 					current_stack->m_command->input = input->m_token[i+1]->content;
 					i++;
 				}
@@ -430,6 +438,13 @@ token_stream_to_command_stream(token_stream_t input)
 			case THEN_TOKEN:
 			case ELSE_TOKEN:
 			case DO_TOKEN:
+				if (current_token->type == THEN_TOKEN)
+					then_counter++;
+				if (current_token->type == ELSE_TOKEN)
+					else_counter++;
+				if (current_token->type == DO_TOKEN)
+					do_counter++;
+
 				temp_stack_2 = current_stack;
 				if (temp_stack_2 != NULL)
 				{
@@ -517,10 +532,12 @@ token_stream_to_command_stream(token_stream_t input)
 				temp_stack_4 = pop_token_stack();
 				if (temp_stack_4->m_token->type == ELSE_TOKEN)
 				{
+					else_counter--;
 					temp_stack_5 = pop_token_stack();
 					temp_stack_7 = pop_token_stack();
 					if (temp_stack_7->m_token->type == THEN_TOKEN)
 					{
+						then_counter--;
 						temp_stack_8 = pop_token_stack();
 						temp_stack_9 = pop_token_stack();
 						if (temp_stack_9->m_token->type != IF_TOKEN)
@@ -546,6 +563,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else if (temp_stack_4->m_token->type == THEN_TOKEN)
 				{
+					then_counter--;
 					temp_stack_5 = pop_token_stack();
 					temp_stack_7 = pop_token_stack();
 					if (temp_stack_7->m_token->type != IF_TOKEN)
@@ -615,6 +633,7 @@ token_stream_to_command_stream(token_stream_t input)
 				temp_stack_4 = pop_token_stack();
 				if (temp_stack_4->m_token->type == DO_TOKEN)
 				{
+					do_counter--;
 					temp_stack_5 = pop_token_stack();
 					temp_stack_7 = pop_token_stack();
 					if (temp_stack_7->m_token->type == WHILE_TOKEN)
@@ -706,6 +725,31 @@ token_stream_to_command_stream(token_stream_t input)
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 				exit(1);
 		}
+	}
+	if (loop_counter)
+	{
+		fprintf(stderr, "%d: Invalid Loop", current_token->line_num);
+		exit(1);
+	}
+	if (paren_counter)
+	{
+		fprintf(stderr, "%d: Invalid Subshell", current_token->line_num);
+		exit(1);
+	}
+	if (do_counter)
+	{
+		fprintf(stderr, "%d: Invalid Subshell", current_token->line_num);
+		exit(1);
+	}
+	if (then_counter)
+	{
+		fprintf(stderr, "%d: Invalid Subshell", current_token->line_num);
+		exit(1);
+	}
+	if (else_counter)
+	{
+		fprintf(stderr, "%d: Invalid Subshell", current_token->line_num);
+		exit(1);
 	}
 	return global_stream;
 }
@@ -1005,7 +1049,7 @@ valid_token_stream(token_stream_t input)
 				break;
 			case LESS_TOKEN:
 			case GREATER_TOKEN:
-				if (next_token->type != WORD_TOKEN)
+				if ((next_token == NULL) || (next_token->type != WORD_TOKEN))
 				{
 					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
 					exit(1);
