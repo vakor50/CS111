@@ -429,6 +429,8 @@ token_stream_to_command_stream(token_stream_t input)
 					{
 						if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 						{
+							if (temp_stack_2->prev_token_stack == NULL)
+								break;
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
 						}
@@ -468,6 +470,8 @@ token_stream_to_command_stream(token_stream_t input)
 					{
 						if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 						{
+							if (temp_stack_2->prev_token_stack == NULL)
+								fprintf(stderr, "Something's wrong with FI TOKEN");
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
 						}
@@ -543,6 +547,8 @@ token_stream_to_command_stream(token_stream_t input)
 					{
 						if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 						{
+							if (temp_stack_2->prev_token_stack == NULL)
+								fprintf(stderr, "Something's wrong with DONE_TOKEN");
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
 						}
