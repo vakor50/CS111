@@ -337,6 +337,8 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND)
 					{
+						token_t new_token = (token_t) checked_malloc(sizeof(struct token));
+						temp_stack_10->m_token = new_token;
 						temp_stack_10->m_token->type = SEMICOLON_TOKEN;
 						//temp_stack_10->m_token->content = NULL;
 						push_token_stack(temp_stack_10);
@@ -383,6 +385,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_6->m_command = (command_t) checked_malloc(sizeof(struct command));
 					temp_stack_6->m_command->u.command[0] = temp_stack_4->m_command;
 					temp_stack_6->m_command->type = SUBSHELL_COMMAND;
+					temp_stack_6->is_command = 1;
 				}	
 				else
 				{
@@ -391,6 +394,7 @@ token_stream_to_command_stream(token_stream_t input)
 					temp_stack_6->m_command->u.command[0] = temp_stack_3->m_command;
 					temp_stack_6->m_command->type = SUBSHELL_COMMAND;
 				}
+				temp_stack_6->m_token->type = COMPLETE_TOKEN;
 				if ((global_stack != NULL) && (global_stack->m_token->type == PAREN_OPEN_TOKEN))
 					pop_token_stack();
 				else
@@ -448,6 +452,7 @@ token_stream_to_command_stream(token_stream_t input)
 								temp_stack_4->m_command->type = PIPE_COMMAND;
 							else
 								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
+							temp_stack_4->m_token->type = COMPLETE_TOKEN;
 							push_token_stack(temp_stack_4);
 							temp_stack_2 = global_stack;
 						}
@@ -489,6 +494,7 @@ token_stream_to_command_stream(token_stream_t input)
 								temp_stack_4->m_command->type = PIPE_COMMAND;
 							else
 								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
+							temp_stack_4->m_token->type = COMPLETE_TOKEN;
 							push_token_stack(temp_stack_4);
 							temp_stack_2 = global_stack;
 						}
@@ -515,6 +521,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[1] = temp_stack_5->m_command;
 						temp_command->u.command[2] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
+						temp_stack_10->m_token->type = COMPLETE_TOKEN;
 						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
@@ -532,6 +539,7 @@ token_stream_to_command_stream(token_stream_t input)
 					temp_command->u.command[0] = temp_stack_5->m_command;
 					temp_command->u.command[1] = temp_stack_3->m_command;
 					temp_stack_10->m_command = temp_command;
+					temp_stack_10->m_token->type = COMPLETE_TOKEN;
 					temp_stack_10->is_command = 1;
 					push_token_stack(temp_stack_10);
 				} 
@@ -566,6 +574,7 @@ token_stream_to_command_stream(token_stream_t input)
 								temp_stack_4->m_command->type = PIPE_COMMAND;
 							else
 								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
+							temp_stack_4->m_token->type = COMPLETE_TOKEN;
 							push_token_stack(temp_stack_4);
 							temp_stack_2 = global_stack;
 						}
@@ -587,6 +596,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[0] = temp_stack_5->m_command;
 						temp_command->u.command[1] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
+						temp_stack_10->m_token->type = COMPLETE_TOKEN;
 						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
@@ -597,6 +607,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[0] = temp_stack_5->m_command;
 						temp_command->u.command[1] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
+						temp_stack_10->m_token->type = COMPLETE_TOKEN;
 						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
@@ -607,6 +618,21 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid Done", temp_stack_4->m_token->line_num);
 				break;
 			case NEWLINE_TOKEN:
+				switch (next_token->type)
+				{
+					case IF_TOKEN:
+					case UNTIL_TOKEN:
+					case WHILE_TOKEN:
+					case THEN_TOKEN:
+					case ELSE_TOKEN:
+					case FI_TOKEN:
+					case DO_TOKEN:
+					case DONE_TOKEN:
+						continue;
+					default:
+						break;
+
+				}
 				temp_stack_2 = current_stack;
 				if (temp_stack_2 == NULL)
 					break;
@@ -633,6 +659,7 @@ token_stream_to_command_stream(token_stream_t input)
 								temp_stack_4->m_command->type = PIPE_COMMAND;
 							else
 								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
+						temp_stack_4->m_token->type = COMPLETE_TOKEN;
 						push_token_stack(temp_stack_4);
 						temp_stack_2 = global_stack;
 					}
