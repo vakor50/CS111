@@ -335,6 +335,12 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else
 				{
+					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND)
+					{
+						temp_stack_10->m_token->type = SEMICOLON_TOKEN;
+						temp_stack_10->m_token->content = NULL;
+						push_token_stack(temp_stack_10);
+					}
 					temp_command = create_command();
 					temp_command->type = SIMPLE_COMMAND;
 					word_size = strlen(current_token->content);
@@ -371,7 +377,8 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_4->m_command->type = PIPE_COMMAND;
 					else
 						temp_stack_4->m_command->type = SEQUENCE_COMMAND;
-					push_token_stack(temp_stack_4);
+					temp_stack_6->m_command->u.command[0] = temp_stack_4->m_command;
+					temp_stack_6->m_command->type = SUBSHELL_COMMAND;
 				}	
 				else
 				{
@@ -382,6 +389,7 @@ token_stream_to_command_stream(token_stream_t input)
 					pop_token_stack();
 				else
 					fprintf(stderr, "%d: Invalid ')' Subshell Token", current_token->line_num);
+				push_token_stack(temp_stack_6);
 				break;
 			case SEMICOLON_TOKEN:
 				switch (next_token->type)
