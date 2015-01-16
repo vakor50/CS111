@@ -204,8 +204,6 @@ stack_precedence (enum token_type type)
 		case THEN_TOKEN:
 		case ELSE_TOKEN:
 		case DO_TOKEN:
-			return 4;
-			break;
 		case IF_TOKEN:
 		case UNTIL_TOKEN:
 		case WHILE_TOKEN:
