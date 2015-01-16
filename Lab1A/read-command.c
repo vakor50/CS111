@@ -266,15 +266,13 @@ token_stream_to_command_stream(token_stream_t input)
 		else
 			next_token = NULL;
 
-		token_stack_t temp_stack = checked_malloc(sizeof(struct token_stack));
-		//token_stack_t temp_stack = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack = (struct token_stack*) checked_malloc(sizeof(struct token_stack));
 		temp_stack->m_token = current_token;
 		temp_stack->m_command = NULL;
 		temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
 		temp_stack->is_command = 0;
 
-		token_stack_t temp_stack_2 = checked_malloc(sizeof(struct token_stack));
-		//token_stack_t temp_stack_2 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack_2 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack_2->m_token = current_token;
 		temp_stack_2->m_command = NULL;
 		temp_stack_2->next_token_stack = temp_stack_2->prev_token_stack = NULL;
@@ -282,15 +280,13 @@ token_stream_to_command_stream(token_stream_t input)
 
 		token_stack_t temp_stack_3,temp_stack_4,temp_stack_5,temp_stack_7,temp_stack_8,temp_stack_9;
 
-		token_stack_t temp_stack_6 = checked_malloc(sizeof(struct token_stack));
-		//token_stack_t temp_stack_6 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack_6 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack_6->m_token = current_token;
 		temp_stack_6->m_command = NULL;
 		temp_stack_6->next_token_stack = temp_stack_6->prev_token_stack = NULL;
 		temp_stack_6->is_command = 0;
 
-		token_stack_t temp_stack_10 = checked_malloc(sizeof(struct token_stack));
-		//token_stack_t temp_stack_10 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack_10 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack_10->m_token = current_token;
 		temp_stack_10->m_command = NULL;
 		temp_stack_10->next_token_stack = temp_stack_10->prev_token_stack = NULL;
@@ -977,8 +973,7 @@ tokenize (char *buffer)
 int
 valid_token_stream(token_stream_t input)
 {
-	int paren_counter = 0, if_counter = 0, then_counter = 0, else_counter = 0, fi_counter = 0;
-	int while_counter = 0, until_counter = 0, do_counter = 0, done_counter = 0;
+	int paren_counter = 0;
 	int i = 0, j = 0, current_line_num;
 	token_t current_token = NULL;
 	token_t prev_token = NULL, next_token = NULL;
