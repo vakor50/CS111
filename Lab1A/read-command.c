@@ -398,7 +398,10 @@ token_stream_to_command_stream(token_stream_t input)
 				if ((global_stack != NULL) && (global_stack->m_token->type == PAREN_OPEN_TOKEN))
 					pop_token_stack();
 				else
+				{
 					fprintf(stderr, "%d: Invalid ')' Subshell Token", current_token->line_num);
+					exit(1);
+				}
 				push_token_stack(temp_stack_6);
 				break;
 			case SEMICOLON_TOKEN:
@@ -409,6 +412,7 @@ token_stream_to_command_stream(token_stream_t input)
 					case LESS_TOKEN:
 					case SEMICOLON_TOKEN:
 						fprintf(stderr, "%d: Invalid Semicolon",current_token->line_num);
+						exit(1);
 					case IF_TOKEN:
 					case UNTIL_TOKEN:
 					case WHILE_TOKEN:
@@ -476,7 +480,10 @@ token_stream_to_command_stream(token_stream_t input)
 						if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 						{
 							if (temp_stack_2->prev_token_stack == NULL)
+							{
 								fprintf(stderr, "Something's wrong with FI TOKEN");
+								exit(1);
+							}
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
 						}
@@ -501,7 +508,10 @@ token_stream_to_command_stream(token_stream_t input)
 					}
 				}
 				else
+				{
 					fprintf(stderr, "%d: Invalid FI",current_token->line_num);
+					exit(1);
+				}
 
 				temp_stack_3 = pop_token_stack();
 				temp_stack_4 = pop_token_stack();
@@ -514,7 +524,10 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_8 = pop_token_stack();
 						temp_stack_9 = pop_token_stack();
 						if (temp_stack_9->m_token->type != IF_TOKEN)
-							fprintf(stderr, "%d: Invalid If1", temp_stack_9->m_token->line_num);
+						{
+							fprintf(stderr, "%d: Invalid If", temp_stack_9->m_token->line_num);
+							exit(1);
+						}
 						temp_command = create_command();
 						temp_command->type = IF_COMMAND;
 						temp_command->u.command[0] = temp_stack_8->m_command;
@@ -526,14 +539,20 @@ token_stream_to_command_stream(token_stream_t input)
 						push_token_stack(temp_stack_10);
 					}
 					else
-						fprintf(stderr, "%d: Invalid If2", temp_stack_4->m_token->line_num);
+					{
+						fprintf(stderr, "%d: Invalid If", temp_stack_4->m_token->line_num);
+						exit(1);
+					}
 				}
 				else if (temp_stack_4->m_token->type == THEN_TOKEN)
 				{
 					temp_stack_5 = pop_token_stack();
 					temp_stack_7 = pop_token_stack();
 					if (temp_stack_7->m_token->type != IF_TOKEN)
+					{
 							fprintf(stderr, "%d: Invalid Then", temp_stack_7->m_token->line_num);
+							exit(1);
+					}
 					temp_command = create_command();
 					temp_command->type = IF_COMMAND;
 					temp_command->u.command[0] = temp_stack_5->m_command;
@@ -544,7 +563,10 @@ token_stream_to_command_stream(token_stream_t input)
 					push_token_stack(temp_stack_10);
 				} 
 				else
-					fprintf(stderr, "%d: Invalid If3", temp_stack_4->m_token->line_num);
+				{
+					fprintf(stderr, "%d: Invalid If", temp_stack_4->m_token->line_num);
+					exit(1);
+				}
 				break;
 			case DONE_TOKEN:
 				loop_counter--;
@@ -556,7 +578,10 @@ token_stream_to_command_stream(token_stream_t input)
 						if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
 						{
 							if (temp_stack_2->prev_token_stack == NULL)
-								fprintf(stderr, "Something's wrong with DONE_TOKEN");
+							{
+								fprintf(stderr, "Invalid Done");
+								exit(1);
+							}
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
 						}
@@ -581,7 +606,10 @@ token_stream_to_command_stream(token_stream_t input)
 					}
 				}
 				else
+				{
 					fprintf(stderr, "%d: Invalid DONE",current_token->line_num);
+					exit(1);
+				}
 
 				temp_stack_3 = pop_token_stack();
 				temp_stack_4 = pop_token_stack();
@@ -612,10 +640,16 @@ token_stream_to_command_stream(token_stream_t input)
 						push_token_stack(temp_stack_10);
 					}
 					else
+					{
 						fprintf(stderr, "%d: Invalid Do", temp_stack_7->m_token->line_num);
+						exit(1);
+					}
 				}
 				else
+				{
 					fprintf(stderr, "%d: Invalid Done", temp_stack_4->m_token->line_num);
+					exit(1);
+				}
 				break;
 			case NEWLINE_TOKEN:
 				temp_stack_2 = current_stack;
@@ -670,6 +704,7 @@ token_stream_to_command_stream(token_stream_t input)
 				break;
 			default:
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
+				exit(1);
 		}
 	}
 	return global_stream;
@@ -911,9 +946,15 @@ valid_token_stream(token_stream_t input)
 				continue;
 			case SEMICOLON_TOKEN:
 				if (i == 0)
+				{
 					fprintf(stderr, "%d: Invalid Semicolon",current_token->line_num);
+					exit(1);
+				}
 				if (next_token->type == SEMICOLON_TOKEN)
+				{
 					fprintf(stderr, "%d: Invalid Semicolon",current_token->line_num);
+					exit(1);
+				}
 				break;
 			case PIPE_TOKEN:
 				switch(next_token->type)
@@ -932,9 +973,13 @@ valid_token_stream(token_stream_t input)
 							break;
 						default:
 							fprintf(stderr, "%d: Invalid Pipe",current_token->line_num);
+							exit(1);
 					}
 				if (next_token->type == PIPE_TOKEN)
+				{
 					fprintf(stderr, "%d: Invalid Pipe",current_token->line_num);
+					exit(1);
+				}
 				break;
 			case PAREN_OPEN_TOKEN:
 				j = i;
@@ -951,7 +996,10 @@ valid_token_stream(token_stream_t input)
 					j++;
 				}
 				if (paren_counter != 0)
+				{
 					fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
+					exit(1);
+				}
 				break;
 			case PAREN_CLOSE_TOKEN:
 				break;
@@ -960,6 +1008,7 @@ valid_token_stream(token_stream_t input)
 				if (next_token->type != WORD_TOKEN)
 				{
 					fprintf(stderr, "%d: Invalid I/O Redirection",current_token->line_num);
+					exit(1);
 				}
 				break;
 			case NEWLINE_TOKEN:
@@ -981,11 +1030,14 @@ valid_token_stream(token_stream_t input)
 							break;
 						default:
 							fprintf(stderr, "%d: Invalid Newline",current_token->line_num);
-							fprintf(stderr, "%s: Invalid Token",type_to_string(next_token->type));
+							exit(1);
 					}
 				}
 				if (prev_token->type == LESS_TOKEN || prev_token->type == GREATER_TOKEN)
+				{
 					fprintf(stderr, "%d: Invalid Newline2",current_token->line_num);
+					exit(1);
+				}
 				break;
 			case IF_TOKEN:
 			case THEN_TOKEN:
@@ -998,6 +1050,7 @@ valid_token_stream(token_stream_t input)
 				break;
 			default:
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
+				exit(1);
 		}
 	}
 	return 1;
