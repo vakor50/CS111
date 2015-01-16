@@ -535,7 +535,7 @@ token_stream_to_command_stream(token_stream_t input)
 				temp_stack_4 = pop_token_stack();
 				if (temp_stack_4 == NULL || temp_stack_3 == NULL)
 				{
-					fprintf(stderr, "%d: Invalid If", temp_stack_2->m_token->line_num);
+					fprintf(stderr, "%d: Invalid If1", temp_stack_2->m_token->line_num);
 					exit(1);
 				}
 				if (temp_stack_4->m_token->type == ELSE_TOKEN)
@@ -560,7 +560,7 @@ token_stream_to_command_stream(token_stream_t input)
 						}
 						if (temp_stack_9->m_token->type != IF_TOKEN)
 						{
-							fprintf(stderr, "%d: Invalid If", temp_stack_9->m_token->line_num);
+							fprintf(stderr, "%d: Invalid If2", temp_stack_9->m_token->line_num);
 							exit(1);
 						}
 						temp_command = create_command();
@@ -600,7 +600,7 @@ token_stream_to_command_stream(token_stream_t input)
 				} 
 				else
 				{
-					fprintf(stderr, "%d: Invalid If", temp_stack_4->m_token->line_num);
+					fprintf(stderr, "%d: Invalid If3", temp_stack_4->m_token->line_num);
 					exit(1);
 				}
 				break;
