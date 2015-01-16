@@ -65,9 +65,6 @@ struct token_stack
 token_stack_t global_stack;
 command_stream_t global_stream;
 
-static void command_indented_print2 (int indent, command_t c);
-void print_command2 (command_t c);
-
 void
 push_token_stack(token_stack_t item)
 {
@@ -266,7 +263,7 @@ token_stream_to_command_stream(token_stream_t input)
 		else
 			next_token = NULL;
 
-		token_stack_t temp_stack = (struct token_stack*) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack->m_token = current_token;
 		temp_stack->m_command = NULL;
 		temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
@@ -742,7 +739,6 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					temp_command_stream = (command_stream_t) checked_malloc(sizeof(struct command_stream));
 					temp_command_stream->m_command = pop_token_stack()->m_command;
-					//print_command2(temp_command_stream->m_command);
 					temp_command_stream->is_read = 0;
 					if (global_stream == NULL)
 						global_stream = temp_command_stream;
@@ -959,7 +955,7 @@ tokenize (char *buffer)
 			if ((token_array_size) <= (token_counter*sizeof(token_t)))
 			{
 				token_array_size *= 2;
-				new_stream->m_token = checked_grow_alloc(new_stream->m_token, &token_array_size);
+				new_stream->m_token = (token_stream_t) checked_grow_alloc(new_stream->m_token, &token_array_size);
 			}
 			new_stream->m_token[token_counter++] = current_token;
 			new_stream->size++;
@@ -974,7 +970,7 @@ int
 valid_token_stream(token_stream_t input)
 {
 	int paren_counter = 0;
-	int i = 0, j = 0, current_line_num;
+	int i = 0, j = 0;
 	token_t current_token = NULL;
 	token_t prev_token = NULL, next_token = NULL;
 
@@ -1074,14 +1070,14 @@ valid_token_stream(token_stream_t input)
 					}
 					if (paren_counter < 0)
 					{
-						fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
+						fprintf(stderr, "%d: Invalid Parentheses",current_token->line_num;
 						exit(1);
 					}
 					j++;
 				}
 				if (paren_counter != 0)
 				{
-					fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
+					fprintf(stderr, "%d: Invalid Parentheses",current_token->line_num);
 					exit(1);
 				}
 				break;
@@ -1138,11 +1134,6 @@ valid_token_stream(token_stream_t input)
 				exit(1);
 		}
 	}
-	/*if (paren_counter != 0)
-	{
-		fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
-		exit(1);
-	}*/
 	return 1;
 }
 
@@ -1194,73 +1185,6 @@ read_command_stream (command_stream_t s)
 	else
 		return NULL;
 
-  error (1, 0, "command reading not yet implemented");
-  return 0;
-}
-
-
-static void
-command_indented_print2 (int indent, command_t c)
-{
-  switch (c->type)
-    {
-    case IF_COMMAND:
-    case UNTIL_COMMAND:
-    case WHILE_COMMAND:
-      printf ("%*s%s\n", indent, "",
-	      (c->type == IF_COMMAND ? "if"
-	       : c->type == UNTIL_COMMAND ? "until" : "while"));
-      command_indented_print2 (indent + 2, c->u.command[0]);
-      printf ("\n%*s%s\n", indent, "", c->type == IF_COMMAND ? "then" : "do");
-      command_indented_print2 (indent + 2, c->u.command[1]);
-      if (c->type == IF_COMMAND && c->u.command[2])
-	{
-	  printf ("\n%*selse\n", indent, "");
-	  command_indented_print2 (indent + 2, c->u.command[2]);
-	}
-      printf ("\n%*s%s", indent, "", c->type == IF_COMMAND ? "fi" : "done");
-      break;
-
-    case SEQUENCE_COMMAND:
-    case PIPE_COMMAND:
-      {
-	command_indented_print2 (indent + 2 * (c->u.command[0]->type != c->type),
-				c->u.command[0]);
-	char separator = c->type == SEQUENCE_COMMAND ? ';' : '|';
-	printf (" \\\n%*s%c\n", indent, "", separator);
-	command_indented_print2 (indent + 2 * (c->u.command[1]->type != c->type),
-				c->u.command[1]);
-	break;
-      }
-
-    case SIMPLE_COMMAND:
-      {
-	char **w = c->u.word;
-	printf ("%*s%s", indent, "", *w);
-	while (*++w)
-	  printf (" %s", *w);
-	break;
-      }
-
-    case SUBSHELL_COMMAND:
-      printf ("%*s(\n", indent, "");
-      command_indented_print2 (indent + 1, c->u.command[0]);
-      printf ("\n%*s)", indent, "");
-      break;
-
-    default:
-      abort ();
-    }
-
-  if (c->input)
-    printf ("<%s", c->input);
-  if (c->output)
-    printf (">%s", c->output);
-}
-
-void
-print_command2 (command_t c)
-{
-  command_indented_print2 (2, c);
-  putchar ('\n');
+  //error (1, 0, "command reading not yet implemented");
+  //return 0;
 }
