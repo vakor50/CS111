@@ -377,6 +377,11 @@ token_stream_to_command_stream(token_stream_t input)
 				break;
 			case PAREN_CLOSE_TOKEN:
 				paren_counter--;
+				if (paren_counter < 0)
+				{
+					fprintf(stderr, "%d: Invalid ')' Subshell Token", current_token->line_num);
+					exit(1);
+				}
 				temp_stack_5 = pop_token_stack();
 				if (temp_stack_5 != NULL && temp_stack_5->m_token->type == PAREN_OPEN_TOKEN)
 					continue;
