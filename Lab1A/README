@@ -13,7 +13,7 @@ ID #304273900
 Our design idea was to take in a char* from input buffer and turning these 
 characters into a linked list of commands, in command_stream_t.
 
-We broke this process into several steps:
+We broke this process into several main steps:
 
 - Get the input file and put it into a buffer of type char*
   Function: make_command_stream
