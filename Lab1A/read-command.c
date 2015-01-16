@@ -393,8 +393,9 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_6->m_command = (command_t) checked_malloc(sizeof(struct command));
 					temp_stack_6->m_command->u.command[0] = temp_stack_3->m_command;
 					temp_stack_6->m_command->type = SUBSHELL_COMMAND;
+					temp_stack_6->is_command = 1;
 				}
-				temp_stack_6->m_token->type = COMPLETE_TOKEN;
+				//temp_stack_6->m_token->type = COMPLETE_TOKEN;
 				if ((global_stack != NULL) && (global_stack->m_token->type == PAREN_OPEN_TOKEN))
 					pop_token_stack();
 				else
@@ -452,7 +453,7 @@ token_stream_to_command_stream(token_stream_t input)
 								temp_stack_4->m_command->type = PIPE_COMMAND;
 							else
 								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
-							temp_stack_4->m_token->type = COMPLETE_TOKEN;
+							//temp_stack_4->m_token->type = COMPLETE_TOKEN;
 							push_token_stack(temp_stack_4);
 							temp_stack_2 = global_stack;
 						}
@@ -494,7 +495,7 @@ token_stream_to_command_stream(token_stream_t input)
 								temp_stack_4->m_command->type = PIPE_COMMAND;
 							else
 								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
-							temp_stack_4->m_token->type = COMPLETE_TOKEN;
+							//temp_stack_4->m_token->type = COMPLETE_TOKEN;
 							push_token_stack(temp_stack_4);
 							temp_stack_2 = global_stack;
 						}
@@ -521,7 +522,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[1] = temp_stack_5->m_command;
 						temp_command->u.command[2] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
-						temp_stack_10->m_token->type = COMPLETE_TOKEN;
+						//temp_stack_10->m_token->type = COMPLETE_TOKEN;
 						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
@@ -539,7 +540,7 @@ token_stream_to_command_stream(token_stream_t input)
 					temp_command->u.command[0] = temp_stack_5->m_command;
 					temp_command->u.command[1] = temp_stack_3->m_command;
 					temp_stack_10->m_command = temp_command;
-					temp_stack_10->m_token->type = COMPLETE_TOKEN;
+					//temp_stack_10->m_token->type = COMPLETE_TOKEN;
 					temp_stack_10->is_command = 1;
 					push_token_stack(temp_stack_10);
 				} 
@@ -574,7 +575,7 @@ token_stream_to_command_stream(token_stream_t input)
 								temp_stack_4->m_command->type = PIPE_COMMAND;
 							else
 								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
-							temp_stack_4->m_token->type = COMPLETE_TOKEN;
+							//temp_stack_4->m_token->type = COMPLETE_TOKEN;
 							push_token_stack(temp_stack_4);
 							temp_stack_2 = global_stack;
 						}
@@ -596,7 +597,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[0] = temp_stack_5->m_command;
 						temp_command->u.command[1] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
-						temp_stack_10->m_token->type = COMPLETE_TOKEN;
+						//temp_stack_10->m_token->type = COMPLETE_TOKEN;
 						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
@@ -607,7 +608,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_command->u.command[0] = temp_stack_5->m_command;
 						temp_command->u.command[1] = temp_stack_3->m_command;
 						temp_stack_10->m_command = temp_command;
-						temp_stack_10->m_token->type = COMPLETE_TOKEN;
+						//temp_stack_10->m_token->type = COMPLETE_TOKEN;
 						temp_stack_10->is_command = 1;
 						push_token_stack(temp_stack_10);
 					}
@@ -659,7 +660,7 @@ token_stream_to_command_stream(token_stream_t input)
 								temp_stack_4->m_command->type = PIPE_COMMAND;
 							else
 								temp_stack_4->m_command->type = SEQUENCE_COMMAND;
-						temp_stack_4->m_token->type = COMPLETE_TOKEN;
+						//temp_stack_4->m_token->type = COMPLETE_TOKEN;
 						push_token_stack(temp_stack_4);
 						temp_stack_2 = global_stack;
 					}
