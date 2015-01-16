@@ -330,6 +330,7 @@ token_stream_to_command_stream(token_stream_t input)
 					while (temp_command->u.word[j] != NULL)
 						j++;
 					current_stack->m_command->u.word[j] = current_token->content;
+					current_stack->m_command->u.word[j+1] = NULL;
 					//strcat(" ", current_token->content);
 					//str_length = (int) strlen(current_token->content) + (int) strlen(current_stack->m_command->u.word);
 					//current_stack->m_command->u.word = (char*) checked_grow_alloc(current_stack->m_command->u.word, (size_t) str_length);
@@ -343,6 +344,7 @@ token_stream_to_command_stream(token_stream_t input)
 					word_size = strlen(current_token->content);
 					temp_command->u.word = (char**) checked_malloc(word_size*sizeof(char*));
 					temp_command->u.word[0] = current_token->content;
+					temp_command->u.word[1] = NULL;
 					temp_stack->m_command = temp_command;
 					temp_stack->is_command = 1;
 					push_token_stack(temp_stack);
