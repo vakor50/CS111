@@ -698,14 +698,6 @@ token_stream_to_command_stream(token_stream_t input)
 				temp_stack_2 = current_stack;
 				if (temp_stack_2 == NULL)
 					break;
-				if ((temp_stack_2->m_token != NULL) && (temp_stack_2->m_token->type == SEMICOLON_TOKEN))
-				{
-					if (!loop_counter)
-						break;
-					pop_token_stack();
-					temp_stack_2 = global_stack;
-					current_stack = global_stack;
-				}
 				while ((stack_precedence(temp_stack_2->m_token->type) > current_precedence(current_token->type)))
 				{
 					if (temp_stack_2->m_command != NULL && (temp_stack_2->m_command->type == SIMPLE_COMMAND || temp_stack_2->is_command))
@@ -759,10 +751,7 @@ token_stream_to_command_stream(token_stream_t input)
 	}
 	if (loop_counter)
 	{
-		fprintf(stderr, "%s: What?\n", type_to_string(global_stack->prev_token_stack->m_token->type));
-		fprintf(stderr, "%s: What?\n", type_to_string(global_stack->m_token->type));
-		fprintf(stderr, "%s: Why?\n", type_to_string(current_token->type));
-		fprintf(stderr, "%d: Invalid Loop\n", current_token->line_num);
+		fprintf(stderr, "%d: Invalid Loop", current_token->line_num);
 		exit(1);
 	}
 	if (paren_counter)
@@ -1115,7 +1104,7 @@ valid_token_stream(token_stream_t input)
 							exit(1);
 					}
 				}
-				if ((prev_token != NULL) && (prev_token->type == LESS_TOKEN || prev_token->type == GREATER_TOKEN))
+				if (prev_token->type == LESS_TOKEN || prev_token->type == GREATER_TOKEN)
 				{
 					fprintf(stderr, "%d: Invalid Newline2",current_token->line_num);
 					exit(1);

@@ -71,7 +71,14 @@ for bad in \
   '(a|b' \
   'a;b)' \
   '( (a)' \
-  'a>>>b'
+  'a>>>b' \
+'then b' \
+'else b' \
+'a||b' \
+'if athenb' \
+'if a; then b' \
+'if a; then b' \
+'if a; then b'
 do
   echo "$bad" >test$n.sh || exit
   ../profsh -t test$n.sh >test$n.out 2>test$n.err && {
@@ -89,3 +96,4 @@ exit $status
 ) || exit
 
 rm -fr "$tmp"
+
