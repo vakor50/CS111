@@ -525,6 +525,8 @@ token_stream_to_command_stream(token_stream_t input)
 							temp_stack_5 = pop_token_stack();
 							temp_stack_4 = pop_token_stack();
 							temp_stack_3 = pop_token_stack();
+							if (temp_stack_4->m_command == NULL)
+								temp_stack_4->m_command = (command_t) checked_malloc(sizeof(struct command));
 							temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 							temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
 							temp_stack_4->is_command = 1;
@@ -598,6 +600,8 @@ token_stream_to_command_stream(token_stream_t input)
 							temp_stack_5 = pop_token_stack();
 							temp_stack_4 = pop_token_stack();
 							temp_stack_3 = pop_token_stack();
+							if (temp_stack_4->m_command == NULL)
+								temp_stack_4->m_command = (command_t) checked_malloc(sizeof(struct command));
 							temp_stack_4->m_command->u.command[0] = temp_stack_3->m_command;
 							temp_stack_4->m_command->u.command[1] = temp_stack_5->m_command;
 							temp_stack_4->is_command = 1;
