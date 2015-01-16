@@ -17,9 +17,8 @@
 
 #include "command.h"
 #include "command-internals.h"
-
+#include "alloc.h"
 #include <error.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -332,10 +331,6 @@ token_stream_to_command_stream(token_stream_t input)
 						j++;
 					current_stack->m_command->u.word[j] = current_token->content;
 					current_stack->m_command->u.word[j+1] = NULL;
-					//strcat(" ", current_token->content);
-					//str_length = (int) strlen(current_token->content) + (int) strlen(current_stack->m_command->u.word);
-					//current_stack->m_command->u.word = (char*) checked_grow_alloc(current_stack->m_command->u.word, (size_t) str_length);
-					//strcat(current_stack->m_command->u.word, current_token->content);
 				}
 				else
 				{
