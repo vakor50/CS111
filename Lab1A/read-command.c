@@ -266,13 +266,15 @@ token_stream_to_command_stream(token_stream_t input)
 		else
 			next_token = NULL;
 
-		token_stack_t temp_stack = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack = checked_malloc(sizeof(struct token_stack));
+		//token_stack_t temp_stack = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack->m_token = current_token;
 		temp_stack->m_command = NULL;
 		temp_stack->next_token_stack = temp_stack->prev_token_stack = NULL;
 		temp_stack->is_command = 0;
 
-		token_stack_t temp_stack_2 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack_2 = checked_malloc(sizeof(struct token_stack));
+		//token_stack_t temp_stack_2 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack_2->m_token = current_token;
 		temp_stack_2->m_command = NULL;
 		temp_stack_2->next_token_stack = temp_stack_2->prev_token_stack = NULL;
@@ -280,13 +282,15 @@ token_stream_to_command_stream(token_stream_t input)
 
 		token_stack_t temp_stack_3,temp_stack_4,temp_stack_5,temp_stack_7,temp_stack_8,temp_stack_9;
 
-		token_stack_t temp_stack_6 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack_6 = checked_malloc(sizeof(struct token_stack));
+		//token_stack_t temp_stack_6 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack_6->m_token = current_token;
 		temp_stack_6->m_command = NULL;
 		temp_stack_6->next_token_stack = temp_stack_6->prev_token_stack = NULL;
 		temp_stack_6->is_command = 0;
 
-		token_stack_t temp_stack_10 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
+		token_stack_t temp_stack_10 = checked_malloc(sizeof(struct token_stack));
+		//token_stack_t temp_stack_10 = (token_stack_t) checked_malloc(sizeof(struct token_stack));
 		temp_stack_10->m_token = current_token;
 		temp_stack_10->m_command = NULL;
 		temp_stack_10->next_token_stack = temp_stack_10->prev_token_stack = NULL;
@@ -342,8 +346,13 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else
 				{
-					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND && loop_counter)
+					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND)
 					{
+						if (!loop_counter)
+						{
+							fprintf(stderr, "%d: Invalid Word Token", current_token->line_num);
+							exit(1);
+						}
 						token_t new_token = (token_t) checked_malloc(sizeof(struct token));
 						temp_stack_10->m_token = new_token;
 						temp_stack_10->m_token->type = SEMICOLON_TOKEN;
@@ -1051,10 +1060,33 @@ valid_token_stream(token_stream_t input)
 				}
 				break;
 			case PAREN_OPEN_TOKEN:
-				paren_counter++;
+				//paren_counter++;
+				j = i;
+				while (j < input->size)
+				{
+					if (input->m_token[j]->type == PAREN_OPEN_TOKEN)
+					{
+						paren_counter++;
+					}
+					if (input->m_token[j]->type == PAREN_CLOSE_TOKEN)
+					{
+						paren_counter--;
+					}
+					if (paren_counter < 0)
+					{
+						fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
+						exit(1);
+					}
+					j++;
+				}
+				if (paren_counter != 0)
+				{
+					fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
+					exit(1);
+				}
 				break;
 			case PAREN_CLOSE_TOKEN:
-				paren_counter--;
+				//paren_counter--;
 				break;
 			case LESS_TOKEN:
 			case GREATER_TOKEN:
@@ -1106,11 +1138,11 @@ valid_token_stream(token_stream_t input)
 				exit(1);
 		}
 	}
-	if (paren_counter != 0)
+	/*if (paren_counter != 0)
 	{
 		fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
 		exit(1);
-	}
+	}*/
 	return 1;
 }
 
