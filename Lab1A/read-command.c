@@ -955,7 +955,7 @@ tokenize (char *buffer)
 			if ((token_array_size) <= (token_counter*sizeof(token_t)))
 			{
 				token_array_size *= 2;
-				new_stream->m_token = (token_stream_t) checked_grow_alloc(new_stream->m_token, &token_array_size);
+				new_stream->m_token = (token_t*) checked_grow_alloc(new_stream->m_token, &token_array_size);
 			}
 			new_stream->m_token[token_counter++] = current_token;
 			new_stream->size++;
@@ -1070,7 +1070,7 @@ valid_token_stream(token_stream_t input)
 					}
 					if (paren_counter < 0)
 					{
-						fprintf(stderr, "%d: Invalid Parentheses",current_token->line_num;
+						fprintf(stderr, "%d: Invalid Parentheses",current_token->line_num);
 						exit(1);
 					}
 					j++;
