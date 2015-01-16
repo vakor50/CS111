@@ -342,7 +342,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else
 				{
-					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND)
+					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND && loop_counter)
 					{
 						token_t new_token = (token_t) checked_malloc(sizeof(struct token));
 						temp_stack_10->m_token = new_token;
@@ -999,8 +999,7 @@ valid_token_stream(token_stream_t input)
 	
 	for (i = 0; i < input->size; i++)
 	{
-		paren_counter = 0, if_counter = 0, then_counter = 0, else_counter = 0, fi_counter = 0;
-		while_counter = 0, until_counter = 0, do_counter = 0, done_counter = 0;
+		paren_counter = 0;
 		current_token = input->m_token[i];
 
 		if (i != 0)
@@ -1052,26 +1051,10 @@ valid_token_stream(token_stream_t input)
 				}
 				break;
 			case PAREN_OPEN_TOKEN:
-				j = i;
-				while (j < input->size)
-				{
-					if (input->m_token[j]->type == PAREN_OPEN_TOKEN)
-					{
-						paren_counter++;
-					}
-					if (input->m_token[j]->type == PAREN_CLOSE_TOKEN)
-					{
-						paren_counter--;
-					}
-					j++;
-				}
-				if (paren_counter != 0)
-				{
-					fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
-					exit(1);
-				}
+				paren_counter++;
 				break;
 			case PAREN_CLOSE_TOKEN:
+				paren_counter--;
 				break;
 			case LESS_TOKEN:
 			case GREATER_TOKEN:
@@ -1122,6 +1105,11 @@ valid_token_stream(token_stream_t input)
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 				exit(1);
 		}
+	}
+	if (paren_counter != 0)
+	{
+		fprintf(stderr, "%d: Invalid Parentheses",current_line_num);
+		exit(1);
 	}
 	return 1;
 }
