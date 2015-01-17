@@ -761,11 +761,37 @@ token_stream_to_command_stream(token_stream_t input)
 				exit(1);
 		}
 	}
+	if (global_stack != NULL)
+	{
+		temp_stack_4 = pop_token_stack();
+		temp_stack_3 = pop_token_stack();
+		if ((temp_stack_3 == NULL) || (temp_stack_3->m_token->type == SEMICOLON_TOKEN))
+		{
+			temp_command_stream = (command_stream_t) checked_malloc(sizeof(struct command_stream));
+			temp_command_stream->m_command = temp_stack_4->m_command;
+			temp_command_stream->is_read = 0;
+			if (global_stream == NULL)
+				global_stream = temp_command_stream;
+			else
+			{
+				temp_command_stream_2 = global_stream;
+				while (temp_command_stream_2->next_stream != NULL)
+				{
+					temp_command_stream_2 = temp_command_stream_2->next_stream;
+				}
+				temp_command_stream_2->next_stream = temp_command_stream;
+			}
+		} 
+		else
+		{
+			fprintf(stderr, "%d: Invalid Entry\n", current_token->line_num);
+			exit(1);
+		}
+
+	}
+
 	if (loop_counter)
 	{
-		fprintf(stderr, "%s: What?\n", type_to_string(global_stack->prev_token_stack->m_token->type));
-		fprintf(stderr, "%s: What?\n", type_to_string(global_stack->m_token->type));
-		fprintf(stderr, "%s: Why?\n", type_to_string(current_token->type));
 		fprintf(stderr, "%d: Invalid Loop\n", current_token->line_num);
 		exit(1);
 	}
