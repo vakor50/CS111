@@ -1048,7 +1048,7 @@ valid_token_stream(token_stream_t input)
 	
 	for (i = 0; i < input->size; i++)
 	{
-		paren_counter = 0;
+		//paren_counter = 0;
 		current_token = input->m_token[i];
 
 		if (i != 0)
@@ -1100,8 +1100,8 @@ valid_token_stream(token_stream_t input)
 				}
 				break;
 			case PAREN_OPEN_TOKEN:
-				//paren_counter++;
-				j = i;
+				paren_counter++;
+				/*j = i;
 				while (j < input->size)
 				{
 					if (input->m_token[j]->type == PAREN_OPEN_TOKEN)
@@ -1118,15 +1118,15 @@ valid_token_stream(token_stream_t input)
 						exit(1);
 					}
 					j++;
-				}
-				if (paren_counter != 0)
+				}*/
+				if (paren_counter < 0)
 				{
 					fprintf(stderr, "%d: Invalid Parentheses",current_token->line_num);
 					exit(1);
 				}
 				break;
 			case PAREN_CLOSE_TOKEN:
-				//paren_counter--;
+				paren_counter--;
 				break;
 			case LESS_TOKEN:
 			case GREATER_TOKEN:
@@ -1177,6 +1177,11 @@ valid_token_stream(token_stream_t input)
 				fprintf(stderr, "%d: Something went wrong.",current_token->line_num);
 				exit(1);
 		}
+	}
+	if (paren_counter != 0)
+	{
+		fprintf(stderr, "%d: Invalid Parentheses",current_token->line_num);
+		exit(1);
 	}
 	return 1;
 }
