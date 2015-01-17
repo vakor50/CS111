@@ -949,6 +949,11 @@ tokenize (char *buffer)
 					current_token->type = NEWLINE_TOKEN;
 					current_token->content[0] = NEWLINE_CHAR;
 					current_token->line_num = line_num;
+					if (token_counter != 0 && new_stream->m_token[token_counter-1]->type == NEWLINE_TOKEN)
+					{
+						buffer_counter+=(skip_char);
+						break;
+					}
 					while (buffer[buffer_counter+skip_char] == '\n')
 					{
 						skip_char++;
