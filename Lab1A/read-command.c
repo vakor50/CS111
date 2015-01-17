@@ -765,10 +765,13 @@ token_stream_to_command_stream(token_stream_t input)
 	{
 		token_stack_t temp_stack_4 = pop_token_stack();
 		token_stack_t temp_stack_3 = pop_token_stack();
-		if ((temp_stack_3 == NULL) || (temp_stack_3->m_token->type == SEMICOLON_TOKEN))
+		if ((temp_stack_3 == NULL) || (temp_stack_4->m_token->type == SEMICOLON_TOKEN))
 		{
 			command_stream_t temp_command_stream = (command_stream_t) checked_malloc(sizeof(struct command_stream));
-			temp_command_stream->m_command = temp_stack_4->m_command;
+			if (temp_stack_3 == NULL)
+				temp_command_stream->m_command = temp_stack_4->m_command;
+			else
+				temp_command_stream->m_command = temp_stack_3->m_command;
 			temp_command_stream->is_read = 0;
 			if (global_stream == NULL)
 				global_stream = temp_command_stream;
