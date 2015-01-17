@@ -28,4 +28,20 @@ until cmp -s a b; do
 	recalc b a | sort -u -o b
 done
 
-a;
+while fname in bob;
+do
+	until a; do b; done
+	break;
+done
+
+#if bob
+#then (b|c)<a>d; else e;
+#fi
+
+if (33)
+false
+then
+(b>c|d<f)>g
+fi
+
+while (if (a|b<c); then a|(b|c); fi); do z; done
