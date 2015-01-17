@@ -1014,7 +1014,7 @@ int
 valid_token_stream(token_stream_t input)
 {
 	int paren_counter = 0;
-	int i = 0, j = 0;
+	int i = 0;
 	token_t current_token = NULL;
 	token_t prev_token = NULL, next_token = NULL;
 
@@ -1101,24 +1101,6 @@ valid_token_stream(token_stream_t input)
 				break;
 			case PAREN_OPEN_TOKEN:
 				paren_counter++;
-				/*j = i;
-				while (j < input->size)
-				{
-					if (input->m_token[j]->type == PAREN_OPEN_TOKEN)
-					{
-						paren_counter++;
-					}
-					if (input->m_token[j]->type == PAREN_CLOSE_TOKEN)
-					{
-						paren_counter--;
-					}
-					if (paren_counter < 0)
-					{
-						fprintf(stderr, "%d: Invalid Parentheses",current_token->line_num);
-						exit(1);
-					}
-					j++;
-				}*/
 				if (paren_counter < 0)
 				{
 					fprintf(stderr, "%d: Invalid Parentheses",current_token->line_num);

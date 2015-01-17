@@ -34,9 +34,10 @@ do
 	break;
 done
 
-#if bob
-#then (b|c)<a>d; else e;
-#fi
+
+if bob
+then (b|c)<a>d; else e;
+fi
 
 if (33)
 false
