@@ -175,15 +175,15 @@ current_precedence (enum token_type type)
 		case DO_TOKEN:
 		case FI_TOKEN:
 		case DONE_TOKEN:
-			return 5;
+			return 6;
 			break;
 		case IF_TOKEN:
 		case UNTIL_TOKEN:
 		case WHILE_TOKEN:
     	case PAREN_OPEN_TOKEN:
-			return 7;
+			return 8;
 	    default:
-			return 9;
+			return 10;
 	}
 }
 
@@ -196,7 +196,7 @@ stack_precedence (enum token_type type)
 	    case NEWLINE_TOKEN:
 			return 2;
 	    case PIPE_TOKEN:
-			return 6;
+			return 7;
 		case THEN_TOKEN:
 		case ELSE_TOKEN:
 		case DO_TOKEN:
@@ -206,7 +206,7 @@ stack_precedence (enum token_type type)
     	case PAREN_OPEN_TOKEN:
 			return 0;
 	    default:
-			return 8;
+			return 9;
 	}
 }
 
@@ -456,6 +456,10 @@ token_stream_to_command_stream(token_stream_t input)
 							temp_stack_2 = temp_stack_2->prev_token_stack;
 							continue;
 						}
+						else if (current_token->type == PIPE_TOKEN && temp_stack_2->m_token->type==SEMICOLON_TOKEN)
+						{
+							break;
+						} 
 						else
 						{
 							temp_stack_5 = pop_token_stack();
