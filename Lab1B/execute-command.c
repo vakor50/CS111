@@ -20,6 +20,8 @@
 
 #include <error.h>
 
+#include <unistd.h>
+
 /* FIXME: You may need to add #include directives, macro definitions,
    static function definitions, etc.  */
 
@@ -61,7 +63,32 @@ execute_command (command_t c, int profiling)
 			c->status = c->u.command[1]->status; //Set the status to that of the second command; can set to first as well, doesn't matter
 			break;
 		case PIPE_COMMAND:
-			
+			if (pipe(file_descriptor)==-1)
+				fprintf(stderr, "Something's wrong with the pipe.\n");
+
+			child = fork(); //Forks the process to run the two commands properly as a pipe
+
+			if (!child) //Child was succesfully created and this is the child
+			{
+				close(file_descriptor[1]); //Close the reading from the child
+				if (dup2(file_descriptor[0],0) == -1)
+					fprintf(stderr, "Something's wrong with the file descriptor.\n");
+				execute_command(c->u.command[0], profiling); //Executes the first command
+				c->status = c->u.command[0]->status;
+				close(file_descriptor[0]); //Close the writing from the child
+				exit(0);
+			}
+			else if (child > 0) //This is the parent class
+			{
+				close(file_descriptor[0]); //Close the writing from the parent
+				if (dup2(file_descriptor[1],1) == -1)
+					fprintf(stderr, "Something's wrong with the file descriptor.\n");
+				execute_command(c->u.command[1], profiling); //Executes the second command
+				c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
+				close(file_descriptor[1]); //Close the reading from the parent
+			}
+			else //Something happened and the child wasn't produced
+				fprintf(stderr, "Something's wrong with the child, so it can't be made.\n");
 			break;
 		case IF_COMMAND:
 			execute_command(c->u.command[0], profiling);
@@ -103,8 +130,6 @@ execute_command (command_t c, int profiling)
 			} while (!c->status); //While the statement is true (status is 0) continue doing while command
 			break;
 		default:
-			fprintf(stderr, "Invalid Command");
+			fprintf(stderr, "Something's wrong with the command and how it's stored.\n");
 	}
-
-	//error (1, 0, "command execution not yet implemented");
 }
