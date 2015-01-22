@@ -52,6 +52,38 @@ execute_command (command_t c, int profiling)
 	switch(c->type)
 	{
 		case SIMPLE_COMMAND:
+						child = fork();
+			if (child == 0)
+			{
+				if (c->input != NULL)
+				{
+					// read file of filename c->input, from stdin
+					freopen(c->input, "r", stdin);
+				}
+
+				if (c->output != NULL)
+				{
+					// write to a file of name c->output, into stdout
+					freopen(c->output, "w", stdout);
+				}		
+
+				int i = execvp(c->u.word[0], c->u.word)
+				if (i < 0)
+					fprintf(stderr, "couldn't execute command\n");
+				
+				fclose(stdin);
+				fclose(stdout);
+			}
+			else if (child > 0)
+			{
+				int simple;
+				waitpid(child, &simple, 0);
+				c->status = simple;
+			}
+			else
+			{
+				fprintf(stderr, "error forking\n");
+			}
 			break;
 		case SUBSHELL_COMMAND:
 			execute_command(c->u.command[0], profiling);//Run the subshell command
