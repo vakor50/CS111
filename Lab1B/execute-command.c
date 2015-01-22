@@ -43,7 +43,7 @@ void
 execute_command (command_t c, int profiling)
 {
   /* FIXME: Replace this with your implementation, like 'prepare_profiling'.  */
-	pid_t pid;
+	pid_t child;
 	int file_descriptor[2];//0 is write, 1 is read
 	int new_file_descriptor[2]; //This may not be used, don't use unless absolutely necessary
 
@@ -52,16 +52,55 @@ execute_command (command_t c, int profiling)
 		case SIMPLE_COMMAND:
 			break;
 		case SUBSHELL_COMMAND:
+			execute_command(c->u.command[0], profiling);//Run the subshell command
+			c->status = c->u.command[0]->status; //Set the status to that of the subshell command
 			break;
 		case SEQUENCE_COMMAND:
+			execute_command(c->u.command[0], profiling);//Run the first command
+			execute_command(c->u.command[1], profiling);//Run the second command
+			c->status = c->u.command[1]->status; //Set the status to that of the second command; can set to first as well, doesn't matter
 			break;
 		case PIPE_COMMAND:
+			
 			break;
 		case IF_COMMAND:
+			execute_command(c->u.command[0], profiling);
+			c->status = c->u.command[0]->status;
+			if (!c->status) //If condition succeeded (status is non-zero): if condition is true
+			{
+				execute_command(c->u.command[1], profiling);
+				c->status = c->u.command[1]->status;
+			}
+			else //If condition failed (status is 0):if condition is false
+			{
+				if (c->u.command[2] != NULL) //Checks for an "else" portion to the if statement
+				{
+					execute_command(c->u.command[1], profiling);
+					c->status = c->u.command[1]->status;
+				}
+			}
 			break;
 		case UNTIL_COMMAND:
+			do {
+				execute_command(c->u.command[0], profiling);
+				c->status = c->u.command[0]->status;
+				if (!c->status) //Until condition succeeded (status is 0), AKA if statement is true
+				{
+					execute_command(c->u.command[1], profiling);
+					c->status = c->u.command[1]->status;
+				}
+			} while (c->status); //While the statement is false (status is non-zero) continue doing until command
 			break;
 		case WHILE_COMMAND:
+			do {
+				execute_command(c->u.command[0], profiling);
+				c->status = c->u.command[0]->status;
+				if (!c->status) //Until condition succeeded (status is 0), AKA if statement is true
+				{
+					execute_command(c->u.command[1], profiling);
+					c->status = c->u.command[1]->status;
+				}
+			} while (!c->status); //While the statement is true (status is 0) continue doing while command
 			break;
 		default:
 			fprintf(stderr, "Invalid Command");
