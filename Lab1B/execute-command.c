@@ -43,5 +43,29 @@ void
 execute_command (command_t c, int profiling)
 {
   /* FIXME: Replace this with your implementation, like 'prepare_profiling'.  */
-  error (1, 0, "command execution not yet implemented");
+	pid_t pid;
+	int file_descriptor[2];//0 is write, 1 is read
+	int new_file_descriptor[2]; //This may not be used, don't use unless absolutely necessary
+
+	switch(c->type)
+	{
+		case SIMPLE_COMMAND:
+			break;
+		case SUBSHELL_COMMAND:
+			break;
+		case SEQUENCE_COMMAND:
+			break;
+		case PIPE_COMMAND:
+			break;
+		case IF_COMMAND:
+			break;
+		case UNTIL_COMMAND:
+			break;
+		case WHILE_COMMAND:
+			break;
+		default:
+			fprintf(stderr, "Invalid Command");
+	}
+
+	//error (1, 0, "command execution not yet implemented");
 }
