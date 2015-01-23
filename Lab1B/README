@@ -2,14 +2,18 @@ This is a skeleton for CS 111 Lab 1.
 Prof. Eggert
 Winter 20155
 
-Lab 1A
-
 Kalin Khemka
 ID #304336969
 
 Vir Thakor
 ID #304273900
 
+Lab1B
+
+We implemented the execution of the commands using recursion of the fucntion execute_command().
+
+
+Lab 1A
 Our design idea was to take in a char* from input buffer and turning these 
 characters into a linked list of commands, in command_stream_t.
 
