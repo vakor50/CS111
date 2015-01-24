@@ -53,7 +53,7 @@ check_io (command_t c)
 	if (c->input != NULL)
 	{
 		// read file of filename c->input, from stdin
-		int temp_in = open(c->input, O_RDONLY);
+		int temp_in = open(c->input, O_RDONLY, 0666);
 		if (temp_in == -1)
 			fprintf(stderr, "Something's wrong with opening the input.\n");
 		if (dup2(temp_in, 0) == -1)
@@ -65,7 +65,7 @@ check_io (command_t c)
 	if (c->output != NULL)
 	{
 		// write to a file of name c->output, into stdout
-		int temp_out = open(c->output, O_WRONLY);
+		int temp_out = open(c->output, O_WRONLY | O_TRUNC | O_CREAT, );
 		if (temp_out == -1)
 			fprintf(stderr, "Something's wrong with opening the output.\n");
 		if (dup2(temp_out, 1) == -1)
@@ -92,7 +92,10 @@ execute_command (command_t c, int profiling)
 				check_io(c);
 				int i = execvp(c->u.word[0], c->u.word);
 				if (i < 0)
+{
 					fprintf(stderr, "Something's wrong with the execution.\n");
+					fprintf(stderr, "%s\n", c->u.word[0]);
+}
 			}
 			else if (child > 0)
 			{

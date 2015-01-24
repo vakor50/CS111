@@ -26,49 +26,66 @@ cd "$tmp" || exit
 cat >test.sh <<'EOF'
 true
 
-g++ -c foo.c
+echo echo1
+echo echo4 | cat
 
-: : :
+echo writing to file > f1.txt
+cat f1.txt # filename as argument
+echo writing to file again > f1.txt
+cat < f1.txt # file from stdin
 
-if cat < /etc/passwd | tr a-z A-Z | sort -u; then :; else echo sort failed!; fi
+echo echo5 | cat ; echo echo6; echo echo7
 
-a b<c > d
-
-if cat < /etc/passwd | tr a-z A-Z | sort -u > out
-then :
-else echo sort failed!
-fi
-
-if
-  if a;a;a; then b; else :; fi
+if true
 then
-
- if c
-  then if d | e; then f; fi
- fi
+echo count
+else
+echo no count
 fi
 
-g<h
+if true
+then
+echo ball
+else
+echo no ball 
+fi
 
-while
-  while
-    until :; do echo yoo hoo!; done
-    false
-  do (a|b)
-  done >f
-do
-  :>g
-done
+echo hello > in.txt
+if cat; then cat; fi < in.txt
 
-# Another weird example: nobody would ever want to run this.
-a<b>c|d<e>f|g<h>i
+touch file
+touch file2
+echo a > file2
+cp file2 file
+while cat file; do rm file; done
+
+touch file
+touch file2
+echo b > file2
+cp file2 file
+until cat file; do rm file; done
+
+g++ -c foo.c
 EOF
 
 cat >test.exp <<'EOF'
-
+echo1
+echo4
+writing to file
+writing to file again
+echo5
+echo6
+echo7
+count
+hello
+a
+cat: file: No such file or directory
+b
+g++: foo.c: No such file or directory
+g++: no input files
 EOF
 
-../profsh -t test.sh >test.out 2>test.err || exit
+../profsh test.sh >test.out 2>test.err || exit
 
 diff -u test.exp test.out || exit
 test ! -s test.err || {
