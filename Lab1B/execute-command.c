@@ -21,6 +21,12 @@
 #include <error.h>
 
 #include <unistd.h>
+#include <stdio.h>
+#include <sys/types.h>  //pid_t
+#include <sys/wait.h> //waitpid
+#include <unistd.h>  //fork
+#include <stdlib.h>  //exit
+#include <fcntl.h> //File Control Options
 
 /* FIXME: You may need to add #include directives, macro definitions,
    static function definitions, etc.  */
