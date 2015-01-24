@@ -65,7 +65,7 @@ check_io (command_t c)
 	if (c->output != NULL)
 	{
 		// write to a file of name c->output, into stdout
-		int temp_out = open(c->output, O_WRONLY | O_TRUNC | O_CREAT, );
+		int temp_out = open(c->output, O_WRONLY | O_TRUNC | O_CREAT, 0666);
 		if (temp_out == -1)
 			fprintf(stderr, "Something's wrong with opening the output.\n");
 		if (dup2(temp_out, 1) == -1)

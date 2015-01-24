@@ -26,6 +26,8 @@ cd "$tmp" || exit
 cat >test.sh <<'EOF'
 true
 
+: : :
+
 echo echo1
 echo echo4 | cat
 
@@ -36,18 +38,18 @@ cat < f1.txt # file from stdin
 
 echo echo5 | cat ; echo echo6; echo echo7
 
-if true
+if :
 then
 echo count
 else
 echo no count
 fi
 
-if true
+if :
 then
-echo ball
+echo ball > test.txt
 else
-echo no ball 
+echo no ball > test.txt
 fi
 
 echo hello > in.txt
@@ -65,7 +67,11 @@ echo b > file2
 cp file2 file
 until cat file; do rm file; done
 
-g++ -c foo.c
+rm test.txt
+rm file2
+rm f1.txt
+rm in.txt
+
 EOF
 
 cat >test.exp <<'EOF'
@@ -81,8 +87,6 @@ hello
 a
 cat: file: No such file or directory
 b
-g++: foo.c: No such file or directory
-g++: no input files
 EOF
 
 ../profsh test.sh >test.out 2>test.err || exit
