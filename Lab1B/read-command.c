@@ -874,6 +874,7 @@ tokenize (char *buffer)
 				}
 				place_holder[i] = buffer[buffer_counter+i];
 			}
+			place_holder[skip_char] = '\0';
 
 			if (strcmp(place_holder,"if") == 0)
 			{
