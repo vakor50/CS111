@@ -42,6 +42,34 @@ command_status (command_t c)
 }
 
 void
+check_io (command_t c)
+{
+	if (c->input != NULL)
+	{
+		// read file of filename c->input, from stdin
+		int temp_in = open(c->input, O_RDONLY);
+		if (temp_in == -1)
+			fprintf(stderr, "Something's wrong with opening the input.\n");
+		if (dup2(temp_in, 0) == -1)
+			fprintf(stderr, "Something's wrong with the duplication of file descriptors in the input.\n");
+		if (close(temp_in) == -1)
+			fprintf(stderr, "Something's wrong with closing the input.\n");
+	}
+
+	if (c->output != NULL)
+	{
+		// write to a file of name c->output, into stdout
+		int temp_out = open(c->output, O_WRONLY);
+		if (temp_out == -1)
+			fprintf(stderr, "Something's wrong with opening the output.\n");
+		if (dup2(temp_out, 1) == -1)
+			fprintf(stderr, "Something's wrong with the duplication of file descriptors in the output.\n");
+		if (close(temp_out) == -1)
+			fprintf(stderr, "Something's wrong with closing the output.\n");
+	}
+}
+
+void
 execute_command (command_t c, int profiling)
 {
   /* FIXME: Replace this with your implementation, like 'prepare_profiling'.  */
@@ -52,27 +80,13 @@ execute_command (command_t c, int profiling)
 	switch(c->type)
 	{
 		case SIMPLE_COMMAND:
-						child = fork();
+			child = fork();
 			if (child == 0)
 			{
-				if (c->input != NULL)
-				{
-					// read file of filename c->input, from stdin
-					freopen(c->input, "r", stdin);
-				}
-
-				if (c->output != NULL)
-				{
-					// write to a file of name c->output, into stdout
-					freopen(c->output, "w", stdout);
-				}		
-
-				int i = execvp(c->u.word[0], c->u.word)
+				check_io(c);
+				int i = execvp(c->u.word[0], c->u.word);
 				if (i < 0)
-					fprintf(stderr, "couldn't execute command\n");
-				
-				fclose(stdin);
-				fclose(stdout);
+					fprintf(stderr, "Something's wrong with the execution.\n");
 			}
 			else if (child > 0)
 			{
@@ -82,10 +96,11 @@ execute_command (command_t c, int profiling)
 			}
 			else
 			{
-				fprintf(stderr, "error forking\n");
+				fprintf(stderr, "Something's wrong with the child, so it can't be made.\n");
 			}
 			break;
 		case SUBSHELL_COMMAND:
+			check_io(c);
 			execute_command(c->u.command[0], profiling);//Run the subshell command
 			c->status = c->u.command[0]->status; //Set the status to that of the subshell command
 			break;
@@ -123,6 +138,7 @@ execute_command (command_t c, int profiling)
 				fprintf(stderr, "Something's wrong with the child, so it can't be made.\n");
 			break;
 		case IF_COMMAND:
+			check_io(c);
 			execute_command(c->u.command[0], profiling);
 			c->status = c->u.command[0]->status;
 			if (!c->status) //If condition succeeded (status is non-zero): if condition is true
@@ -140,6 +156,7 @@ execute_command (command_t c, int profiling)
 			}
 			break;
 		case UNTIL_COMMAND:
+			check_io(c);
 			do {
 				execute_command(c->u.command[0], profiling);
 				c->status = c->u.command[0]->status;
@@ -151,6 +168,7 @@ execute_command (command_t c, int profiling)
 			} while (c->status); //While the statement is false (status is non-zero) continue doing until command
 			break;
 		case WHILE_COMMAND:
+			check_io(c);
 			do {
 				execute_command(c->u.command[0], profiling);
 				c->status = c->u.command[0]->status;
