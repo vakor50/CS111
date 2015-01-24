@@ -82,6 +82,7 @@ execute_command (command_t c, int profiling)
 	pid_t child;
 	int file_descriptor[2];//0 is write, 1 is read
 	int new_file_descriptor[2]; //This may not be used, don't use unless absolutely necessary
+	int counter = 0;
 
 	switch(c->type)
 	{
@@ -89,13 +90,21 @@ execute_command (command_t c, int profiling)
 			child = fork();
 			if (child == 0)
 			{
+				while (c->u.word[counter] != NULL)
+				{
+					if (c->u.word[counter] == ":")
+					{
+						c->u.word[counter] == "true";
+					}
+					counter++;
+				}
 				check_io(c);
 				int i = execvp(c->u.word[0], c->u.word);
 				if (i < 0)
-{
+				{
 					fprintf(stderr, "Something's wrong with the execution.\n");
 					fprintf(stderr, "%s\n", c->u.word[0]);
-}
+				}
 			}
 			else if (child > 0)
 			{
