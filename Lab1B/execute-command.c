@@ -133,6 +133,9 @@ execute_command (command_t c, int profiling)
 			}
 			else if (child > 0) //This is the parent class
 			{
+				int status;
+				waitpid(child, &status, 0);
+				
 				close(file_descriptor[0]); //Close the writing from the parent
 				if (dup2(file_descriptor[1],1) == -1)
 					fprintf(stderr, "Something's wrong with the file descriptor.\n");
