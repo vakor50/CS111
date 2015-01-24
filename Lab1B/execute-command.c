@@ -123,25 +123,25 @@ execute_command (command_t c, int profiling)
 
 			if (!child) //Child was succesfully created and this is the child
 			{
-				close(file_descriptor[1]); //Close the reading from the child
-				if (dup2(file_descriptor[0],0) == -1)
+				close(file_descriptor[0]); //Close the reading from the child
+				if (dup2(file_descriptor[1],1) == -1)
 					fprintf(stderr, "Something's wrong with the file descriptor.\n");
 				execute_command(c->u.command[0], profiling); //Executes the first command
 				c->status = c->u.command[0]->status;
-				close(file_descriptor[0]); //Close the writing from the child
+				close(file_descriptor[1]); //Close the writing from the child
 				exit(0);
 			}
 			else if (child > 0) //This is the parent class
 			{
 				int status;
 				waitpid(child, &status, 0);
-				
-				close(file_descriptor[0]); //Close the writing from the parent
-				if (dup2(file_descriptor[1],1) == -1)
+
+				close(file_descriptor[1]); //Close the writing from the parent
+				if (dup2(file_descriptor[0],0) == -1)
 					fprintf(stderr, "Something's wrong with the file descriptor.\n");
 				execute_command(c->u.command[1], profiling); //Executes the second command
 				c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
-				close(file_descriptor[1]); //Close the reading from the parent
+				close(file_descriptor[0]); //Close the reading from the parent
 			}
 			else //Something happened and the child wasn't produced
 				fprintf(stderr, "Something's wrong with the child, so it can't be made.\n");
