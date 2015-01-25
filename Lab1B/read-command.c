@@ -17,12 +17,12 @@
 
 #include "command.h"
 #include "command-internals.h"
-#include "alloc.h"
+#include "alloc.h" //checked allocs
 #include <error.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+#include <stdlib.h> //size_t, exit
+#include <stdio.h> //standard input output
+#include <string.h> //strcmp
+#include <ctype.h> //isalnum
 
 /* FIXME: You may need to add #include directives, macro definitions,
    static function definitions, etc.  */

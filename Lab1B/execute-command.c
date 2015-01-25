@@ -20,13 +20,14 @@
 
 #include <error.h>
 
-#include <unistd.h>
-#include <stdio.h>
+#include <unistd.h> //pipe
+#include <stdio.h> //standard input output
+#include <string.h> //strcmp
 #include <sys/types.h>  //pid_t
 #include <sys/wait.h> //waitpid
 #include <unistd.h>  //fork
 #include <stdlib.h>  //exit
-#include <fcntl.h> //File Control Options
+#include <fcntl.h> //file control
 
 /* FIXME: You may need to add #include directives, macro definitions,
    static function definitions, etc.  */
