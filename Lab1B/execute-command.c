@@ -19,6 +19,7 @@
 #include "command-internals.h"
 
 #include <error.h>
+#include <errno.h> //creates integer errno
 
 #include <unistd.h> //pipe
 #include <stdio.h> //standard input output
@@ -119,7 +120,8 @@ execute_command (command_t c, int profiling)
 					i = execvp(c->u.word[0], c->u.word);
 					if (i < 0)
 					{
-						error(1,0, "Something's wrong with the execution of a simple command.\n");
+
+						error(1,errno, "Something's wrong with the execution of a simple command.\n");
 					}
 				}
 			}
