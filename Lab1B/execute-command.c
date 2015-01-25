@@ -95,7 +95,7 @@ execute_command (command_t c, int profiling)
 				{
 					if (c->u.word[counter] == ":")
 					{
-						c->u.word[counter] = "true";
+						c->u.word[counter] = "true\0";
 					}
 					counter++;
 				}*/
@@ -103,7 +103,7 @@ execute_command (command_t c, int profiling)
 				check_io(c);
 				int i;
 
-				if (c->u.word[0] == "exec")
+				if (!strcmp (c->u.word[0], "exec"))
 				{
 					if (c->u.word[1] == NULL)
 						error(1,0, "Something's wrong with the exec command.\n");
