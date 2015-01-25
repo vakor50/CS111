@@ -57,11 +57,11 @@ check_io (command_t c)
 		// read file of filename c->input, from stdin
 		int temp_in = open(c->input, O_RDONLY, 00660);
 		if (temp_in == -1)
-			error(1,0,"Something's wrong with opening the input.\n");
+			error(1,0,"Unable to open input\n");
 		if (dup2(temp_in, 0) == -1)
-			error(1,0,"Something's wrong with the duplication of file descriptors in the input.\n");
+			error(1,0,"Unable to duplicate input file descriptors\n");
 		if (close(temp_in) == -1)
-			error(1,0,"Something's wrong with closing the input.\n");
+			error(1,0,"Unable to close input\n");
 	}
 
 	if (c->output != NULL)
@@ -69,11 +69,11 @@ check_io (command_t c)
 		// write to a file of name c->output, into stdout
 		int temp_out = open(c->output, O_WRONLY | O_TRUNC | O_CREAT, 00660);
 		if (temp_out == -1)
-			error(1,0,"Something's wrong with opening the output.\n");
+			error(1,0,"Unable to open output\n");
 		if (dup2(temp_out, 1) == -1)
-			error(1,0,"Something's wrong with the duplication of file descriptors in the output.\n");
+			error(1,0,"Unable to duplicate input file descriptors\n");
 		if (close(temp_out) == -1)
-			error(1,0,"Something's wrong with closing the output.\n");
+			error(1,0,"Unable to close output\n");
 	}
 }
 
@@ -82,59 +82,43 @@ execute_command (command_t c, int profiling)
 {
   /* FIXME: Replace this with your implementation, like 'prepare_profiling'.  */
 	pid_t child;
-	int file_descriptor[2];//0 is write, 1 is read
+	int file_descriptor[2];//0 is read, 1 is write
 	int counter = 0;
 
 	switch(c->type)
 	{
 		case SIMPLE_COMMAND:
-			child = fork();
-			if (child == 0)
+			child = fork(); //Forks the process to run the simple command properly without messing up parent process
+			if (child == 0) //Child Process
 			{
-				if (c->u.word[0][0] == ':')
-					_exit(0);
-				/*while (c->u.word[counter] != NULL)
-				{
-					if (c->u.word[counter] == ":")
-					{
-						c->u.word[counter] = "true\0";
-					}
-					counter++;
-				}*/
+				if (c->u.word[0][0] == ':') //Check for a colon simple command
+					_exit(0);  //Does nothing with null utility
 
 				check_io(c);
 				int i;
-
-				if (!strcmp (c->u.word[0], "exec"))
+				if (!strcmp (c->u.word[0], "exec")) //Checks for the exec command and runs accordingly
 				{
 					if (c->u.word[1] == NULL)
-						error(1,0, "Something's wrong with the exec command.\n");
+						error(1,0, "Invalid exec command\n");
 					i = execvp(c->u.word[1], c->u.word+1);
 					if (i < 0)
-					{
-						error(1,0, "Something's wrong with the execution of exec.\n");
-					}
+						error(1,errno, "Exec command error\n");
 				}
 				else
 				{
 					i = execvp(c->u.word[0], c->u.word);
 					if (i < 0)
-					{
-
-						error(1,errno, "Something's wrong with the execution of a simple command.\n");
-					}
+						error(1,errno, "Invalid simple command\n");
 				}
 			}
-			else if (child > 0)
+			else if (child > 0) //Parent Process
 			{
 				int simple;
 				waitpid(child, &simple, 0);
 				c->status = simple;
 			}
 			else
-			{
-				error(1,0, "Something's wrong with the simple command child, so it can't be made.\n");
-			}
+				error(1,errno, "Unable to fork\n");
 			break;
 		case SUBSHELL_COMMAND:
 			check_io(c);
@@ -142,13 +126,28 @@ execute_command (command_t c, int profiling)
 			c->status = c->u.command[0]->status; //Set the status to that of the subshell command
 			break;
 		case SEQUENCE_COMMAND:
-			execute_command(c->u.command[0], profiling);//Run the first command
+			child = fork(); //Forks the process to run the sequence command parallely
+			if (child == 0) //Child Process
+			{
+					execute_command(c->u.command[0], profiling); //Runs first command
+			}
+			else if (child > 0) //Parent Process
+			{
+				int status;
+				waitpid(child, &status, 0);
+
+				execute_command(c->u.command[1], profiling);//Run the second command
+				c->status = c->u.command[1]->status;
+			}
+			else
+				error(1,errno, "Unable to fork\n");
+			/*execute_command(c->u.command[0], profiling);//Run the first command
 			execute_command(c->u.command[1], profiling);//Run the second command
-			c->status = c->u.command[1]->status; //Set the status to that of the second command; can set to first as well, doesn't matter
+			c->status = c->u.command[1]->status; //Set the status to that of the second command; can set to first as well, doesn't matter*/
 			break;
 		case PIPE_COMMAND:
 			if (pipe(file_descriptor)==-1)
-				error(1,0, "Something's wrong with the pipe.\n");
+				error(1,0, "Unable to pipe\n");
 
 			child = fork(); //Forks the process to run the two commands properly as a pipe
 
@@ -156,7 +155,7 @@ execute_command (command_t c, int profiling)
 			{
 				close(file_descriptor[0]); //Close the reading from the child
 				if (dup2(file_descriptor[1],1) == -1)
-					error(1,0, "Something's wrong with the pipe child file descriptor.\n");
+					error(1,errno, "Unable to duplicate pipe child file descriptors\n");
 				execute_command(c->u.command[0], profiling); //Executes the first command
 				c->status = c->u.command[0]->status;
 				close(file_descriptor[1]); //Close the writing from the child
@@ -169,13 +168,13 @@ execute_command (command_t c, int profiling)
 
 				close(file_descriptor[1]); //Close the writing from the parent
 				if (dup2(file_descriptor[0],0) == -1)
-					error(1,0, "Something's wrong with the pipe parent file descriptor.\n");
+					error(1,errno, "Unable to duplicate pipe parent file descriptors\n");
 				execute_command(c->u.command[1], profiling); //Executes the second command
 				c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
 				close(file_descriptor[0]); //Close the reading from the parent
 			}
 			else //Something happened and the child wasn't produced
-				error(1,0, "Something's wrong with the pipe child, so it can't be made.\n");
+				error(1,errno, "Unable to fork\n");
 			break;
 		case IF_COMMAND:
 			check_io(c);
@@ -220,6 +219,6 @@ execute_command (command_t c, int profiling)
 			} while (!c->status); //While the statement is true (status is 0) continue doing while command
 			break;
 		default:
-			error(1,0, "Something's wrong with the command and how it's stored.\n");
+			error(1,0, "Invalid command stored\n");
 	}
 }
