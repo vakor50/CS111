@@ -38,10 +38,8 @@ n=1
 for bad in \
   'jibjab' \
   'cat dog.txt' \
-  '<' \
-  'a >b <' \
-  ';' \
-  '; a'
+  'if bob.txt; then echo bob; else echo dog; fi' \
+  'a >b <'
 do
   echo "$bad" >test$n.sh || exit
   ../profsh test$n.sh >test$n.out 2>test$n.err #&& {
