@@ -120,7 +120,7 @@ execute_command (command_t c, int profiling)
 			{
 				int simple;
 				waitpid(child, &simple, 0);
-				c->status = simple;
+				c->status = WEXITSTATUS(simple);
 			}
 			else
 			{
@@ -134,21 +134,6 @@ execute_command (command_t c, int profiling)
 			c->status = c->u.command[0]->status; //Set the status to that of the subshell command
 			break;
 		case SEQUENCE_COMMAND:
-			/*child = fork(); //Forks the process to run the sequence command parallely
-			if (child == 0) //Child Process
-			{
-					execute_command(c->u.command[0], profiling); //Runs first command
-			}
-			else if (child > 0) //Parent Process
-			{
-				int status;
-				waitpid(child, &status, 0);
-
-				execute_command(c->u.command[1], profiling);//Run the second command
-				c->status = c->u.command[1]->status;
-			}
-			else
-				error(1,errno, "Unable to fork");*/
 			execute_command(c->u.command[0], profiling);//Run the first command
 			execute_command(c->u.command[1], profiling);//Run the second command
 			c->status = c->u.command[1]->status; //Set the status to that of the second command; can set to first as well, doesn't matter
