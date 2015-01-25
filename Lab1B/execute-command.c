@@ -91,11 +91,17 @@ execute_command (command_t c, int profiling)
 			if (!strcmp (c->u.word[0], "exec")) //Checks for the exec command and runs accordingly, killing parent process
 			{
 				if (c->u.word[1] == NULL)
+				{
+					c->status = -1;
 					error(1,0, "Invalid exec command\n");
+				}
 				check_io(c);
 				int i = execvp(c->u.word[1], c->u.word+1);
 				if (i < 0)
+				{
+					c->status = -1;
 					error(1,errno, "Exec command error");
+				}
 			}
 			child = fork(); //Forks the process to run the simple command properly without messing up parent process
 			if (child == 0) //Child Process
@@ -105,7 +111,10 @@ execute_command (command_t c, int profiling)
 				check_io(c);
 				int i = execvp(c->u.word[0], c->u.word);
 				if (i < 0)
+				{
+					c->status = -1;
 					error(1,errno, "Invalid simple command");
+				}
 			}
 			else if (child > 0) //Parent Process
 			{
@@ -114,7 +123,10 @@ execute_command (command_t c, int profiling)
 				c->status = simple;
 			}
 			else
+			{
+				c->status = -1;
 				error(1,errno, "Unable to fork");
+			}
 			break;
 		case SUBSHELL_COMMAND:
 			check_io(c);
@@ -143,7 +155,10 @@ execute_command (command_t c, int profiling)
 			break;
 		case PIPE_COMMAND:
 			if (pipe(file_descriptor)==-1)
+			{
+				c->status = -1;
 				error(1,0, "Unable to pipe\n");
+			}
 
 			child = fork(); //Forks the process to run the two commands properly as a pipe
 
@@ -151,7 +166,10 @@ execute_command (command_t c, int profiling)
 			{
 				close(file_descriptor[0]); //Close the reading from the child
 				if (dup2(file_descriptor[1],1) == -1)
+				{
+					c->status = -1;
 					error(1,errno, "Unable to duplicate pipe child file descriptors");
+				}
 				execute_command(c->u.command[0], profiling); //Executes the first command
 				c->status = c->u.command[0]->status;
 				close(file_descriptor[1]); //Close the writing from the child
@@ -164,19 +182,25 @@ execute_command (command_t c, int profiling)
 
 				close(file_descriptor[1]); //Close the writing from the parent
 				if (dup2(file_descriptor[0],0) == -1)
+				{
+					c->status = -1;
 					error(1,errno, "Unable to duplicate pipe parent file descriptors");
+				}
 				execute_command(c->u.command[1], profiling); //Executes the second command
 				c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
 				close(file_descriptor[0]); //Close the reading from the parent
 			}
 			else //Something happened and the child wasn't produced
+			{
+				c->status = -1;
 				error(1,errno, "Unable to fork");
+			}
 			break;
 		case IF_COMMAND:
 			check_io(c);
 			execute_command(c->u.command[0], profiling);
 			c->status = c->u.command[0]->status;
-			if (!c->status) //If condition succeeded (status is non-zero): if condition is true
+			if ((!c->status) && (c->status != -1)) //If condition succeeded (status is non-zero): if condition is true
 			{
 				execute_command(c->u.command[1], profiling);
 				c->status = c->u.command[1]->status;
@@ -215,6 +239,7 @@ execute_command (command_t c, int profiling)
 			} while (!c->status); //While the statement is true (status is 0) continue doing while command
 			break;
 		default:
+			c->status = -1;
 			error(1,0, "Invalid command stored\n");
 	}
 }
