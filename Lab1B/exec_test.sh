@@ -62,6 +62,13 @@ rm file2
 rm f1.txt
 rm in.txt
 
+#Test if with bad cases
+if dog.txt
+then echo success
+else
+echo booooo
+fi
+
 #Test exec command
 exec cat dog
 
