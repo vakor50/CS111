@@ -89,20 +89,37 @@ execute_command (command_t c, int profiling)
 			child = fork();
 			if (child == 0)
 			{
-				while (c->u.word[counter] != NULL)
+				if (c->u.word[0][0] == ':')
+					_exit(0);
+				/*while (c->u.word[counter] != NULL)
 				{
 					if (c->u.word[counter] == ":")
 					{
 						c->u.word[counter] = "true";
 					}
 					counter++;
-				}
+				}*/
+
 				check_io(c);
-				int i = execvp(c->u.word[0], c->u.word);
-				if (i < 0)
+				int i;
+
+				if (c->u.word[0] == "exec")
 				{
-					error(1,0, "Something's wrong with the execution.\n");
-					error(1,0, "%s\n", c->u.word[0]);
+					if (c->u.word[1] == NULL)
+						error(1,0, "Something's wrong with the execution.\n");
+					i = execvp(c->u.word[1], c->u.word+1);
+					if (i < 0)
+					{
+						error(1,0, "Something's wrong with the execution.\n");
+					}
+				}
+				else
+				{
+					i = execvp(c->u.word[0], c->u.word);
+					if (i < 0)
+					{
+						error(1,0, "Something's wrong with the execution.\n");
+					}
 				}
 			}
 			else if (child > 0)
