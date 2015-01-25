@@ -88,28 +88,24 @@ execute_command (command_t c, int profiling)
 	switch(c->type)
 	{
 		case SIMPLE_COMMAND:
+			if (!strcmp (c->u.word[0], "exec")) //Checks for the exec command and runs accordingly, killing parent process
+			{
+				if (c->u.word[1] == NULL)
+					error(1,0, "Invalid exec command\n");
+				check_io(c);
+				int i = execvp(c->u.word[1], c->u.word+1);
+				if (i < 0)
+					error(1,errno, "Exec command error");
+			}
 			child = fork(); //Forks the process to run the simple command properly without messing up parent process
 			if (child == 0) //Child Process
 			{
 				if (c->u.word[0][0] == ':') //Check for a colon simple command
 					_exit(0);  //Does nothing with null utility
-
 				check_io(c);
-				int i;
-				if (!strcmp (c->u.word[0], "exec")) //Checks for the exec command and runs accordingly
-				{
-					if (c->u.word[1] == NULL)
-						error(1,0, "Invalid exec command\n");
-					i = execvp(c->u.word[1], c->u.word+1);
-					if (i < 0)
-						error(1,errno, "Exec command error");
-				}
-				else
-				{
-					i = execvp(c->u.word[0], c->u.word);
-					if (i < 0)
-						error(1,errno, "Invalid simple command");
-				}
+				int i = execvp(c->u.word[0], c->u.word);
+				if (i < 0)
+					error(1,errno, "Invalid simple command");
 			}
 			else if (child > 0) //Parent Process
 			{
