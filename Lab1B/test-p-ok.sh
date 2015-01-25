@@ -71,7 +71,6 @@ rm test.txt
 rm file2
 rm f1.txt
 rm in.txt
-
 EOF
 
 cat >test.exp <<'EOF'
