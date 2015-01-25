@@ -53,25 +53,25 @@ check_io (command_t c)
 	if (c->input != NULL)
 	{
 		// read file of filename c->input, from stdin
-		int temp_in = open(c->input, O_RDONLY, 0666);
+		int temp_in = open(c->input, O_RDONLY, 00660);
 		if (temp_in == -1)
-			fprintf(stderr, "Something's wrong with opening the input.\n");
+			error(1,0,"Something's wrong with opening the input.\n");
 		if (dup2(temp_in, 0) == -1)
-			fprintf(stderr, "Something's wrong with the duplication of file descriptors in the input.\n");
+			error(1,0,"Something's wrong with the duplication of file descriptors in the input.\n");
 		if (close(temp_in) == -1)
-			fprintf(stderr, "Something's wrong with closing the input.\n");
+			error(1,0,"Something's wrong with closing the input.\n");
 	}
 
 	if (c->output != NULL)
 	{
 		// write to a file of name c->output, into stdout
-		int temp_out = open(c->output, O_WRONLY | O_TRUNC | O_CREAT, 0666);
+		int temp_out = open(c->output, O_WRONLY | O_TRUNC | O_CREAT, 00660);
 		if (temp_out == -1)
-			fprintf(stderr, "Something's wrong with opening the output.\n");
+			error(1,0,"Something's wrong with opening the output.\n");
 		if (dup2(temp_out, 1) == -1)
-			fprintf(stderr, "Something's wrong with the duplication of file descriptors in the output.\n");
+			error(1,0,"Something's wrong with the duplication of file descriptors in the output.\n");
 		if (close(temp_out) == -1)
-			fprintf(stderr, "Something's wrong with closing the output.\n");
+			error(1,0,"Something's wrong with closing the output.\n");
 	}
 }
 
@@ -81,7 +81,6 @@ execute_command (command_t c, int profiling)
   /* FIXME: Replace this with your implementation, like 'prepare_profiling'.  */
 	pid_t child;
 	int file_descriptor[2];//0 is write, 1 is read
-	int new_file_descriptor[2]; //This may not be used, don't use unless absolutely necessary
 	int counter = 0;
 
 	switch(c->type)
@@ -94,7 +93,7 @@ execute_command (command_t c, int profiling)
 				{
 					if (c->u.word[counter] == ":")
 					{
-						c->u.word[counter] == "true";
+						c->u.word[counter] = "true";
 					}
 					counter++;
 				}
@@ -102,8 +101,8 @@ execute_command (command_t c, int profiling)
 				int i = execvp(c->u.word[0], c->u.word);
 				if (i < 0)
 				{
-					fprintf(stderr, "Something's wrong with the execution.\n");
-					fprintf(stderr, "%s\n", c->u.word[0]);
+					error(1,0, "Something's wrong with the execution.\n");
+					error(1,0, "%s\n", c->u.word[0]);
 				}
 			}
 			else if (child > 0)
@@ -114,7 +113,7 @@ execute_command (command_t c, int profiling)
 			}
 			else
 			{
-				fprintf(stderr, "Something's wrong with the child, so it can't be made.\n");
+				error(1,0, "Something's wrong with the child, so it can't be made.\n");
 			}
 			break;
 		case SUBSHELL_COMMAND:
@@ -129,7 +128,7 @@ execute_command (command_t c, int profiling)
 			break;
 		case PIPE_COMMAND:
 			if (pipe(file_descriptor)==-1)
-				fprintf(stderr, "Something's wrong with the pipe.\n");
+				error(1,0, "Something's wrong with the pipe.\n");
 
 			child = fork(); //Forks the process to run the two commands properly as a pipe
 
@@ -137,7 +136,7 @@ execute_command (command_t c, int profiling)
 			{
 				close(file_descriptor[0]); //Close the reading from the child
 				if (dup2(file_descriptor[1],1) == -1)
-					fprintf(stderr, "Something's wrong with the file descriptor.\n");
+					error(1,0, "Something's wrong with the file descriptor.\n");
 				execute_command(c->u.command[0], profiling); //Executes the first command
 				c->status = c->u.command[0]->status;
 				close(file_descriptor[1]); //Close the writing from the child
@@ -150,13 +149,13 @@ execute_command (command_t c, int profiling)
 
 				close(file_descriptor[1]); //Close the writing from the parent
 				if (dup2(file_descriptor[0],0) == -1)
-					fprintf(stderr, "Something's wrong with the file descriptor.\n");
+					error(1,0, "Something's wrong with the file descriptor.\n");
 				execute_command(c->u.command[1], profiling); //Executes the second command
 				c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
 				close(file_descriptor[0]); //Close the reading from the parent
 			}
 			else //Something happened and the child wasn't produced
-				fprintf(stderr, "Something's wrong with the child, so it can't be made.\n");
+				error(1,0, "Something's wrong with the child, so it can't be made.\n");
 			break;
 		case IF_COMMAND:
 			check_io(c);
@@ -201,6 +200,6 @@ execute_command (command_t c, int profiling)
 			} while (!c->status); //While the statement is true (status is 0) continue doing while command
 			break;
 		default:
-			fprintf(stderr, "Something's wrong with the command and how it's stored.\n");
+			error(1,0, "Something's wrong with the command and how it's stored.\n");
 	}
 }
