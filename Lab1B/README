@@ -10,8 +10,15 @@ ID #304273900
 
 Lab1B
 
-We implemented the execution of the commands using recursion of the fucntion execute_command().
-
+We implemented the execution of the commands using recursion of the fucntion execute_command() 
+in execute-command.c. execute_command() checks the type of the command_t being passed to it. 
+Depending on the command type, we would go into the components of the command. If the command
+was a simple command, we would execute the words in the command's u.word. If the command was a
+subshell, sequence, pipe, if, until, or while command, we would execute the relevant components
+If the command had input or output locations, we would input or output the data from the command.
+The commands with the most difficulty were:
+- simple, where we figured out how to read and write to files set under "input" or "output".
+- pipe, where we separated the commands on opposite sides of the pipe and executed them
 
 Lab 1A
 Our design idea was to take in a char* from input buffer and turning these 
