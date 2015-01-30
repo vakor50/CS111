@@ -61,7 +61,7 @@ make_timeval(double sec, double usec)
 	return (sec+(usec/1000000));
 }
 
-double[]
+double*
 calculate_time_end(double start_time)
 {
 	double real_end_time, execution_time, user_time, system_time;
@@ -84,7 +84,7 @@ calculate_time_end(double start_time)
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
 
 	double return_array[] = {real_end_time, execution_time, user_time, system_time};
-	return return_array[];
+	return return_array;
 }
 
 int
