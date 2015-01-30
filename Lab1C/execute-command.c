@@ -66,7 +66,7 @@ calculate_time_end(double start_time)
 {
 	double real_end_time, execution_time, user_time, system_time;
 	struct timespec real_time, monotonic_time;
-	struct timeval usage_time, usage_time_children;
+	struct rusage usage_time, usage_time_children;
 
 	if (clock_gettime(CLOCK_REALTIME, &real_time) < 0)
 		error(1,0,"Unable to receive real clock time\n");
