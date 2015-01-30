@@ -108,7 +108,7 @@ b
 cat: dog: No such file or directory
 EOF
 
-../profsh test.sh &>test.out
+../profsh test.sh >test.out 2>&1
 
 diff -u test.exp test.out || exit
 #test ! -s test.err || {
