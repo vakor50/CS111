@@ -60,7 +60,7 @@ rm f1.txt
 rm in.txt
 
 #Test exec command
-exec cat dog
+exec echo dog
 
 #Test what happens after exec
 echo exec_ran
