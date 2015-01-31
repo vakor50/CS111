@@ -163,47 +163,26 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	}
 	strcat(buffer, temp);
 	
-	sprintf(temp2, "%f", values[1]);
-	if ((strlen(temp2)+size) < 1023) //Execution Time
+	for (int i = 1; i < 4; i++)
 	{
-		sprintf(temp,"%.3f ", values[1]);
-		size+=strlen(temp2);
+		sprintf(temp2, "%f", values[i]);
+		if ((strlen(temp2)+size) < 1023) //Execution Time
+		{
+			sprintf(temp,"%.3f ", values[i]);
+			size+=strlen(temp2);
+		}
+		else
+		{
+			snprintf(temp,(1023-size),"%.3f ", values[i]);
+			size = 1023;
+		}
+		strcat(buffer, temp);
 	}
-	else
-	{
-		snprintf(temp,(1023-size),"%.3f ", values[1]);
-		size = 1023;
-	}
-	strcat(buffer, temp);
-	
-	sprintf(temp2, "%f", values[2]);
-	if ((strlen(temp2)+size) < 1023) //User CPU Time
-	{
-		sprintf(temp,"%.3f ", values[2]);
-		size+=strlen(temp2);
-	}
-	else
-	{
-		snprintf(temp,(1023-size),"%.3f ", values[2]);
-		size = 1023;
-	}
-	strcat(buffer, temp);
-	
-	sprintf(temp2, "%f", values[3]);
-	if ((strlen(temp2)+size) < 1023) //System CPU Time
-	{
-		sprintf(temp,"%.3f ", values[3]);
-		size+=strlen(temp2);
-	}
-	else
-	{
-		snprintf(temp,(1023-size),"%.3f ", values[3]);
-		size = 1023;
-	}
-	strcat(buffer, temp);
 
 	memset(temp,0,sizeof(temp));
-	strcat(temp, print_command_line(c,pid)); //Prints command or process id
+	char *temp3 = print_command_line(c,pid);
+	printf("%s",temp3);
+	strcat(temp, temp3); //Prints command or process id
 	if ((strlen(temp)+size) < 1023)
 	{
 		strcat(buffer, temp);
@@ -292,9 +271,8 @@ execute_command (command_t c, int profiling)
 				}
 				else if (child > 0)
 				{
-					int simple;
-					waitpid(child, &simple, 0);
-					c->status = WEXITSTATUS(simple);
+					waitpid(child, &status, 0);
+					c->status = WEXITSTATUS(status);
 					if (profiling != -1)
 					{
 						values = calculate_end_time(start_time);
@@ -324,9 +302,8 @@ execute_command (command_t c, int profiling)
 			}
 			else if (child > 0) //Parent Process
 			{
-				int simple;
-				waitpid(child, &simple, 0);
-				c->status = WEXITSTATUS(simple);
+				waitpid(child, &status, 0);
+				c->status = WEXITSTATUS(status);
 				if (profiling != -1)
 				{
 					values = calculate_end_time(start_time);
@@ -355,7 +332,7 @@ execute_command (command_t c, int profiling)
 				if (profiling != -1)
 				{	
 					values = calculate_end_time(start_time);
-					print_line(values, c, profiling, getpid());
+					print_line(values, c, profiling, child);
 				}
 			}
 			else
