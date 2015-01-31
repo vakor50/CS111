@@ -23,6 +23,10 @@
 
 #include "command.h"
 
+#include <time.h> //gettime
+#include <sys/time.h> //getrusage
+#include <sys/resource.h> //getrusage
+
 static char const *program_name;
 static char const *script_name;
 
@@ -77,13 +81,13 @@ main (int argc, char **argv)
   command_t last_command = NULL;
   command_t command;
   //ADDED CODE
+  double start_time;
   if (profiling != -1)
   {
     struct timespec monotonic_time;
     if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) < 0)
       error(1,0,"Unable to receive monotonic clock start time\n");
-    double start_time = make_timespec(monotonic_time.tv_sec, monotonic_time.tv_nsec);
-    double *values;
+    start_time = make_timespec(monotonic_time.tv_sec, monotonic_time.tv_nsec);
   }
   //ADDED CODE
   while ((command = read_command_stream (command_stream)))
@@ -102,7 +106,7 @@ main (int argc, char **argv)
   //ADDED CODE
   if (profiling != -1)
   {
-    values = calculate_end_time(start_time);
+    double *values = calculate_end_time(start_time);
     print_line(values, NULL, profiling, getpid());
   }
   //ADDED CODE
