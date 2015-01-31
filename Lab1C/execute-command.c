@@ -111,7 +111,7 @@ print_command_line(command_t c, char *temp[], pid_t pid)
 	    case SUBSHELL_COMMAND:
 	    case PIPE_COMMAND:
 			strcat(*temp, "[");
-			char *temp2[20];
+			char temp2[20];
 			sprintf(temp2, "%d", pid);
 			if (pid != -1)
 				strcat(*temp, temp2);
@@ -200,7 +200,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	}
 	strcat(buffer, temp);
 
-	temp = "";
+	memset(temp,0,sizeof(temp));
 	print_command_line(c, &temp, pid); //Prints command or process id
 	if ((strlen(temp)+size) < 1023)
 	{
