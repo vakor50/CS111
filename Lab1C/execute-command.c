@@ -95,7 +95,7 @@ calculate_end_time(double start_time)
 }
 
 void
-print_command_line(command_t c, char temp*[], pid_t pid)
+print_command_line(command_t c, char *temp[], pid_t pid)
 {
 	int counter = 0;
 	switch(c->type)
