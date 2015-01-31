@@ -17,6 +17,7 @@
 
 #include "command.h"
 #include "command-internals.h"
+#include "alloc.h"
 
 #include <error.h>
 #include <errno.h> //creates integer errno
@@ -84,7 +85,7 @@ calculate_end_time(double start_time)
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
 
 	//double return_array[] = {real_end_time, execution_time, user_time, system_time};
-	double *return_array;
+	double *return_array = checked_malloc(4*sizeof(double));
 	return_array[0] = real_end_time;
 	return_array[1] = execution_time;
 	return_array[2] = user_time;
@@ -94,7 +95,7 @@ calculate_end_time(double start_time)
 }
 
 void
-print_command_line(command_t c, char *temp[], pid_t pid)
+print_command_line(command_t c, char temp*[], pid_t pid)
 {
 	int counter = 0;
 	switch(c->type)
@@ -317,7 +318,7 @@ execute_command (command_t c, int profiling)
 			execute_command(c->u.command[0], profiling);//Run the subshell command
 			c->status = c->u.command[0]->status; //Set the status to that of the subshell command
 			values = calculate_end_time(start_time);
-			print_line(values, c, profiling, child);
+			print_line(values, c, profiling, getpid());
 			break;
 		case SEQUENCE_COMMAND:
 			execute_command(c->u.command[0], profiling);//Run the first command
