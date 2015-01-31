@@ -261,6 +261,7 @@ execute_command (command_t c, int profiling)
   /* FIXME: Replace this with your implementation, like 'prepare_profiling'.  */
 	pid_t child, grandchild;
 	int file_descriptor[2];//0 is read, 1 is write
+	int status;
 	
 	struct timespec monotonic_time;
 	if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) < 0)
@@ -341,7 +342,7 @@ execute_command (command_t c, int profiling)
 			break;
 
 		case SUBSHELL_COMMAND:
-			int status;
+			status;
 			child = fork();
 			if (!child) //Child was succesfully created and this is the child
 			{
@@ -377,7 +378,7 @@ execute_command (command_t c, int profiling)
 				c->status = -1;
 				error(1,0, "Unable to pipe\n");
 			}
-			int status;
+			status;
 			child = fork(); //Forks the process to run the two commands properly as a pipe
 			if (!child) //Child was succesfully created and this is the child
 			{
