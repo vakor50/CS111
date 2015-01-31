@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <sys/types.h>  //pid_t
+
 #define SEMICOLON_CHAR		';'
 #define PIPE_CHAR			'|'
 #define PAREN_OPEN_CHAR		'('
