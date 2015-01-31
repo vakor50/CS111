@@ -21,7 +21,7 @@
 #include <error.h>
 #include <errno.h> //creates integer errno
 
-#include <unistd.h> //pipe
+#include <unistd.h> //pipe, read, write
 #include <stdio.h> //standard input output
 #include <string.h> //strcmp
 #include <sys/types.h>  //pid_t
@@ -43,7 +43,7 @@ prepare_profiling (char const *name)
      add auxiliary functions and otherwise modify the source code.
      You can also use external functions defined in the GNU C Library.  */
 	int file_descriptor;
-	file_descriptor = open(name, O_RDONLY | O_CREAT | O_TRUNC, 0666);
+	file_descriptor = open(name, O_RDONLY | O_CREAT | O_APPEND, 0666);
 	if (file_descriptor < 0)
 		error(1,0,"Unable to create file descriptor for profiling\n");
 	return file_descriptor;
@@ -62,7 +62,7 @@ make_timeval(double sec, double usec)
 }
 
 double*
-calculate_time_end(double start_time)
+calculate_end_time(double start_time)
 {
 	double real_end_time, execution_time, user_time, system_time;
 	struct timespec real_time, monotonic_time;
@@ -85,6 +85,125 @@ calculate_time_end(double start_time)
 
 	double return_array[] = {real_end_time, execution_time, user_time, system_time};
 	return return_array;
+}
+
+void
+print_command(command_t c, char **temp, pid_t pid)
+{
+	switch(c->type)
+	{
+		case SIMPLE_COMMAND:
+			int counter;
+			while (c->u.word[counter] != NULL)
+			{
+				strcat(temp,c->u.word[counter]);
+				strcat(temp," ");
+				counter++;
+			}
+			return temp;
+			break;
+	    case SUBSHELL_COMMAND:
+	    case PIPE_COMMAND:
+			strcat(temp, "[");
+			if (pid != NULL)
+				strcat(temp, pid);
+			else
+				error(1,0,"No pid passed in\n");
+			strcat(temp, "]");
+			break;
+	    case SEQUENCE_COMMAND:
+	    case IF_COMMAND:
+	    case UNTIL_COMMAND:
+	    case WHILE_COMMAND: //Nothing doing, unless there is an input/output
+	    	break;
+	    default:
+	    	break;
+	}
+	if (c->input != NULL)
+	{
+		// read file of filename c->input, from stdin
+		strcat(temp, "<");
+		strcat(temp, c->input);
+	}
+
+	if (c->output != NULL)
+	{
+		// write to a file of name c->output, into stdout
+		strcat(temp, ">");
+		strcat(temp, c->output);
+	}
+}
+
+void
+print_line(double *values, command_t c, int profiling, pid_t pid)
+{
+	char buffer[1023];
+	char temp[1023];
+	int size = 0;
+
+	if ((strlen((char*)values[0])+size) < 1023) //Real End Time
+	{
+		sprintf(temp,"%.2f ", values[0]);
+		size+=strlen((char*)values[0]);
+	}
+	else
+	{
+		snprintf(temp,(1023-size),"%.2f ", values[0]);
+		size = 1023;
+	}
+	strcat(buffer, temp);
+
+	if ((strlen((char*)values[1])+size) < 1023) //Execution Time
+	{
+		sprintf(temp,"%.3f ", values[1]);
+		size+=strlen((char*)values[1]);
+	}
+	else
+	{
+		snprintf(temp,(1023-size),"%.3f ", values[1]);
+		size = 1023;
+	}
+	strcat(buffer, temp);
+	if ((strlen((char*)values[2])+size) < 1023) //User CPU Time
+	{
+		sprintf(temp,"%.3f ", values[2]);
+		size+=strlen((char*)values[2]);
+	}
+	else
+	{
+		snprintf(temp,(1023-size),"%.3f ", values[2]);
+		size = 1023;
+	}
+	strcat(buffer, temp);
+	if ((strlen((char*)values[3])+size) < 1023) //System CPU Time
+	{
+		sprintf(temp,"%.3f ", values[3]);
+		size+=strlen((char*)values[3]);
+	}
+	else
+	{
+		snprintf(temp,(1023-size),"%.3f ", values[3]);
+		size = 1023;
+	}
+	strcat(buffer, temp);
+
+	temp = "";
+	print_command(c, &temp, pid); //Prints command or process id
+	if ((strlen(temp)+size) < 1023)
+	{
+		strcat(buffer, temp);
+		size+=strlen(temp);
+	}
+	else
+	{
+		strncat(buffer, temp, (1023-size));
+		size = 1023;
+	}
+
+	if (write(profiling, buffer, size) == -1)
+		error(1,0,"Unable to write to file log\n");
+	if (write(profiling, "\n", 1))
+		error(1,0,"Unable to write to file log\n");
 }
 
 int
@@ -127,7 +246,12 @@ execute_command (command_t c, int profiling)
   /* FIXME: Replace this with your implementation, like 'prepare_profiling'.  */
 	pid_t child, grandchild;
 	int file_descriptor[2];//0 is read, 1 is write
-	//int counter = 0;
+	
+	struct timespec monotonic_time;
+	if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) < 0)
+		error(1,0,"Unable to receive monotonic clock start time\n");
+	double start_time = make_timespec(monotonic_time.tv_sec, monotonic_time.tv_nsec);
+	double *values;
 
 	switch(c->type)
 	{
@@ -165,17 +289,22 @@ execute_command (command_t c, int profiling)
 				int simple;
 				waitpid(child, &simple, 0);
 				c->status = WEXITSTATUS(simple);
+				values = calculate_end_time(start_time);
+				print_line(values, c, profiling, child);
 			}
 			else
 			{
 				c->status = -1;
 				error(1,errno, "Unable to fork");
 			}
+
 			break;
 		case SUBSHELL_COMMAND:
 			check_io(c);
 			execute_command(c->u.command[0], profiling);//Run the subshell command
 			c->status = c->u.command[0]->status; //Set the status to that of the subshell command
+			values = calculate_end_time(start_time);
+			print_line(values, c, profiling, child);
 			break;
 		case SEQUENCE_COMMAND:
 			execute_command(c->u.command[0], profiling);//Run the first command
@@ -231,6 +360,8 @@ execute_command (command_t c, int profiling)
 				close(file_descriptor[0]);
 				close(file_descriptor[1]);
 				waitpid(child, &status, 0);
+				values = calculate_end_time(start_time);
+				print_line(values, c, profiling, child);
 			}
 			else //Something happened and the child wasn't produced
 			{
