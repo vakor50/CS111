@@ -26,6 +26,7 @@
 #include <time.h> //gettime
 #include <sys/time.h> //getrusage
 #include <sys/resource.h> //getrusage
+#include <sys/types.h>  //pid_t
 
 static char const *program_name;
 static char const *script_name;

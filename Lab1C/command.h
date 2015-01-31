@@ -64,6 +64,7 @@ typedef struct token *token_t;
 typedef struct token_stream *token_stream_t;
 typedef struct token_stack *token_stack_t;
 
+double make_timespec(double, double);
 double* calculate_end_time(double);
 void print_line(double*, command_t, int, pid_t);
 
