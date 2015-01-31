@@ -218,7 +218,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 
 	if (write(profiling, buffer, size) == -1)
 		error(1,0,"Unable to write to file log\n");
-	if (write(profiling, "\n", 1))
+	if (write(profiling, "\n", 1) == -1)
 		error(1,0,"Unable to write to file log\n");
 }
 
