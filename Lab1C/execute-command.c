@@ -112,7 +112,7 @@ print_command_line(command_t c, pid_t pid)
 	    case SUBSHELL_COMMAND:
 	    case PIPE_COMMAND:
 			strcat(temp, "[");
-			char temp2[20];
+			char *temp2 = (char*)checked_malloc(20*sizeof(char));
 			sprintf(temp2, "%d", pid);
 			if (pid != -1)
 				strcat(temp, temp2);
@@ -146,15 +146,18 @@ print_command_line(command_t c, pid_t pid)
 void
 print_line(double *values, command_t c, int profiling, pid_t pid)
 {
-	char buffer[1023];
-	char temp[1023], temp2[1023];
+	char *buffer = (char*)checked_malloc(1023*sizeof(char));
+	char *temp = (char*)checked_malloc(1023*sizeof(char));
+	char *temp2 = (char*)checked_malloc(1023*sizeof(char));
 	int size = 0;
-
+	//printf("%s %d\n",buffer, size);
 	sprintf(temp2, "%f", values[0]);
 	if ((strlen(temp2)+size) < 1023) //Real End Time
 	{
+		//printf("%f %d\n",values[0], size);
 		sprintf(temp,"%.2f ", values[0]);
-		size+=strlen(temp2);
+		size+=strlen(temp);
+		//printf("%s %d\n",buffer, size);
 	}
 	else
 	{
@@ -162,14 +165,16 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		size = 1023;
 	}
 	strcat(buffer, temp);
-	
-	for (int i = 1; i < 4; i++)
+	//printf("%s %d\n",buffer, size);
+	int i = 1;
+	for (i = 1; i < 4; i++)
 	{
+		memset(temp2,0,sizeof(temp2));
 		sprintf(temp2, "%f", values[i]);
 		if ((strlen(temp2)+size) < 1023) //Execution Time
 		{
 			sprintf(temp,"%.3f ", values[i]);
-			size+=strlen(temp2);
+			size+=strlen(temp);
 		}
 		else
 		{
@@ -181,8 +186,8 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 
 	memset(temp,0,sizeof(temp));
 	char *temp3 = print_command_line(c,pid);
-	printf("%s",temp3);
 	strcat(temp, temp3); //Prints command or process id
+	//printf("%s %d\n",buffer, size);
 	if ((strlen(temp)+size) < 1023)
 	{
 		strcat(buffer, temp);
@@ -193,7 +198,8 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		strncat(buffer, temp, (1023-size));
 		size = 1023;
 	}
-
+	//printf("%s %d\n",buffer, size);
+	//exit(0);
 	if (write(profiling, buffer, size) == -1)
 		error(1,errno,"Unable to write to file log\n");
 	if (write(profiling, "\n", 1) == -1)
