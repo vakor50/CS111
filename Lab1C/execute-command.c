@@ -290,14 +290,16 @@ execute_command (command_t c, int profiling)
 			child = fork(); //Forks the process to run the simple command properly without messing up parent process
 			if (child == 0) //Child Process
 			{
-				if (c->u.word[0][0] == ':') //Check for a colon simple command
-					_exit(0);  //Does nothing with null utility
-				check_io(c);
-				int i = execvp(c->u.word[0], c->u.word);
-				if (i < 0)
+				if (c->u.word[0][0] != ':') //Check for a colon simple command
+					//_exit(0);  //Does nothing with null utility
 				{
-					c->status = -1;
-					error(1,errno, "Invalid simple command");
+					check_io(c);
+					int i = execvp(c->u.word[0], c->u.word);
+					if (i < 0)
+					{
+						c->status = -1;
+						error(1,errno, "Invalid simple command");
+					}
 				}
 			}
 			else if (child > 0) //Parent Process
