@@ -84,7 +84,12 @@ calculate_end_time(double start_time)
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
 
 	//double return_array[] = {real_end_time, execution_time, user_time, system_time};
-	double *return_array = {real_end_time, execution_time, user_time, system_time};
+	double *return_array;
+	return_array[0] = real_end_time;
+	return_array[1] = execution_time;
+	return_array[2] = user_time;
+	return_array[3] = system_time;
+	//= {real_end_time, execution_time, user_time, system_time};
 	return return_array;
 }
 
@@ -106,8 +111,10 @@ print_command_line(command_t c, char *temp[], pid_t pid)
 	    case SUBSHELL_COMMAND:
 	    case PIPE_COMMAND:
 			strcat(*temp, "[");
+			char *temp2[20];
+			sprintf(temp2, "%d", pid);
 			if (pid != -1)
-				strcat(*temp, pid);
+				strcat(*temp, temp2);
 			else
 				error(1,0,"No pid passed in\n");
 			strcat(*temp, "]");
@@ -194,7 +201,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	strcat(buffer, temp);
 
 	temp = "";
-	print_command_line(c, &(*temp), pid); //Prints command or process id
+	print_command_line(c, &temp, pid); //Prints command or process id
 	if ((strlen(temp)+size) < 1023)
 	{
 		strcat(buffer, temp);
