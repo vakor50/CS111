@@ -183,12 +183,12 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		sprintf(temp2, "%f", values[i]);
 		if ((strlen(temp2)+size) < 1023) //Execution Time
 		{
-			sprintf(temp,"%.3f ", values[i]);
+			sprintf(temp,"%.6f ", values[i]);
 			size+=strlen(temp);
 		}
 		else
 		{
-			snprintf(temp,(1023-size),"%.3f ", values[i]);
+			snprintf(temp,(1023-size),"%.6f ", values[i]);
 			size = 1023;
 		}
 		strcat(buffer, temp);
@@ -338,10 +338,12 @@ execute_command (command_t c, int profiling)
 				check_io(c);
 				execute_command(c->u.command[0], profiling);//Run the subshell command
 				c->status = c->u.command[0]->status; //Set the status to that of the subshell command
+				_exit(0);
 			}
 			else if (child > 0) //This is the parent
 			{
 				waitpid(child, &status, 0);
+				c->status = WEXITSTATUS(status);
 				if (profiling != -1)
 				{	
 					values = calculate_end_time(start_time);

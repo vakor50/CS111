@@ -53,14 +53,21 @@ echo b > file2
 cp file2 file
 until cat file; do rm file; done
 
+#Check subshells
+(echo a)
+(echo a | cat)
+(echo bob) > file3
+(exec echo bob)
+
 #Clean all temp files
 rm test.txt
 rm file2
 rm f1.txt
 rm in.txt
+rm file3
 
 #Test exec command
-exec cat dog
+#exec cat dog
 
 #Test what happens after exec
 echo exec_ran
