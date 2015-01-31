@@ -342,7 +342,6 @@ execute_command (command_t c, int profiling)
 			break;
 
 		case SUBSHELL_COMMAND:
-			status;
 			child = fork();
 			if (!child) //Child was succesfully created and this is the child
 			{
@@ -378,7 +377,6 @@ execute_command (command_t c, int profiling)
 				c->status = -1;
 				error(1,0, "Unable to pipe\n");
 			}
-			status;
 			child = fork(); //Forks the process to run the two commands properly as a pipe
 			if (!child) //Child was succesfully created and this is the child
 			{
