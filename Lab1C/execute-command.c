@@ -88,7 +88,7 @@ calculate_end_time(double start_time)
 }
 
 void
-print_command(command_t c, char **temp, pid_t pid)
+print_command(command_t c, char *temp[], pid_t pid)
 {
 	switch(c->type)
 	{
@@ -96,20 +96,20 @@ print_command(command_t c, char **temp, pid_t pid)
 			int counter;
 			while (c->u.word[counter] != NULL)
 			{
-				strcat(temp,c->u.word[counter]);
-				strcat(temp," ");
+				strcat(*temp,c->u.word[counter]);
+				strcat(*temp," ");
 				counter++;
 			}
-			return temp;
+			//return temp;
 			break;
 	    case SUBSHELL_COMMAND:
 	    case PIPE_COMMAND:
-			strcat(temp, "[");
+			strcat(*temp, "[");
 			if (pid != NULL)
-				strcat(temp, pid);
+				strcat(*temp, pid);
 			else
 				error(1,0,"No pid passed in\n");
-			strcat(temp, "]");
+			strcat(*temp, "]");
 			break;
 	    case SEQUENCE_COMMAND:
 	    case IF_COMMAND:
@@ -122,15 +122,15 @@ print_command(command_t c, char **temp, pid_t pid)
 	if (c->input != NULL)
 	{
 		// read file of filename c->input, from stdin
-		strcat(temp, "<");
-		strcat(temp, c->input);
+		strcat(*temp, "<");
+		strcat(*temp, c->input);
 	}
 
 	if (c->output != NULL)
 	{
 		// write to a file of name c->output, into stdout
-		strcat(temp, ">");
-		strcat(temp, c->output);
+		strcat(*temp, ">");
+		strcat(*temp, c->output);
 	}
 }
 
