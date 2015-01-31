@@ -83,12 +83,13 @@ calculate_end_time(double start_time)
 	user_time = make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) + make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec);
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
 
-	double *return_array[] = {real_end_time, execution_time, user_time, system_time};
+	//double return_array[] = {real_end_time, execution_time, user_time, system_time};
+	double *return_array = {real_end_time, execution_time, user_time, system_time};
 	return return_array;
 }
 
 void
-print_command(command_t c, char *temp[], pid_t pid)
+print_command_line(command_t c, char *temp[], pid_t pid)
 {
 	int counter = 0;
 	switch(c->type)
@@ -193,7 +194,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	strcat(buffer, temp);
 
 	temp = "";
-	print_command(c, &(*temp), pid); //Prints command or process id
+	print_command_line(c, &(*temp), pid); //Prints command or process id
 	if ((strlen(temp)+size) < 1023)
 	{
 		strcat(buffer, temp);
