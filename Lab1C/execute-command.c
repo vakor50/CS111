@@ -98,28 +98,28 @@ char*
 print_command_line(command_t c, pid_t pid)
 {
 	int counter = 0;
-	char temp[1023];
+	char temp = checked_malloc(1023*sizeof(char*));
 	switch(c->type)
 	{
 		case SIMPLE_COMMAND:
 			while (c->u.word[counter] != NULL)
 			{
-				strcat(*temp,c->u.word[counter]);
-				strcat(*temp," ");
+				strcat(temp,c->u.word[counter]);
+				strcat(temp," ");
 				counter++;
 			}
 			//return temp;
 			break;
 	    case SUBSHELL_COMMAND:
 	    case PIPE_COMMAND:
-			strcat(*temp, "[");
+			strcat(temp, "[");
 			char temp2[20];
 			sprintf(temp2, "%d", pid);
 			if (pid != -1)
-				strcat(*temp, temp2);
+				strcat(temp, temp2);
 			else
 				error(1,0,"No pid passed in\n");
-			strcat(*temp, "]");
+			strcat(temp, "]");
 			break;
 	    case SEQUENCE_COMMAND:
 	    case IF_COMMAND:
@@ -132,15 +132,16 @@ print_command_line(command_t c, pid_t pid)
 	if (c->input != NULL)
 	{
 		// read file of filename c->input, from stdin
-		strcat(*temp, "<");
-		strcat(*temp, c->input);
+		strcat(temp, "<");
+		strcat(temp, c->input);
 	}
 	if (c->output != NULL)
 	{
 		// write to a file of name c->output, into stdout
-		strcat(*temp, ">");
-		strcat(*temp, c->output);
+		strcat(temp, ">");
+		strcat(temp, c->output);
 	}
+	return temp;
 }
 
 void
