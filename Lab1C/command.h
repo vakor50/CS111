@@ -62,6 +62,9 @@ typedef struct token *token_t;
 typedef struct token_stream *token_stream_t;
 typedef struct token_stack *token_stack_t;
 
+double* calculate_end_time(double);
+void print_line(double*, command_t, int, pid_t);
+
 /* Create a command stream from GETBYTE and ARG.  A reader of
    the command stream will invoke GETBYTE (ARG) to get the next byte.
    GETBYTE will return the next input byte, or a negative number
@@ -88,6 +91,3 @@ void execute_command (command_t, int);
 /* Return the exit status of a command, which must have previously
    been executed.  Wait for the command, if it is not already finished.  */
 int command_status (command_t);
-
-double* calculate_end_time(double start_time);
-void print_line(double *values, command_t c, int profiling, pid_t pid);
