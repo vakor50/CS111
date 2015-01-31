@@ -98,7 +98,7 @@ char*
 print_command_line(command_t c, pid_t pid)
 {
 	int counter = 0;
-	char temp = checked_malloc(1023*sizeof(char*));
+	char *temp = (char*)checked_malloc(1023*sizeof(char));
 	switch(c->type)
 	{
 		case SIMPLE_COMMAND:
