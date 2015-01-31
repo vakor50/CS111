@@ -274,32 +274,49 @@ execute_command (command_t c, int profiling)
 		case SIMPLE_COMMAND:
 			if (!strcmp (c->u.word[0], "exec")) //Checks for the exec command and runs accordingly, killing parent process
 			{
-				if (c->u.word[1] == NULL)
+				child = fork();
+				if (child == 0) //Child Process
 				{
-					c->status = -1;
-					error(1,0, "Invalid exec command\n");
-				}
-				check_io(c);
-				int i = execvp(c->u.word[1], c->u.word+1);
-				if (i < 0)
-				{
-					c->status = -1;
-					error(1,errno, "Exec command error");
-				}
-			}
-			child = fork(); //Forks the process to run the simple command properly without messing up parent process
-			if (child == 0) //Child Process
-			{
-				if (c->u.word[0][0] != ':') //Check for a colon simple command
-					//_exit(0);  //Does nothing with null utility
-				{
+					if (c->u.word[1] == NULL)
+					{
+						c->status = -1;
+						error(1,0, "Invalid exec command\n");
+					}
 					check_io(c);
-					int i = execvp(c->u.word[0], c->u.word);
+					int i = execvp(c->u.word[1], c->u.word+1);
 					if (i < 0)
 					{
 						c->status = -1;
-						error(1,errno, "Invalid simple command");
+						error(1,errno, "Exec command error");
 					}
+				}
+				else if (child > 0)
+				{
+					int simple;
+					waitpid(child, &simple, 0);
+					c->status = WEXITSTATUS(simple);
+					values = calculate_end_time(start_time);
+					print_line(values, c, profiling, child);
+					_exit(0);
+				} 
+				else
+				{
+					c->status = -1;
+					error(1,errno, "Unable to fork");
+				}
+			} //Done Exec Implementation
+
+			child = fork(); //Forks the process to run the simple command properly without messing up parent process
+			if (child == 0) //Child Process
+			{
+				if (c->u.word[0][0] == ':') //Check for a colon simple command
+					_exit(0);  //Does nothing with null utility
+				check_io(c);
+				int i = execvp(c->u.word[0], c->u.word);
+				if (i < 0)
+				{
+					c->status = -1;
+					error(1,errno, "Invalid simple command");
 				}
 			}
 			else if (child > 0) //Parent Process
