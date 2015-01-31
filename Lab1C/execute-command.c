@@ -90,10 +90,10 @@ calculate_end_time(double start_time)
 void
 print_command(command_t c, char *temp[], pid_t pid)
 {
+	int counter = 0;
 	switch(c->type)
 	{
 		case SIMPLE_COMMAND:
-			int counter;
 			while (c->u.word[counter] != NULL)
 			{
 				strcat(*temp,c->u.word[counter]);
@@ -105,7 +105,7 @@ print_command(command_t c, char *temp[], pid_t pid)
 	    case SUBSHELL_COMMAND:
 	    case PIPE_COMMAND:
 			strcat(*temp, "[");
-			if (pid != NULL)
+			if (pid != -1)
 				strcat(*temp, pid);
 			else
 				error(1,0,"No pid passed in\n");
@@ -125,7 +125,6 @@ print_command(command_t c, char *temp[], pid_t pid)
 		strcat(*temp, "<");
 		strcat(*temp, c->input);
 	}
-
 	if (c->output != NULL)
 	{
 		// write to a file of name c->output, into stdout
@@ -141,7 +140,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	char temp[1023], temp2[1023];
 	int size = 0;
 
-	sprintf(temp2, "%d", values[0]);
+	sprintf(temp2, "%f", values[0]);
 	if ((strlen(temp2)+size) < 1023) //Real End Time
 	{
 		sprintf(temp,"%.2f ", values[0]);
@@ -154,7 +153,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	}
 	strcat(buffer, temp);
 	
-	sprintf(temp2, "%d", values[1]);
+	sprintf(temp2, "%f", values[1]);
 	if ((strlen(temp2)+size) < 1023) //Execution Time
 	{
 		sprintf(temp,"%.3f ", values[1]);
@@ -167,7 +166,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	}
 	strcat(buffer, temp);
 	
-	sprintf(temp2, "%d", values[2]);
+	sprintf(temp2, "%f", values[2]);
 	if ((strlen(temp2)+size) < 1023) //User CPU Time
 	{
 		sprintf(temp,"%.3f ", values[2]);
@@ -180,7 +179,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	}
 	strcat(buffer, temp);
 	
-	sprintf(temp2, "%d", values[3]);
+	sprintf(temp2, "%f", values[3]);
 	if ((strlen(temp2)+size) < 1023) //System CPU Time
 	{
 		sprintf(temp,"%.3f ", values[3]);
