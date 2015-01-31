@@ -99,19 +99,9 @@ print_command_line(command_t c, pid_t pid)
 {
 	int counter = 0;
 	char *temp = (char*)checked_malloc(1023*sizeof(char));
-	switch(c->type)
+	if (c == NULL)
 	{
-		case SIMPLE_COMMAND:
-			while (c->u.word[counter] != NULL)
-			{
-				strcat(temp,c->u.word[counter]);
-				strcat(temp," ");
-				counter++;
-			}
-			break;
-	    case SUBSHELL_COMMAND:
-	    case PIPE_COMMAND:
-			strcat(temp, "[");
+		strcat(temp, "[");
 			char *temp2 = (char*)checked_malloc(20*sizeof(char));
 			sprintf(temp2, "%d", pid);
 			if (pid != -1)
@@ -119,26 +109,50 @@ print_command_line(command_t c, pid_t pid)
 			else
 				error(1,0,"No pid passed in\n");
 			strcat(temp, "]");
-			break;
-	    case SEQUENCE_COMMAND:
-	    case IF_COMMAND:
-	    case UNTIL_COMMAND:
-	    case WHILE_COMMAND: //Nothing doing, unless there is an input/output
-	    	break;
-	    default:
-	    	break;
 	}
-	if (c->input != NULL)
+	else
 	{
-		// read file of filename c->input, from stdin
-		strcat(temp, "<");
-		strcat(temp, c->input);
-	}
-	if (c->output != NULL)
-	{
-		// write to a file of name c->output, into stdout
-		strcat(temp, ">");
-		strcat(temp, c->output);
+		switch(c->type)
+		{
+			case SIMPLE_COMMAND:
+				while (c->u.word[counter] != NULL)
+				{
+					strcat(temp,c->u.word[counter]);
+					strcat(temp," ");
+					counter++;
+				}
+				break;
+		    case SUBSHELL_COMMAND:
+		    case PIPE_COMMAND:
+				strcat(temp, "[");
+				char *temp2 = (char*)checked_malloc(20*sizeof(char));
+				sprintf(temp2, "%d", pid);
+				if (pid != -1)
+					strcat(temp, temp2);
+				else
+					error(1,0,"No pid passed in\n");
+				strcat(temp, "]");
+				break;
+		    case SEQUENCE_COMMAND:
+		    case IF_COMMAND:
+		    case UNTIL_COMMAND:
+		    case WHILE_COMMAND: //Nothing doing, unless there is an input/output
+		    	break;
+		    default:
+		    	break;
+		}
+		if (c->input != NULL)
+		{
+			// read file of filename c->input, from stdin
+			strcat(temp, "<");
+			strcat(temp, c->input);
+		}
+		if (c->output != NULL)
+		{
+			// write to a file of name c->output, into stdout
+			strcat(temp, ">");
+			strcat(temp, c->output);
+		}
 	}
 	return temp;
 }
@@ -150,14 +164,11 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	char *temp = (char*)checked_malloc(1023*sizeof(char));
 	char *temp2 = (char*)checked_malloc(1023*sizeof(char));
 	int size = 0;
-	//printf("%s %d\n",buffer, size);
 	sprintf(temp2, "%f", values[0]);
 	if ((strlen(temp2)+size) < 1023) //Real End Time
 	{
-		//printf("%f %d\n",values[0], size);
 		sprintf(temp,"%.2f ", values[0]);
 		size+=strlen(temp);
-		//printf("%s %d\n",buffer, size);
 	}
 	else
 	{
@@ -165,7 +176,6 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		size = 1023;
 	}
 	strcat(buffer, temp);
-	//printf("%s %d\n",buffer, size);
 	int i = 1;
 	for (i = 1; i < 4; i++)
 	{
@@ -187,7 +197,6 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	memset(temp,0,sizeof(temp));
 	char *temp3 = print_command_line(c,pid);
 	strcat(temp, temp3); //Prints command or process id
-	//printf("%s %d\n",buffer, size);
 	if ((strlen(temp)+size) < 1023)
 	{
 		strcat(buffer, temp);
@@ -198,8 +207,6 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		strncat(buffer, temp, (1023-size));
 		size = 1023;
 	}
-	//printf("%s %d\n",buffer, size);
-	//exit(0);
 	if (write(profiling, buffer, size) == -1)
 		error(1,errno,"Unable to write to file log\n");
 	if (write(profiling, "\n", 1) == -1)

@@ -76,6 +76,16 @@ main (int argc, char **argv)
 
   command_t last_command = NULL;
   command_t command;
+  //ADDED CODE
+  if (profiling != -1)
+  {
+    struct timespec monotonic_time;
+    if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) < 0)
+      error(1,0,"Unable to receive monotonic clock start time\n");
+    double start_time = make_timespec(monotonic_time.tv_sec, monotonic_time.tv_nsec);
+    double *values;
+  }
+  //ADDED CODE
   while ((command = read_command_stream (command_stream)))
     {
       if (print_tree)
@@ -89,6 +99,12 @@ main (int argc, char **argv)
 	  execute_command (command, profiling);
 	}
     }
-
+  //ADDED CODE
+  if (profiling != -1)
+  {
+    values = calculate_end_time(start_time);
+    print_line(values, NULL, profiling, getpid());
+  }
+  //ADDED CODE
   return print_tree || !last_command ? 0 : command_status (last_command);
 }

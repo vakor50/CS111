@@ -88,3 +88,6 @@ void execute_command (command_t, int);
 /* Return the exit status of a command, which must have previously
    been executed.  Wait for the command, if it is not already finished.  */
 int command_status (command_t);
+
+double* calculate_end_time(double start_time);
+void print_line(double *values, command_t c, int profiling, pid_t pid);
