@@ -138,13 +138,14 @@ void
 print_line(double *values, command_t c, int profiling, pid_t pid)
 {
 	char buffer[1023];
-	char temp[1023];
+	char temp[1023], temp2[1023];
 	int size = 0;
 
-	if ((strlen((char*)values[0])+size) < 1023) //Real End Time
+	sprintf(temp2, "%d", values[0]);
+	if ((strlen(temp2)+size) < 1023) //Real End Time
 	{
 		sprintf(temp,"%.2f ", values[0]);
-		size+=strlen((char*)values[0]);
+		size+=strlen(temp2);
 	}
 	else
 	{
@@ -152,11 +153,12 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		size = 1023;
 	}
 	strcat(buffer, temp);
-
-	if ((strlen((char*)values[1])+size) < 1023) //Execution Time
+	
+	sprintf(temp2, "%d", values[1]);
+	if ((strlen(temp2)+size) < 1023) //Execution Time
 	{
 		sprintf(temp,"%.3f ", values[1]);
-		size+=strlen((char*)values[1]);
+		size+=strlen(temp2);
 	}
 	else
 	{
@@ -164,10 +166,12 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		size = 1023;
 	}
 	strcat(buffer, temp);
-	if ((strlen((char*)values[2])+size) < 1023) //User CPU Time
+	
+	sprintf(temp2, "%d", values[2]);
+	if ((strlen(temp2)+size) < 1023) //User CPU Time
 	{
 		sprintf(temp,"%.3f ", values[2]);
-		size+=strlen((char*)values[2]);
+		size+=strlen(temp2);
 	}
 	else
 	{
@@ -175,10 +179,12 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		size = 1023;
 	}
 	strcat(buffer, temp);
-	if ((strlen((char*)values[3])+size) < 1023) //System CPU Time
+	
+	sprintf(temp2, "%d", values[3]);
+	if ((strlen(temp2)+size) < 1023) //System CPU Time
 	{
 		sprintf(temp,"%.3f ", values[3]);
-		size+=strlen((char*)values[3]);
+		size+=strlen(temp2);
 	}
 	else
 	{
