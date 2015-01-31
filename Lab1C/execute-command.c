@@ -44,7 +44,7 @@ prepare_profiling (char const *name)
      add auxiliary functions and otherwise modify the source code.
      You can also use external functions defined in the GNU C Library.  */
 	int file_descriptor;
-	file_descriptor = open(name, O_RDONLY | O_CREAT | O_APPEND, 0666);
+	file_descriptor = open(name, O_WRONLY | O_CREAT | O_APPEND, 0666);
 	if (file_descriptor < 0)
 		error(1,0,"Unable to create file descriptor for profiling\n");
 	return file_descriptor;
