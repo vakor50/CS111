@@ -94,10 +94,11 @@ calculate_end_time(double start_time)
 	return return_array;
 }
 
-void
-print_command_line(command_t c, char *temp[], pid_t pid)
+char*
+print_command_line(command_t c, pid_t pid)
 {
 	int counter = 0;
+	char temp[1023];
 	switch(c->type)
 	{
 		case SIMPLE_COMMAND:
@@ -202,7 +203,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	strcat(buffer, temp);
 
 	memset(temp,0,sizeof(temp));
-	print_command_line(c, &temp, pid); //Prints command or process id
+	strcat(temp, print_command_line(c,pid)); //Prints command or process id
 	if ((strlen(temp)+size) < 1023)
 	{
 		strcat(buffer, temp);
