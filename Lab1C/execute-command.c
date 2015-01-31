@@ -303,34 +303,47 @@ execute_command (command_t c, int profiling)
 			child = fork(); //Forks the process to run the simple command properly without messing up parent process
 			if (child == 0) //Child Process
 			{
-				if (c->u.word[0][0] == ':') //Check for a colon simple command
-					_exit(0);  //Does nothing with null utility
-				check_io(c);
-				int i = execvp(c->u.word[0], c->u.word);
-				if (i < 0)
+				grandchild = fork();
+				if (grandchild == 0) //Grandchild Process
+				{
+					if (c->u.word[0][0] == ':') //Check for a colon simple command
+						_exit(0);  //Does nothing with null utility
+					check_io(c);
+					int i = execvp(c->u.word[0], c->u.word);
+					if (i < 0)
+					{
+						c->status = -1;
+						error(1,errno, "Invalid simple command");
+					}
+				}
+				else if (grandchild > 0) //Child Process
+				{
+					waitpid(grandchild, &status, 0);
+					c->status = WEXITSTATUS(status);
+					if (profiling != -1)
+					{
+						values = calculate_end_time(start_time);
+						print_line(values, c, profiling, grandchild);
+					}
+					_exit(0);
+				}
+				else
 				{
 					c->status = -1;
-					error(1,errno, "Invalid simple command");
+					error(1,errno, "Unable to fork");
 				}
 			}
 			else if (child > 0) //Parent Process
 			{
 				waitpid(child, &status, 0);
 				c->status = WEXITSTATUS(status);
-				if (profiling != -1)
-				{
-					values = calculate_end_time(start_time);
-					print_line(values, c, profiling, child);
-				}
 			}
 			else
 			{
 				c->status = -1;
 				error(1,errno, "Unable to fork");
 			}
-
 			break;
-
 		case SUBSHELL_COMMAND:
 			child = fork();
 			if (!child) //Child was succesfully created and this is the child
