@@ -108,7 +108,6 @@ print_command_line(command_t c, pid_t pid)
 				strcat(temp," ");
 				counter++;
 			}
-			//return temp;
 			break;
 	    case SUBSHELL_COMMAND:
 	    case PIPE_COMMAND:
@@ -334,18 +333,35 @@ execute_command (command_t c, int profiling)
 			}
 
 			break;
+
 		case SUBSHELL_COMMAND:
-			check_io(c);
-			execute_command(c->u.command[0], profiling);//Run the subshell command
-			c->status = c->u.command[0]->status; //Set the status to that of the subshell command
-			values = calculate_end_time(start_time);
-			print_line(values, c, profiling, getpid());
+			int status;
+			child = fork();
+			if (!child) //Child was succesfully created and this is the child
+			{
+				check_io(c);
+				execute_command(c->u.command[0], profiling);//Run the subshell command
+				c->status = c->u.command[0]->status; //Set the status to that of the subshell command
+			}
+			else if (child > 0) //This is the parent
+			{
+				waitpid(child, &status, 0);
+				values = calculate_end_time(start_time);
+				print_line(values, c, profiling, getpid());
+			}
+			else
+			{
+				c->status = -1;
+				error(1,errno, "Unable to fork");
+			}
 			break;
+
 		case SEQUENCE_COMMAND:
 			execute_command(c->u.command[0], profiling);//Run the first command
 			execute_command(c->u.command[1], profiling);//Run the second command
 			c->status = c->u.command[1]->status; //Set the status to that of the second command; can set to first as well, doesn't matter
 			break;
+
 		case PIPE_COMMAND:
 			if (pipe(file_descriptor)==-1)
 			{
@@ -404,6 +420,7 @@ execute_command (command_t c, int profiling)
 				error(1,errno, "Unable to fork");
 			}
 			break;
+
 		case IF_COMMAND:
 			check_io(c);
 			execute_command(c->u.command[0], profiling);
@@ -422,6 +439,7 @@ execute_command (command_t c, int profiling)
 				}
 			}
 			break;
+
 		case UNTIL_COMMAND:
 			check_io(c);
 			do {
@@ -434,6 +452,7 @@ execute_command (command_t c, int profiling)
 				}
 			} while (c->status); //While the statement is false (status is non-zero) continue doing until command
 			break;
+
 		case WHILE_COMMAND:
 			check_io(c);
 			do {
