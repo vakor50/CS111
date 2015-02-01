@@ -372,11 +372,11 @@ execute_command (command_t c, int profiling)
 				}
 				else if (grandchild > 0) //This is the child
 				{
-					waitpid(child, &status, 0);
+					waitpid(grandchild, &status, 0);
 					if (profiling != -1)
 					{	
 						values = calculate_end_time(start_time);
-						print_line(values, c, profiling, child);
+						print_line(values, c, profiling, grandchild);
 					}
 					_exit(WEXITSTATUS(status));
 				}
