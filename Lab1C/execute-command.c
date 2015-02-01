@@ -84,7 +84,7 @@ calculate_end_time(double start_time)
 	user_time =   make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) + make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec);
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
 
-	if (make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) == 0)
+	/*if (make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) == 0)
 		printf("User Self: %f %f \n", (double) usage_time.ru_utime.tv_sec, (double) usage_time.ru_utime.tv_usec);
 	if (make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec) == 0)
 		printf("User Children: %f %f \n", (double) usage_time_children.ru_utime.tv_sec,(double) usage_time_children.ru_utime.tv_usec);
@@ -94,7 +94,7 @@ calculate_end_time(double start_time)
 	if (make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec) == 0)
 		printf("System Children: %f %f \n", (double) usage_time_children.ru_stime.tv_sec,(double) usage_time_children.ru_stime.tv_usec);
 
-	//error(1,0,"Checking");
+	error(1,0,"Checking");*/
 
 	//double return_array[] = {real_end_time, execution_time, user_time, system_time};
 	double *return_array = checked_malloc(4*sizeof(double));
@@ -302,7 +302,7 @@ execute_command (command_t c, int profiling)
 						values = calculate_end_time(start_time);
 						print_line(values, c, profiling, child);
 					}
-					_exit(status);
+					_exit(-1);
 				} 
 				else
 				{
@@ -365,17 +365,20 @@ execute_command (command_t c, int profiling)
 				check_io(c);
 				execute_command(c->u.command[0], profiling);//Run the subshell command
 				c->status = c->u.command[0]->status; //Set the status to that of the subshell command
-				_exit(0);
+				_exit(WEXITSTATUS(c->status));
 			}
 			else if (child > 0) //This is the parent
 			{
 				waitpid(child, &status, 0);
 				c->status = WEXITSTATUS(status);
+if (c->status != -1)
+{
 				if (profiling != -1)
 				{	
 					values = calculate_end_time(start_time);
 					print_line(values, c, profiling, child);
 				}
+}
 			}
 			else
 			{
@@ -410,7 +413,7 @@ execute_command (command_t c, int profiling)
 					}
 					execute_command(c->u.command[0], profiling); //Executes the first command
 					c->status = c->u.command[0]->status;
-					_exit(0);
+					_exit(c->status);
 				}
 				else if (grandchild > 0) //This is the child class
 				{
@@ -423,7 +426,7 @@ execute_command (command_t c, int profiling)
 					}
 					execute_command(c->u.command[1], profiling); //Executes the second command
 					c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
-					_exit(0);
+					_exit(c->status);
 				}
 				else //Something happened and the grandchild wasn't produced
 				{

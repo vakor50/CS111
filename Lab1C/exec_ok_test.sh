@@ -77,7 +77,7 @@ rm file3
 rm file
 
 #Test exec command
-#exec cat dog
+exec cat dog
 
 #Test what happens after exec
 echo exec_ran
