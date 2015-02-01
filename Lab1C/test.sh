@@ -8,6 +8,9 @@ rm txt.txt
 #Check on SEASNET
 sort /usr/share/dict/words > /dev/null
 
+#in a subshell
+(sort /usr/share/dict/words > /dev/null)
+
 #Check if commands
 echo hello > in.txt
 if cat; then cat; fi < in.txt
