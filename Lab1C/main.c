@@ -29,6 +29,9 @@
 #include <sys/types.h>  //pid_t
 #include <unistd.h>
 
+#include <sys/wait.h> //waitpid
+#include <stdlib.h>  //exit
+
 static char const *program_name;
 static char const *script_name;
 
@@ -91,6 +94,10 @@ main (int argc, char **argv)
       error(1,0,"Unable to receive monotonic clock start time\n");
     start_time = make_timespec(monotonic_time.tv_sec, monotonic_time.tv_nsec);
   }
+  int status;
+  pif_t child = fork();
+  if (!child)
+  {
   //ADDED CODE
   while ((command = read_command_stream (command_stream)))
     {
@@ -106,11 +113,20 @@ main (int argc, char **argv)
 	}
     }
   //ADDED CODE
-  if (profiling != -1)
+    _exit(0);
+  }
+  else if (child > 0)
   {
+    waitpid(child,&status,0);
+    if (profiling != -1)
+    {
     double *values = calculate_end_time(start_time);
     print_line(values, NULL, profiling, getpid());
+    }
   }
+  else
+    error(1,0,"Child could not be made for main")
+  
   //ADDED CODE
   return print_tree || !last_command ? 0 : command_status (last_command);
 }
