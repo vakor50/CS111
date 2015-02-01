@@ -1,29 +1,23 @@
-#Check simple word
-true
-
-#Check colons
-: : :
+#check fail
+jibjab
 
 #Test simple commands
 echo echo1
 
 #Test long commands
 sort /usr/share/dict/words > /dev/null
-
-#Test pipe
-echo echo4 | cat
-
-#Test simple commands with input-output
-echo wrote to file > f1.txt
-cat f1.txt
-echo wrote to file again > f1.txt
-cat < f1.txt
-
-#Test pipe and sequence commands
-echo echo5 | cat ; echo echo6; echo echo7
+(sort /usr/share/dict/words > /dev/null)
 
 #Test if statement
 if gobble
+then
+echo count
+else
+echo no count
+fi
+
+#Test if statement
+if false
 then
 echo count
 else
@@ -72,6 +66,7 @@ until cat file; do rm file; done
 (echo bob) > file3
 (
 echo a | cat
+exec echo bob
 )
 
 #Clean all temp files
@@ -82,4 +77,17 @@ rm in.txt
 rm file3
 rm file
 
+#Test exec command
+exec cat dog
+
+#Test what happens after exec
 echo exec_ran
+
+#Check subshells
+(echo a)
+(echo a | cat)
+(echo bob) > file3
+(
+echo a | cat
+exec echo bob
+)
