@@ -84,6 +84,18 @@ calculate_end_time(double start_time)
 	user_time =   make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) + make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec);
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
 
+	if (make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) == 0)
+		printf("User Self: %f %f \n", (double) usage_time.ru_utime.tv_sec, (double) usage_time.ru_utime.tv_usec);
+	if (make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec) == 0)
+		printf("User Children: %f %f \n", (double) usage_time_children.ru_utime.tv_sec,(double) usage_time_children.ru_utime.tv_usec);
+	
+	if (make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) == 0)
+		printf("System Self: %f %f \n", (double) usage_time.ru_stime.tv_sec,(double) usage_time.ru_stime.tv_usec);
+	if (make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec) == 0)
+		printf("System Children: %f %f \n", (double) usage_time_children.ru_stime.tv_sec,(double) usage_time_children.ru_stime.tv_usec);
+
+	error(1,0,"Checking");
+
 	//double return_array[] = {real_end_time, execution_time, user_time, system_time};
 	double *return_array = checked_malloc(4*sizeof(double));
 	return_array[0] = real_end_time;
@@ -182,7 +194,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		sprintf(temp2, "%f", values[i]);
 		if ((strlen(temp2)+size) < 1023) //Execution Time
 		{
-			sprintf(temp,"%.6f ", values[i]);
+			sprintf(temp,"%.8f ", values[i]);
 			size+=strlen(temp);
 		}
 		else

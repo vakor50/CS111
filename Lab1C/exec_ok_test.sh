@@ -5,7 +5,7 @@ true
 jibjab
 
 #Check colons
-: : :
+#: : :
 
 #Test simple commands
 echo echo1
@@ -39,7 +39,7 @@ echo no ball > test.txt
 fi
 
 #test long command
-sort /usr/shar/dict/words > /dev/null
+#sort /usr/shar/dict/words > /dev/null
 
 #More if statement tests
 echo hello > in.txt
