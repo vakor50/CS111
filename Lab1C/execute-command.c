@@ -476,28 +476,26 @@ execute_command (command_t c, int profiling)
 			break;
 		case UNTIL_COMMAND:
 			check_io(c);
-			do {
+			execute_command(c->u.command[0], profiling);
+			c->status = c->u.command[0]->status;
+			while (c->u.command[0]->status) //While the statement is false (status is non-zero) continue doing until command
+			{								//Until condition succeeded (status is 0), AKA if statement is true
+				execute_command(c->u.command[1], profiling);
+				c->status = c->u.command[1]->status;
 				execute_command(c->u.command[0], profiling);
-				c->status = c->u.command[0]->status;
-				if (c->u.command[0]->status) //Until condition succeeded (status is 0), AKA if statement is true
-				{
-					execute_command(c->u.command[1], profiling);
-					c->status = c->u.command[1]->status;
-				}
-			} while (c->u.command[0]->status); //While the statement is false (status is non-zero) continue doing until command
+			}
 			break;
 
 		case WHILE_COMMAND:
 			check_io(c);
-			do {
+			execute_command(c->u.command[0], profiling);
+			c->status = c->u.command[0]->status;
+			while (!c->u.command[0]->status) //While the statement is true (status is 0) continue doing while command
+			{
+				execute_command(c->u.command[1], profiling);
+				c->status = c->u.command[1]->status;
 				execute_command(c->u.command[0], profiling);
-				c->status = c->u.command[0]->status;
-				if (c->status == EXIT_SUCCESS) //Until condition succeeded (status is 0), AKA if statement is true
-				{
-					execute_command(c->u.command[1], profiling);
-					c->status = c->u.command[1]->status;
-				}
-			} while (c->status == EXIT_SUCCESS); //While the statement is true (status is 0) continue doing while command
+			}
 			break;
 		default:
 			c->status = -1;
