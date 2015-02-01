@@ -365,20 +365,21 @@ execute_command (command_t c, int profiling)
 				check_io(c);
 				execute_command(c->u.command[0], profiling);//Run the subshell command
 				c->status = c->u.command[0]->status; //Set the status to that of the subshell command
+				if (profiling != -1)
+				{	
+					values = calculate_end_time(start_time);
+				}
 				_exit(WEXITSTATUS(c->status));
 			}
 			else if (child > 0) //This is the parent
 			{
 				waitpid(child, &status, 0);
 				c->status = WEXITSTATUS(status);
-if (c->status != -1)
-{
 				if (profiling != -1)
 				{	
-					values = calculate_end_time(start_time);
+					//values = calculate_end_time(start_time);
 					print_line(values, c, profiling, child);
 				}
-}
 			}
 			else
 			{
