@@ -312,7 +312,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else
 				{
-					if ((current_stack!= NULL && current_stack->m_command!= NULL && ((current_stack->m_command->type != SIMPLE_COMMAND) || (current_stack->m_command->type == SIMPLE_COMMAND && newline_flag)))
+					if ((current_stack!= NULL && current_stack->m_command!= NULL) && ((current_stack->m_command->type != SIMPLE_COMMAND) || (current_stack->m_command->type == SIMPLE_COMMAND && newline_flag)))
 					{
 						if (!loop_counter && !paren_counter)
 						{
