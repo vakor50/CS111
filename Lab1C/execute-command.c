@@ -99,7 +99,7 @@ print_command_line(command_t c, pid_t pid)
 {
 	int counter = 0;
 	char *temp = (char*)checked_malloc(1023*sizeof(char));
-	if (c == NULL) //If the command passed in is NULL, then this is the main process running
+	if (c == NULL && can_write) //If the command passed in is NULL, then this is the main process running
 	{
 		strcat(temp, "[");
 			char *temp2 = (char*)checked_malloc(20*sizeof(char));
@@ -159,68 +159,65 @@ print_command_line(command_t c, pid_t pid)
 void
 print_line(double *values, command_t c, int profiling, pid_t pid)
 {
-	if (can_write)
+	char *buffer = (char*)checked_malloc(1023*sizeof(char));
+	char *temp = (char*)checked_malloc(1023*sizeof(char));
+	char *temp2 = (char*)checked_malloc(1023*sizeof(char));
+	int size = 0;
+	sprintf(temp2, "%f", values[0]); //Real End Time
+	if ((strlen(temp2)+size) < 1023) //Checks for size limit
 	{
-		char *buffer = (char*)checked_malloc(1023*sizeof(char));
-		char *temp = (char*)checked_malloc(1023*sizeof(char));
-		char *temp2 = (char*)checked_malloc(1023*sizeof(char));
-		int size = 0;
-		sprintf(temp2, "%f", values[0]); //Real End Time
+		sprintf(temp,"%.2f ", values[0]);
+		size+=strlen(temp);
+	}
+	else //will be greater than 1023 characters, so will only print till limit
+	{
+		snprintf(temp,(1023-size),"%.2f ", values[0]);
+		size = 1023;
+	}
+	strcat(buffer, temp);
+
+	int i = 1;
+	for (i = 1; i < 4; i++) //Execution time, user cpu time, and system cpu time formatting
+	{
+		memset(temp2,0,sizeof(temp2));
+		sprintf(temp2, "%f", values[i]);
 		if ((strlen(temp2)+size) < 1023) //Checks for size limit
 		{
-			sprintf(temp,"%.2f ", values[0]);
+			sprintf(temp,"%.8f ", values[i]);
 			size+=strlen(temp);
 		}
 		else //will be greater than 1023 characters, so will only print till limit
 		{
-			snprintf(temp,(1023-size),"%.2f ", values[0]);
+			snprintf(temp,(1023-size),"%.8f ", values[i]);
 			size = 1023;
 		}
 		strcat(buffer, temp);
+	}
 
-		int i = 1;
-		for (i = 1; i < 4; i++) //Execution time, user cpu time, and system cpu time formatting
-		{
-			memset(temp2,0,sizeof(temp2));
-			sprintf(temp2, "%f", values[i]);
-			if ((strlen(temp2)+size) < 1023) //Checks for size limit
-			{
-				sprintf(temp,"%.8f ", values[i]);
-				size+=strlen(temp);
-			}
-			else //will be greater than 1023 characters, so will only print till limit
-			{
-				snprintf(temp,(1023-size),"%.8f ", values[i]);
-				size = 1023;
-			}
-			strcat(buffer, temp);
-		}
+	memset(temp,0,sizeof(temp));
+	char *temp3 = print_command_line(c,pid);
+	strcat(temp, temp3); //Prints command or process id
+	if ((strlen(temp)+size) < 1023) //Checks for size limit
+	{
+		strcat(buffer, temp);
+		size+=strlen(temp);
+	}
+	else //will be greater than 1023 characters, so will only print till limit
+	{
+		strncat(buffer, temp, (1023-size));
+		size = 1023;
+	}
 
-		memset(temp,0,sizeof(temp));
-		char *temp3 = print_command_line(c,pid);
-		strcat(temp, temp3); //Prints command or process id
-		if ((strlen(temp)+size) < 1023) //Checks for size limit
-		{
-			strcat(buffer, temp);
-			size+=strlen(temp);
-		}
-		else //will be greater than 1023 characters, so will only print till limit
-		{
-			strncat(buffer, temp, (1023-size));
-			size = 1023;
-		}
-
-		//Writing to the output file
-		if (write(profiling, buffer, size) == -1)
-		{
-			can_write = 0;
-			error(1,errno,"Unable to write to file log\n");
-		}
-		if (write(profiling, "\n", 1) == -1)
-		{
-			can_write = 0;
-			error(1,errno,"Unable to write to file log\n");
-		}
+	//Writing to the output file
+	if (write(profiling, buffer, size) == -1)
+	{
+		can_write = 0;
+		error(1,errno,"Unable to write to file log\n");
+	}
+	if (write(profiling, "\n", 1) == -1)
+	{
+		can_write = 0;
+		error(1,errno,"Unable to write to file log\n");
 	}
 }
 
@@ -297,7 +294,7 @@ execute_command (command_t c, int profiling)
 				{
 					waitpid(child, &status, 0);
 					c->status = WEXITSTATUS(status);
-					if (profiling != -1)
+					if (profiling != -1 && can_write)
 					{
 						values = calculate_end_time(start_time);
 						print_line(values, c, profiling, child);
@@ -332,7 +329,7 @@ execute_command (command_t c, int profiling)
 				else if (grandchild > 0) //Child Process
 				{
 					waitpid(grandchild, &status, 0);
-					if (profiling != -1)
+					if (profiling != -1 && can_write)
 					{
 						values = calculate_end_time(start_time);
 						print_line(values, c, profiling, grandchild);
@@ -366,7 +363,7 @@ execute_command (command_t c, int profiling)
 				check_io(c);
 				execute_command(c->u.command[0], profiling);//Run the subshell command
 				c->status = c->u.command[0]->status; //Set the status to that of the subshell command
-				if (profiling != -1) //Print the profile log line
+				if (profiling != -1 && can_write) //Print the profile log line
 				{	
 					values = calculate_end_time(start_time);
 					print_line(values, c, profiling, getpid());
@@ -427,7 +424,7 @@ execute_command (command_t c, int profiling)
 					}
 					execute_command(c->u.command[1], profiling); //Executes the second command
 					c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
-					if (profiling != -1) //Print the profile log line
+					if (profiling != -1 && can_write) //Print the profile log line
 					{
 						values = calculate_end_time(start_time);
 						print_line(values, c, profiling, getpid());
