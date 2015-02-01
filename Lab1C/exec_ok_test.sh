@@ -38,6 +38,13 @@ else
 echo no ball > test.txt
 fi
 
+#test interesting while
+while
+until :; do echo yoo hoo!; done
+false
+do echo b
+done
+
 #More if statement tests
 echo hello > in.txt
 if cat; then cat; fi < in.txt
@@ -64,7 +71,7 @@ until cat file; do rm file; done
 (echo a | cat)
 (echo bob) > file3
 (
-echo a
+echo a | cat
 exec echo bob
 )
 

@@ -23,9 +23,12 @@ mkdir "$tmp" || exit
 (
 cd "$tmp" || exit
 
-cat >test.sh <<'EOF'
+cat >test2.sh <<'EOF'
 #Check simple word
 true
+
+#check fail
+jibjab
 
 #Check colons
 : : :
@@ -46,7 +49,7 @@ cat < f1.txt
 echo echo5 | cat ; echo echo6; echo echo7
 
 #Test if statement
-if :
+if gobble
 then
 echo count
 else
@@ -61,6 +64,13 @@ else
 echo no ball > test.txt
 fi
 
+#test interesting while
+while
+until :; do echo yoo hoo!; done
+false
+do echo b
+done
+
 #More if statement tests
 echo hello > in.txt
 if cat; then cat; fi < in.txt
@@ -72,6 +82,9 @@ echo a > file2
 cp file2 file
 while cat file; do rm file; done
 
+#Check above worked
+echo notfailedabove
+
 #Check until loops
 touch file
 touch file2
@@ -79,20 +92,32 @@ echo b > file2
 cp file2 file
 until cat file; do rm file; done
 
+#Check subshells
+(echo a)
+(echo a | cat)
+(echo bob) > file3
+(
+echo a | cat
+exec echo bob
+)
+
 #Clean all temp files
 rm test.txt
 rm file2
 rm f1.txt
 rm in.txt
+rm file3
+rm file
 
 #Test exec command
 exec cat dog
 
-#Test what happens after exec, should not run
+#Test what happens after exec
 echo exec_ran
 EOF
 
-cat >test.exp <<'EOF'
+cat >test2.exp <<'EOF'
+../profsh: Invalid simple command: No such file or directory
 echo1
 echo4
 wrote to file
@@ -100,17 +125,23 @@ wrote to file again
 echo5
 echo6
 echo7
-count
+../profsh: Invalid simple command: No such file or directory
+no count
 hello
 a
 cat: file: No such file or directory
+notfailedabove
 b
+a
+a
+a
+bob
 cat: dog: No such file or directory
 EOF
 
-../profsh test.sh >test.out 2>&1
+../profsh -p f.shp test2.sh >test2.out 2>&1
 
-diff -u test.exp test.out || exit
+diff -u test2.exp test2.out || exit
 #test ! -s test.err || {
 #  cat test.err
 #  exit 1
