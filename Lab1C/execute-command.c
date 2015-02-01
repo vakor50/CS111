@@ -362,20 +362,37 @@ execute_command (command_t c, int profiling)
 			child = fork();
 			if (!child) //Child was succesfully created and this is the child
 			{
-				check_io(c);
-				execute_command(c->u.command[0], profiling);//Run the subshell command
-				c->status = c->u.command[0]->status; //Set the status to that of the subshell command
-				_exit(WEXITSTATUS(c->status));
+				grandchild = fork();
+				if (!grandchild) //Grandchild was succesfully created and this is the grandchild
+				{
+					check_io(c);
+					execute_command(c->u.command[0], profiling);//Run the subshell command
+					c->status = c->u.command[0]->status; //Set the status to that of the subshell command
+					_exit(WEXITSTATUS(c->status));
+				}
+				else if (grandchild > 0) //This is the child
+				{
+					waitpid(child, &status, 0);
+					if (profiling != -1)
+					{	
+						values = calculate_end_time(start_time);
+						print_line(values, c, profiling, child);
+					}
+					_exit(WEXITSTATUS(status));
+				}
+				else
+				{
+					c->status = -1;
+					error(1,errno, "Unable to fork");
+				}
 			}
 			else if (child > 0) //This is the parent
 			{
 				waitpid(child, &status, 0);
-				c->status = WEXITSTATUS(status);
-				if (profiling != -1)
-				{	
-					values = calculate_end_time(start_time);
-					print_line(values, c, profiling, child);
-				}
+				if (WIFEXITED(status))
+					c->status = WEXITSTATUS(status);
+				else
+					error(1,errno, "The status is invalid");
 			}
 			else
 			{
