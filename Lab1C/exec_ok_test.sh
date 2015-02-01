@@ -1,6 +1,9 @@
 #Check simple word
 true
 
+#check fail
+jibjab
+
 #Check colons
 : : :
 
@@ -20,7 +23,7 @@ cat < f1.txt
 echo echo5 | cat ; echo echo6; echo echo7
 
 #Test if statement
-if :
+if gobble
 then
 echo count
 else
@@ -45,6 +48,9 @@ touch file2
 echo a > file2
 cp file2 file
 while cat file; do rm file; done
+
+#Check above worked
+echo notfailedabove
 
 #Check until loops
 touch file

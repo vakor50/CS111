@@ -141,13 +141,13 @@ print_command_line(command_t c, pid_t pid)
 		    default:
 		    	break;
 		}
-		if (c->input != NULL)
+		if (c->input != NULL && (c->type != SUBSHELL_COMMAND)  && (c->type != PIPE_COMMAND))
 		{
 			// read file of filename c->input, from stdin
 			strcat(temp, "<");
 			strcat(temp, c->input);
 		}
-		if (c->output != NULL)
+		if (c->output != NULL  && (c->type != SUBSHELL_COMMAND)  && (c->type != PIPE_COMMAND))
 		{
 			// write to a file of name c->output, into stdout
 			strcat(temp, ">");
@@ -291,7 +291,7 @@ execute_command (command_t c, int profiling)
 						values = calculate_end_time(start_time);
 						print_line(values, c, profiling, child);
 					}
-					_exit(0);
+					_exit(status);
 				} 
 				else
 				{
@@ -315,17 +315,27 @@ execute_command (command_t c, int profiling)
 						c->status = -1;
 						error(1,errno, "Invalid simple command");
 					}
+					_exit(i);
 				}
 				else if (grandchild > 0) //Child Process
 				{
 					waitpid(grandchild, &status, 0);
-					c->status = WEXITSTATUS(status);
+//printf("%d\n",WEXITSTATUS(status));
+//printf("%d\n",c->status);
+//exit(status);
+//int temp = (int) WEXITSTATUS(status);
+//write(profiling, temp, 5);
+//write(profiling, "\n", 1);
+					//if (WIFEXITED(status))
+					//	c->status = WEXITSTATUS(status);
+					//else
+					//	error(1,errno, "This forking screwed up");
 					if (profiling != -1)
 					{
 						values = calculate_end_time(start_time);
 						print_line(values, c, profiling, grandchild);
 					}
-					_exit(0);
+					_exit(WEXITSTATUS(status));
 				}
 				else
 				{
@@ -335,8 +345,18 @@ execute_command (command_t c, int profiling)
 			}
 			else if (child > 0) //Parent Process
 			{
+//printf("%d\n",WEXITSTATUS(status));
+//printf("%d\n",c->status);
+//exit(status);
 				waitpid(child, &status, 0);
-				c->status = WEXITSTATUS(status);
+				//printf("%d",WEXITSTATUS(status));
+				if (WIFEXITED(status))
+{
+					//if (c->status != -1)
+						c->status = WEXITSTATUS(status);
+}
+				else
+					error(1,errno, "This forking screwed up");
 			}
 			else
 			{
@@ -439,6 +459,7 @@ execute_command (command_t c, int profiling)
 			check_io(c);
 			execute_command(c->u.command[0], profiling);
 			c->status = c->u.command[0]->status;
+
 			if ((!c->status) && (c->status != -1)) //If condition succeeded (status is non-zero): if condition is true
 			{
 				execute_command(c->u.command[1], profiling);
@@ -448,23 +469,22 @@ execute_command (command_t c, int profiling)
 			{
 				if (c->u.command[2] != NULL) //Checks for an "else" portion to the if statement
 				{
-					execute_command(c->u.command[1], profiling);
-					c->status = c->u.command[1]->status;
+					execute_command(c->u.command[2], profiling);
+					c->status = c->u.command[2]->status;
 				}
 			}
 			break;
-
 		case UNTIL_COMMAND:
 			check_io(c);
 			do {
 				execute_command(c->u.command[0], profiling);
 				c->status = c->u.command[0]->status;
-				if (!c->status) //Until condition succeeded (status is 0), AKA if statement is true
+				if (c->u.command[0]->status) //Until condition succeeded (status is 0), AKA if statement is true
 				{
 					execute_command(c->u.command[1], profiling);
 					c->status = c->u.command[1]->status;
 				}
-			} while (c->status); //While the statement is false (status is non-zero) continue doing until command
+			} while (c->u.command[0]->status); //While the statement is false (status is non-zero) continue doing until command
 			break;
 
 		case WHILE_COMMAND:
@@ -472,12 +492,12 @@ execute_command (command_t c, int profiling)
 			do {
 				execute_command(c->u.command[0], profiling);
 				c->status = c->u.command[0]->status;
-				if (!c->status) //Until condition succeeded (status is 0), AKA if statement is true
+				if (c->status == EXIT_SUCCESS) //Until condition succeeded (status is 0), AKA if statement is true
 				{
 					execute_command(c->u.command[1], profiling);
 					c->status = c->u.command[1]->status;
 				}
-			} while (!c->status); //While the statement is true (status is 0) continue doing while command
+			} while (c->status == EXIT_SUCCESS); //While the statement is true (status is 0) continue doing while command
 			break;
 		default:
 			c->status = -1;
