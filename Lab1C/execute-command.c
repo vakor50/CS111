@@ -69,17 +69,17 @@ calculate_end_time(double start_time)
 	struct timespec real_time, monotonic_time;
 	struct rusage usage_time, usage_time_children;
 
-	if (clock_gettime(CLOCK_REALTIME, &real_time) < 0)
+	if (clock_gettime(CLOCK_REALTIME, &real_time) < 0) //Checks the end time of the process
 		error(1,0,"Unable to receive real clock time\n");
 	real_end_time = make_timespec(real_time.tv_sec, real_time.tv_nsec);
 	
-	if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) < 0)
+	if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) < 0) //Checks the monotonic end time of the process then determines execution time
 		error(1,0,"Unable to receive monotonic clock time\n");
 	execution_time = make_timespec(monotonic_time.tv_sec, monotonic_time.tv_nsec) - start_time;
 
-	if (getrusage(RUSAGE_SELF, &usage_time) < 0)
+	if (getrusage(RUSAGE_SELF, &usage_time) < 0) //Gets the user and system cpu usage of the current process
 		error(1,0,"Unable to receive self usage time\n");
-	if (getrusage(RUSAGE_CHILDREN, &usage_time_children) < 0)
+	if (getrusage(RUSAGE_CHILDREN, &usage_time_children) < 0) //Gets the user and system cpu usage of all child processes
 		error(1,0,"Unable to receive children usage time\n");
 	user_time =   make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) + make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec);
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
@@ -97,7 +97,7 @@ print_command_line(command_t c, pid_t pid)
 {
 	int counter = 0;
 	char *temp = (char*)checked_malloc(1023*sizeof(char));
-	if (c == NULL)
+	if (c == NULL) //If the command passed in is NULL, then this is the main process running
 	{
 		strcat(temp, "[");
 			char *temp2 = (char*)checked_malloc(20*sizeof(char));
@@ -131,10 +131,10 @@ print_command_line(command_t c, pid_t pid)
 					error(1,0,"No pid passed in\n");
 				strcat(temp, "]");
 				break;
-		    case SEQUENCE_COMMAND:
+		    case SEQUENCE_COMMAND: //Will not ever reach here, unless error
 		    case IF_COMMAND:
 		    case UNTIL_COMMAND:
-		    case WHILE_COMMAND: //Will not ever reach here, unless error
+		    case WHILE_COMMAND: 
 		    default:
 		    	break;
 		}
@@ -195,12 +195,12 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	memset(temp,0,sizeof(temp));
 	char *temp3 = print_command_line(c,pid);
 	strcat(temp, temp3); //Prints command or process id
-	if ((strlen(temp)+size) < 1023)
+	if ((strlen(temp)+size) < 1023) //Checks for size limit
 	{
 		strcat(buffer, temp);
 		size+=strlen(temp);
 	}
-	else
+	else //will be greater than 1023 characters, so will only print till limit
 	{
 		strncat(buffer, temp, (1023-size));
 		size = 1023;
@@ -349,14 +349,13 @@ execute_command (command_t c, int profiling)
 			}
 			break;
 		case SUBSHELL_COMMAND:
-		/*Double forked the subshell so as to prevent time from being accumulated when running getrusage*/
 			child = fork();
 			if (!child) //Child was succesfully created and this is the child
 			{
 				check_io(c);
 				execute_command(c->u.command[0], profiling);//Run the subshell command
 				c->status = c->u.command[0]->status; //Set the status to that of the subshell command
-				if (profiling != -1)
+				if (profiling != -1) //Print the profile log line
 				{	
 					values = calculate_end_time(start_time);
 					print_line(values, c, profiling, getpid());
@@ -417,12 +416,11 @@ execute_command (command_t c, int profiling)
 					}
 					execute_command(c->u.command[1], profiling); //Executes the second command
 					c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
-					if (profiling != -1)
+					if (profiling != -1) //Print the profile log line
 					{
 						values = calculate_end_time(start_time);
 						print_line(values, c, profiling, getpid());
 					}
-
 					_exit(c->status);
 				}
 				else //Something happened and the grandchild wasn't produced
@@ -436,11 +434,6 @@ execute_command (command_t c, int profiling)
 				close(file_descriptor[0]);
 				close(file_descriptor[1]);
 				waitpid(child, &status, 0);
-				//if (profiling != -1)
-				//{
-				//	values = calculate_end_time(start_time);
-				//	print_line(values, c, profiling, child);
-				//}
 			}
 			else //Something happened and the child wasn't produced
 			{
