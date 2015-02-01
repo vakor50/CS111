@@ -38,6 +38,9 @@ else
 echo no ball > test.txt
 fi
 
+#test long command
+sort /usr/shar/dict/words > /dev/null
+
 #More if statement tests
 echo hello > in.txt
 if cat; then cat; fi < in.txt
@@ -71,6 +74,7 @@ rm file2
 rm f1.txt
 rm in.txt
 rm file3
+rm file
 
 #Test exec command
 #exec cat dog
