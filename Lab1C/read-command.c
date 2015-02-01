@@ -314,6 +314,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_10->m_token->type = SEMICOLON_TOKEN;
 						//temp_stack_10->m_token->content = NULL;
 						push_token_stack(temp_stack_10);
+						current_stack = global_stack;
 				}
 				
 				if ((current_stack != NULL) && (current_stack->m_command != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND))
