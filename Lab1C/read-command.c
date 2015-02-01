@@ -225,6 +225,7 @@ token_stream_to_command_stream(token_stream_t input)
 	int do_counter = 0;
 	int then_counter = 0;
 	int else_counter = 0;
+	int newline_flag = 0;
 
 	for (i = 0; i < input->size; i++)
 	{
@@ -289,6 +290,7 @@ token_stream_to_command_stream(token_stream_t input)
 					current_stack->m_command->input = input->m_token[i+1]->content;
 					i++;
 				}
+				newline_flag = 0;
 				break;
 			case GREATER_TOKEN:
 				if (current_stack != NULL && ((current_stack->m_command != NULL) && ((current_stack->m_command->type == SIMPLE_COMMAND) || (current_stack->is_command))) && next_token != NULL && next_token->type == WORD_TOKEN)
@@ -296,6 +298,7 @@ token_stream_to_command_stream(token_stream_t input)
 					current_stack->m_command->output = input->m_token[i+1]->content;
 					i++;
 				}
+				newline_flag = 0;
 				break;
 			case WORD_TOKEN:
 				//HAVE TO DEAL WTIH NULL
@@ -309,7 +312,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else
 				{
-					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND)
+					if ((current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND) || newline_flag)
 					{
 						if (!loop_counter && !paren_counter)
 						{
@@ -332,11 +335,13 @@ token_stream_to_command_stream(token_stream_t input)
 					temp_stack->is_command = 1;
 					push_token_stack(temp_stack);
 				}
+				newline_flag = 0;
 				break;
 			
 			case PAREN_OPEN_TOKEN:
 				push_token_stack(temp_stack);
 				paren_counter++;
+				newline_flag = 0;
 				break;
 			case PAREN_CLOSE_TOKEN:
 				paren_counter--;
@@ -394,6 +399,7 @@ token_stream_to_command_stream(token_stream_t input)
 					exit(1);
 				}
 				push_token_stack(temp_stack_6);
+				newline_flag = 0;
 				break;
 			case SEMICOLON_TOKEN:
 				switch (next_token->type)
@@ -486,12 +492,14 @@ token_stream_to_command_stream(token_stream_t input)
 					}
 				}
 				push_token_stack(temp_stack);
+				newline_flag = 0;
 				break;
 			case IF_TOKEN:
 			case WHILE_TOKEN:
 			case UNTIL_TOKEN:
 				loop_counter++;
 				push_token_stack(temp_stack);
+				newline_flag = 0;
 				break;
 			case FI_TOKEN:
 				loop_counter--;
@@ -608,6 +616,7 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid If3", temp_stack_4->m_token->line_num);
 					exit(1);
 				}
+				newline_flag = 0;
 				break;
 			case DONE_TOKEN:
 				loop_counter--;
@@ -702,6 +711,7 @@ token_stream_to_command_stream(token_stream_t input)
 					fprintf(stderr, "%d: Invalid Done", temp_stack_4->m_token->line_num);
 					exit(1);
 				}
+				newline_flag = 0;
 				break;
 			case NEWLINE_TOKEN:
 				temp_stack_2 = current_stack;
@@ -745,7 +755,7 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				if (paren_counter || loop_counter)
 				{
-					
+					newline_flag = 1;
 				}
 				if (!paren_counter && !loop_counter)
 				{
