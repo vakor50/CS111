@@ -11,6 +11,12 @@ sort /usr/share/dict/words > /dev/null
 #in a subshell
 (sort /usr/share/dict/words > /dev/null)
 
+echo hello > txt.txt
+
+cat < txt.txt | cat
+
+rm txt.txt
+
 #Check if commands
 echo hello > in.txt
 if cat; then cat; fi < in.txt
