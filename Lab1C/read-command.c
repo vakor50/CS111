@@ -315,7 +315,7 @@ token_stream_to_command_stream(token_stream_t input)
 					if ((current_stack!= NULL && current_stack->m_command!= NULL) && ((current_stack->m_command->type != SIMPLE_COMMAND) || (current_stack->m_command->type == SIMPLE_COMMAND && newline_flag)))
 					{
 						printf("%d\n",newline_flag);
-						error("Reached here");
+						error(1,0,"Reached here");
 						if (!loop_counter && !paren_counter)
 						{
 							fprintf(stderr, "%d: Invalid Word Token", current_token->line_num);
