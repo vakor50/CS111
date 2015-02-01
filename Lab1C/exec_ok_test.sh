@@ -5,7 +5,7 @@ true
 jibjab
 
 #Check colons
-#: : :
+: : :
 
 #Test simple commands
 echo echo1
@@ -38,9 +38,6 @@ else
 echo no ball > test.txt
 fi
 
-#test long command
-#sort /usr/shar/dict/words > /dev/null
-
 #More if statement tests
 echo hello > in.txt
 if cat; then cat; fi < in.txt
@@ -66,7 +63,10 @@ until cat file; do rm file; done
 (echo a)
 (echo a | cat)
 (echo bob) > file3
-(exec echo bob)
+(
+echo a
+exec echo bob
+)
 
 #Clean all temp files
 rm test.txt

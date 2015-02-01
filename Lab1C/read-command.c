@@ -311,7 +311,7 @@ token_stream_to_command_stream(token_stream_t input)
 				{
 					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND)
 					{
-						if (!loop_counter)
+						if (!loop_counter && !paren_counter)
 						{
 							fprintf(stderr, "%d: Invalid Word Token", current_token->line_num);
 							exit(1);
@@ -742,6 +742,10 @@ token_stream_to_command_stream(token_stream_t input)
 						push_token_stack(temp_stack_4);
 						temp_stack_2 = global_stack;
 					}
+				}
+				if (paren_counter || loop_counter)
+				{
+					
 				}
 				if (!paren_counter && !loop_counter)
 				{
