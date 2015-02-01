@@ -208,16 +208,19 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		size = 1023;
 	}
 
-	//Writing to the output file
-	if (write(profiling, buffer, size) == -1)
+	if (can_write)
 	{
-		can_write = 0;
-		error(1,errno,"Unable to write to file log\n");
-	}
-	if (write(profiling, "\n", 1) == -1)
-	{
-		can_write = 0;
-		error(1,errno,"Unable to write to file log\n");
+		//Writing to the output file
+		if (write(profiling, buffer, size) == -1)
+		{
+			can_write = 0;
+			//error(1,errno,"Unable to write to file log\n");
+		}
+		if (write(profiling, "\n", 1) == -1)
+		{
+			can_write = 0;
+			//error(1,errno,"Unable to write to file log\n");
+		}
 	}
 }
 
