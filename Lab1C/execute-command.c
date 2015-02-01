@@ -78,10 +78,10 @@ calculate_end_time(double start_time)
 	execution_time = make_timespec(monotonic_time.tv_sec, monotonic_time.tv_nsec) - start_time;
 
 	if (getrusage(RUSAGE_SELF, &usage_time) < 0)
-		error(1,0,"Unable to receive usage time\n");
+		error(1,0,"Unable to receive self usage time\n");
 	if (getrusage(RUSAGE_CHILDREN, &usage_time_children) < 0)
-		error(1,0,"Unable to receive usage time\n");
-	user_time = make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) + make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec);
+		error(1,0,"Unable to receive children usage time\n");
+	user_time =   make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) + make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec);
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
 
 	//double return_array[] = {real_end_time, execution_time, user_time, system_time};
@@ -90,7 +90,6 @@ calculate_end_time(double start_time)
 	return_array[1] = execution_time;
 	return_array[2] = user_time;
 	return_array[3] = system_time;
-	//= {real_end_time, execution_time, user_time, system_time};
 	return return_array;
 }
 
@@ -188,7 +187,7 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		}
 		else
 		{
-			snprintf(temp,(1023-size),"%.6f ", values[i]);
+			snprintf(temp,(1023-size),"%.8f ", values[i]);
 			size = 1023;
 		}
 		strcat(buffer, temp);
@@ -301,10 +300,10 @@ execute_command (command_t c, int profiling)
 			} //Done Exec Implementation
 
 			child = fork(); //Forks the process to run the simple command properly without messing up parent process
-			if (child == 0) //Child Process
+			if (!child) //Child Process
 			{
 				grandchild = fork();
-				if (grandchild == 0) //Grandchild Process
+				if (!grandchild) //Grandchild Process
 				{
 					if (c->u.word[0][0] == ':') //Check for a colon simple command
 						_exit(0);  //Does nothing with null utility
@@ -320,16 +319,6 @@ execute_command (command_t c, int profiling)
 				else if (grandchild > 0) //Child Process
 				{
 					waitpid(grandchild, &status, 0);
-//printf("%d\n",WEXITSTATUS(status));
-//printf("%d\n",c->status);
-//exit(status);
-//int temp = (int) WEXITSTATUS(status);
-//write(profiling, temp, 5);
-//write(profiling, "\n", 1);
-					//if (WIFEXITED(status))
-					//	c->status = WEXITSTATUS(status);
-					//else
-					//	error(1,errno, "This forking screwed up");
 					if (profiling != -1)
 					{
 						values = calculate_end_time(start_time);
@@ -345,18 +334,11 @@ execute_command (command_t c, int profiling)
 			}
 			else if (child > 0) //Parent Process
 			{
-//printf("%d\n",WEXITSTATUS(status));
-//printf("%d\n",c->status);
-//exit(status);
 				waitpid(child, &status, 0);
-				//printf("%d",WEXITSTATUS(status));
 				if (WIFEXITED(status))
-{
-					//if (c->status != -1)
-						c->status = WEXITSTATUS(status);
-}
+					c->status = WEXITSTATUS(status);
 				else
-					error(1,errno, "This forking screwed up");
+					error(1,errno, "The status is invalid");
 			}
 			else
 			{
