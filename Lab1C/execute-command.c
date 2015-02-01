@@ -94,7 +94,7 @@ calculate_end_time(double start_time)
 	if (make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec) == 0)
 		printf("System Children: %f %f \n", (double) usage_time_children.ru_stime.tv_sec,(double) usage_time_children.ru_stime.tv_usec);
 
-	error(1,0,"Checking");
+	//error(1,0,"Checking");
 
 	//double return_array[] = {real_end_time, execution_time, user_time, system_time};
 	double *return_array = checked_malloc(4*sizeof(double));
