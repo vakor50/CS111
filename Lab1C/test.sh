@@ -36,8 +36,8 @@ rm file
 (echo a | cat)
 (echo bob) > file3
 
-#rm file2
-#rm file3
+rm file2
+rm file3
 
 #exec test
 (exec echo b)

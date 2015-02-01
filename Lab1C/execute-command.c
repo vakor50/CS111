@@ -84,19 +84,6 @@ calculate_end_time(double start_time)
 	user_time =   make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) + make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec);
 	system_time = make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) + make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec);
 
-	/*if (make_timeval(usage_time.ru_utime.tv_sec, usage_time.ru_utime.tv_usec) == 0)
-		printf("User Self: %f %f \n", (double) usage_time.ru_utime.tv_sec, (double) usage_time.ru_utime.tv_usec);
-	if (make_timeval(usage_time_children.ru_utime.tv_sec, usage_time_children.ru_utime.tv_usec) == 0)
-		printf("User Children: %f %f \n", (double) usage_time_children.ru_utime.tv_sec,(double) usage_time_children.ru_utime.tv_usec);
-	
-	if (make_timeval(usage_time.ru_stime.tv_sec, usage_time.ru_stime.tv_usec) == 0)
-		printf("System Self: %f %f \n", (double) usage_time.ru_stime.tv_sec,(double) usage_time.ru_stime.tv_usec);
-	if (make_timeval(usage_time_children.ru_stime.tv_sec, usage_time_children.ru_stime.tv_usec) == 0)
-		printf("System Children: %f %f \n", (double) usage_time_children.ru_stime.tv_sec,(double) usage_time_children.ru_stime.tv_usec);
-
-	error(1,0,"Checking");*/
-
-	//double return_array[] = {real_end_time, execution_time, user_time, system_time};
 	double *return_array = checked_malloc(4*sizeof(double));
 	return_array[0] = real_end_time;
 	return_array[1] = execution_time;
@@ -147,20 +134,19 @@ print_command_line(command_t c, pid_t pid)
 		    case SEQUENCE_COMMAND:
 		    case IF_COMMAND:
 		    case UNTIL_COMMAND:
-		    case WHILE_COMMAND: //Nothing doing, unless there is an input/output
-		    	break;
+		    case WHILE_COMMAND: //Will not ever reach here, unless error
 		    default:
 		    	break;
 		}
 		if (c->input != NULL && (c->type != SUBSHELL_COMMAND)  && (c->type != PIPE_COMMAND))
 		{
-			// read file of filename c->input, from stdin
+			//print the input
 			strcat(temp, "<");
 			strcat(temp, c->input);
 		}
 		if (c->output != NULL  && (c->type != SUBSHELL_COMMAND)  && (c->type != PIPE_COMMAND))
 		{
-			// write to a file of name c->output, into stdout
+			//print the output
 			strcat(temp, ">");
 			strcat(temp, c->output);
 		}
@@ -175,29 +161,30 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 	char *temp = (char*)checked_malloc(1023*sizeof(char));
 	char *temp2 = (char*)checked_malloc(1023*sizeof(char));
 	int size = 0;
-	sprintf(temp2, "%f", values[0]);
-	if ((strlen(temp2)+size) < 1023) //Real End Time
+	sprintf(temp2, "%f", values[0]); //Real End Time
+	if ((strlen(temp2)+size) < 1023) //Checks for size limit
 	{
 		sprintf(temp,"%.2f ", values[0]);
 		size+=strlen(temp);
 	}
-	else
+	else //will be greater than 1023 characters, so will only print till limit
 	{
 		snprintf(temp,(1023-size),"%.2f ", values[0]);
 		size = 1023;
 	}
 	strcat(buffer, temp);
+
 	int i = 1;
-	for (i = 1; i < 4; i++)
+	for (i = 1; i < 4; i++) //Execution time, user cpu time, and system cpu time formatting
 	{
 		memset(temp2,0,sizeof(temp2));
 		sprintf(temp2, "%f", values[i]);
-		if ((strlen(temp2)+size) < 1023) //Execution Time
+		if ((strlen(temp2)+size) < 1023) //Checks for size limit
 		{
 			sprintf(temp,"%.8f ", values[i]);
 			size+=strlen(temp);
 		}
-		else
+		else //will be greater than 1023 characters, so will only print till limit
 		{
 			snprintf(temp,(1023-size),"%.8f ", values[i]);
 			size = 1023;
@@ -218,6 +205,8 @@ print_line(double *values, command_t c, int profiling, pid_t pid)
 		strncat(buffer, temp, (1023-size));
 		size = 1023;
 	}
+
+	//Writing to the output file
 	if (write(profiling, buffer, size) == -1)
 		error(1,errno,"Unable to write to file log\n");
 	if (write(profiling, "\n", 1) == -1)
@@ -266,7 +255,7 @@ execute_command (command_t c, int profiling)
 	int file_descriptor[2];//0 is read, 1 is write
 	int status;
 	
-	struct timespec monotonic_time;
+	struct timespec monotonic_time; //Gets the start time of every command
 	if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) < 0)
 		error(1,0,"Unable to receive monotonic clock start time\n");
 	double start_time = make_timespec(monotonic_time.tv_sec, monotonic_time.tv_nsec);
@@ -311,11 +300,12 @@ execute_command (command_t c, int profiling)
 				}
 			} //Done Exec Implementation
 
+			/*Double forked the simple command so as to prevent time from being accumulated when running getrusage*/
 			child = fork(); //Forks the process to run the simple command properly without messing up parent process
-			if (!child) //Child Process
+			if (!child) //Child was succesfully created and this is the child
 			{
 				grandchild = fork();
-				if (!grandchild) //Grandchild Process
+				if (!grandchild) //grandchild was succesfully created and this is the grandchild
 				{
 					if (c->u.word[0][0] == ':') //Check for a colon simple command
 						_exit(0);  //Does nothing with null utility
@@ -359,6 +349,7 @@ execute_command (command_t c, int profiling)
 			}
 			break;
 		case SUBSHELL_COMMAND:
+		/*Double forked the subshell so as to prevent time from being accumulated when running getrusage*/
 			child = fork();
 			if (!child) //Child was succesfully created and this is the child
 			{
@@ -370,7 +361,7 @@ execute_command (command_t c, int profiling)
 					c->status = c->u.command[0]->status; //Set the status to that of the subshell command
 					_exit(WEXITSTATUS(c->status));
 				}
-				else if (grandchild > 0) //This is the child
+				else if (grandchild > 0) //Child process
 				{
 					waitpid(grandchild, &status, 0);
 					if (profiling != -1)
@@ -386,7 +377,7 @@ execute_command (command_t c, int profiling)
 					error(1,errno, "Unable to fork");
 				}
 			}
-			else if (child > 0) //This is the parent
+			else if (child > 0) //Parent process
 			{
 				waitpid(child, &status, 0);
 				if (WIFEXITED(status))
@@ -429,7 +420,7 @@ execute_command (command_t c, int profiling)
 					c->status = c->u.command[0]->status;
 					_exit(c->status);
 				}
-				else if (grandchild > 0) //This is the child class
+				else if (grandchild > 0) //Child process
 				{
 					waitpid(grandchild, &status, 0);
 					close(file_descriptor[1]); //Close the writing from the child
@@ -440,6 +431,12 @@ execute_command (command_t c, int profiling)
 					}
 					execute_command(c->u.command[1], profiling); //Executes the second command
 					c->status = c->u.command[1]->status; //Sets the final c->status to that of the second command
+					if (profiling != -1)
+					{
+						values = calculate_end_time(start_time);
+						print_line(values, c, profiling, getpid());
+					}
+
 					_exit(c->status);
 				}
 				else //Something happened and the grandchild wasn't produced
@@ -448,16 +445,16 @@ execute_command (command_t c, int profiling)
 					error(1,errno, "Unable to fork");
 				}
 			}
-			else if (child > 0) //This is the parent class
+			else if (child > 0) //Parent process
 			{
 				close(file_descriptor[0]);
 				close(file_descriptor[1]);
 				waitpid(child, &status, 0);
-				if (profiling != -1)
-				{
-					values = calculate_end_time(start_time);
-					print_line(values, c, profiling, child);
-				}
+				//if (profiling != -1)
+				//{
+				//	values = calculate_end_time(start_time);
+				//	print_line(values, c, profiling, child);
+				//}
 			}
 			else //Something happened and the child wasn't produced
 			{
@@ -471,12 +468,12 @@ execute_command (command_t c, int profiling)
 			execute_command(c->u.command[0], profiling);
 			c->status = c->u.command[0]->status;
 
-			if ((!c->status) && (c->status != -1)) //If condition succeeded (status is non-zero): if condition is true
+			if ((!c->status) && (c->status != -1)) //If condition succeeded (status is zero): if condition is true
 			{
 				execute_command(c->u.command[1], profiling);
 				c->status = c->u.command[1]->status;
 			}
-			else //If condition failed (status is 0):if condition is false
+			else //If condition failed (status is non-zero):if condition is false
 			{
 				if (c->u.command[2] != NULL) //Checks for an "else" portion to the if statement
 				{
@@ -487,10 +484,10 @@ execute_command (command_t c, int profiling)
 			break;
 		case UNTIL_COMMAND:
 			check_io(c);
-			execute_command(c->u.command[0], profiling);
+			execute_command(c->u.command[0], profiling); //Run initial command
 			c->status = c->u.command[0]->status;
 			while (c->u.command[0]->status) //While the statement is false (status is non-zero) continue doing until command
-			{								//Until condition succeeded (status is 0), AKA if statement is true
+			{
 				execute_command(c->u.command[1], profiling);
 				c->status = c->u.command[1]->status;
 				execute_command(c->u.command[0], profiling);
@@ -499,7 +496,7 @@ execute_command (command_t c, int profiling)
 
 		case WHILE_COMMAND:
 			check_io(c);
-			execute_command(c->u.command[0], profiling);
+			execute_command(c->u.command[0], profiling); //Run initial command
 			c->status = c->u.command[0]->status;
 			while (!c->u.command[0]->status) //While the statement is true (status is 0) continue doing while command
 			{
