@@ -302,6 +302,20 @@ token_stream_to_command_stream(token_stream_t input)
 				break;
 			case WORD_TOKEN:
 				//HAVE TO DEAL WTIH NULL
+				if ((current_stack != NULL) && (current_stack->m_command != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND) && newline_flag) //Dealing with newline flag in parentheses
+				{
+					if (!loop_counter && !paren_counter)
+						{
+							fprintf(stderr, "%d: Invalid Word Token", current_token->line_num);
+							exit(1);
+						}
+						token_t new_token = (token_t) checked_malloc(sizeof(struct token));
+						temp_stack_10->m_token = new_token;
+						temp_stack_10->m_token->type = SEMICOLON_TOKEN;
+						//temp_stack_10->m_token->content = NULL;
+						push_token_stack(temp_stack_10);
+				}
+				
 				if ((current_stack != NULL) && (current_stack->m_command != NULL) && (current_stack->m_command->type == SIMPLE_COMMAND))
 				{
 					j = 0;
@@ -312,10 +326,8 @@ token_stream_to_command_stream(token_stream_t input)
 				}
 				else
 				{
-					if ((current_stack!= NULL && current_stack->m_command!= NULL) && ((current_stack->m_command->type != SIMPLE_COMMAND) || (current_stack->m_command->type == SIMPLE_COMMAND && newline_flag)))
+					if (current_stack!= NULL && current_stack->m_command!= NULL && current_stack->m_command->type != SIMPLE_COMMAND)
 					{
-						printf("%d\n",newline_flag);
-						error(1,0,"Reached here");
 						if (!loop_counter && !paren_counter)
 						{
 							fprintf(stderr, "%d: Invalid Word Token", current_token->line_num);
@@ -755,7 +767,7 @@ token_stream_to_command_stream(token_stream_t input)
 						temp_stack_2 = global_stack;
 					}
 				}
-				if (paren_counter)
+				if (paren_counter || loop_counter)
 				{
 					newline_flag = 1;
 				}
