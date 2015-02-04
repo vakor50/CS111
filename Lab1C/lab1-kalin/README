@@ -1,0 +1,94 @@
+This is a skeleton for CS 111 Lab 1.
+Prof. Eggert
+Winter 20155
+
+Kalin Khemka
+ID #304336969
+
+Vir Thakor
+ID #304273900
+
+Lab 1C
+
+In the final part of this lab, we created a logging feature, which allows us to see the real time, 
+execution time, user CPU time, system CPU time, the executed command,arguments of the command, and 
+the current process ID. 
+
+Write to a log file using: ./profsh -p f.shp script.sh
+
+- Must the first column of the log output be in nondecreasing order? If not, give a counterexample.
+    Not always. Although the logging is done without parallelism and thus the read, write and log commands are
+	done in sequence, there is the possibilty that if the clock is manually changed, the realtime and execution 
+	time of the command would be affected by the jump in the CLOCK_REALTIME parameter.
+    
+- Can the second column be less than the sum of the third and fourth columns, other than due to 
+  rounding errors? If so, explain why.
+    Yes, because during process scheduling by the kernel, the context switching time is recorded under system CPU
+    time, but not under the command's real time.
+    
+- Can the second, third, or fourth column ever be negative? Briefly explain.
+    No. For the second column, we are using CLOCK_MONOTONIC which always counts upwards from a time before the process 
+	begins, such as system startup, so you can never get a negative value for the execution time. As for the third
+	and fourth columns, the user and system CPU time will always be positive as well because they are dependent on
+	the time the process begins and they count upward.
+    
+- How did you test your shell to make sure that log lines are not interleaved? If you used test 
+  scripts, submit a copy of the scripts as part of your submission tarball.
+    There is no parallelism implemented, therefore there is no interleaving.
+
+
+Test scripts are included in tarball, but they were run manually to test. (exec_ok_test.sh and exec_bad_test.sh)
+
+Limitations:
+No currently known limitations. Passed all test cases given to it.    
+
+Lab 1B
+
+We implemented the execution of the commands using recursion of the fucntion execute_command() 
+in execute-command.c. execute_command() checks the type of the command_t being passed to it. 
+Depending on the command type, we would go into the components of the command. If the command
+was a simple command, we would execute the words in the command's u.word. If the command was a
+subshell, sequence, pipe, if, until, or while command, we would execute the relevant components
+If the command had input or output locations, we would input or output the data from the command.
+The commands with the most difficulty were:
+- simple, where we figured out how to read and write to files set under "input" or "output".
+- pipe, where we separated the commands on opposite sides of the pipe and executed them
+
+Test scripts: test-p-bad.sh & test-p-ok.sh
+
+Lab 1A
+Our design idea was to take in a char* from input buffer and turning these 
+characters into a linked list of commands, in command_stream_t.
+
+We broke this process into several main steps:
+
+- Get the input file and put it into a buffer of type char*
+  Function: make_command_stream
+  
+- using the char*, create entities that possessed the words, special tokens, or compound commands
+  We referred to these entities as tokens, which would help to build our commands, and put them 
+  into a token_stream or a pointer to all of the tokens.
+  Function: tokenize()
+  
+- We then needed to check that these functions were in the valid order and of valid content
+  Function: valid_token_stream
+  
+- In order to check the token created commands correctly, and to create the command_stream_t we
+  implemented a shift-reduce stack using a new data structure, token_stack. We would use the stack
+  to check tokens or commands currently on the stack in order to pop them off to create commands.
+  - token_stack takes in pointers both tokens and commands for the reason that if we had created 
+    a command, it could be pushed back onto the stack.
+  - to create commands, we checked the previous commands, popped off the necessary elements on the 
+    stack, combined them into a command and pushed the command back onto the token_stack
+  - we performed the previous while checking that the commands and tokens followed the POSIX shell 
+    grammar outlined in the project spec
+  Function: token_stream_to_command_stream
+  
+- Once we had created our command_stream_t, we had to implement read_command_stream, which we did
+  by checking if the stream wasn't empty and hadn't already been read, then we returning the 
+  first command, otherwise if the stream isn't null and next element isn't null we recursively 
+  read the next stream in our command stream
+  Function: read_command_stream
+
+Limitations:
+No known limitations yet
