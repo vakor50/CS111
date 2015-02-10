@@ -44,6 +44,14 @@ MODULE_AUTHOR("Skeletor");
 static int nsectors = 32;
 module_param(nsectors, int, 0);
 
+/*--------------------------------*/
+struct pid_list 
+{
+	pid_t pid;
+	struct pid_list* next;
+};
+typedef struct pid_list* pid_list_t;
+/*--------------------------------*/
 
 /* The internal representation of our device. */
 typedef struct osprd_info {
@@ -64,7 +72,12 @@ typedef struct osprd_info {
 
 	/* HINT: You may want to add additional fields to help
 	         in detecting deadlock. */
-
+	int num_write_locks;			// counter for write locks
+	int num_read_locks;				// counter for read locks
+	
+	pid_t write_lock_pid;			// pid of write lock
+	pid_list_t read_lock_pids;		// list of pids of read locks 
+	
 	// The following elements are used internally; you don't need
 	// to understand them.
 	struct request_queue *queue;    // The device request queue.
@@ -131,7 +144,7 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	//		int is 1 if success, and 0 if failure
 
 	// offset for a specific sector
-	int data_offset = d->data + (SECTOR_SIZE * req->sector);
+	int data_offset = (SECTOR_SIZE * req->sector);
 	// size of read/write
 	int data_size = req->current_nr_sectors * SECTOR_SIZE;
 
