@@ -121,8 +121,42 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	// 'req->buffer' members, and the rq_data_dir() function.
 
 	// Your code here.
-	eprintk("Should process request...\n");
+	// req->sector = sector cursor
+	// req->current_nr_sectors = current number of sectors?
+	// req->buffer = char array
+	// rq_data_dir(rq) = tells if request is read or write 
+	// end_request(req, int) 
+	//      must have spinlock acquired
+	//		wakes up processes waiting on I/O operation
+	//		int is 1 if success, and 0 if failure
 
+	// offset for a specific sector
+	int data_offset = d->data + (SECTOR_SIZE * req->sector);
+	// size of read/write
+	int data_size = req->current_nr_sectors * SECTOR_SIZE;
+
+	// check to see if trying to write to sector that doesn't exist
+	if ((req->current_nr_sectors + req->sector) > nsectors)
+	{
+		eprintk("Error: tried writing to nonexistant sector\n");
+		end_request(req, 0);
+	}
+
+	if (rq_data_dir(req) == READ)		// read from RAMDISK
+	{
+		// Copy data in requested sectors into buffer
+		memcpy(req->buffer, (d->data + data_offset), data_size);
+	}	
+	else if (rq_data_dir(req) == WRITE)	// write from RAMDISK
+	{
+		// Copy data in buffer to requested sectors
+		memcpy((d->data + data_offset), req->buffer, data_size);
+	}
+	else
+	{
+		eprintk("Error: Invalid read or write\n");
+		end_request(req, 0);	
+	}
 	end_request(req, 1);
 }
 
