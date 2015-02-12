@@ -207,14 +207,16 @@ static int osprd_close_last(struct inode *inode, struct file *filp)
 				d->write_lock_pid = -1;
 			} else {
 				d->num_read_locks--;
-				//pid_list_t temp = NULL;
 				pid_list_t prev = NULL;
 				pid_list_t curr = d->read_lock_pids;
 				while (curr != NULL){
 					if (curr->pid == current->pid){
-						//temp = curr;
-						prev->next = curr->next;
-						//free(temp);
+						if (prev != NULL)
+							prev->next = curr->next;
+						else
+							d->read_lock_pids = curr->next;
+						kfree(curr);
+						break;
 					} else {
 						prev = curr;
 						curr = curr->next;
@@ -333,7 +335,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 				}
 				else
 				{
-					printk(KERN_DEBUG "IN 1ST LOOP");
 					curr = curr->next;
 				}
 			}
@@ -365,7 +366,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 						curr->next = temp;
 						break;
 					} else{
-					printk(KERN_DEBUG "IN 2ND LOOP");
 					curr = curr->next;
 				}
 				}
@@ -470,9 +470,12 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 				pid_list_t curr = d->read_lock_pids;
 				while (curr != NULL){
 					if (curr->pid == current->pid){
-						//temp = curr;
-						prev->next = curr->next;
-						//free(temp);
+						if (prev != NULL)
+							prev->next = curr->next;
+						else
+							d->read_lock_pids = curr->next;
+						kfree(curr);
+						break;
 					} else {
 						prev = curr;
 						curr = curr->next;
