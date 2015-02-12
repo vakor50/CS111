@@ -144,7 +144,7 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	//		int is 1 if success, and 0 if failure
 
 	// offset for a specific sector
-	int data_offset = (SECTOR_SIZE * req->sector);
+	int data_offset = SECTOR_SIZE * req->sector;
 	// size of read/write
 	int data_size = req->current_nr_sectors * SECTOR_SIZE;
 
@@ -199,6 +199,8 @@ static int osprd_close_last(struct inode *inode, struct file *filp)
 		// as appropriate.
 
 		// Your code here.
+		pid_list_t prev;
+		pid_list_t curr;
 
 		if (filp->f_flags & F_OSPRD_LOCKED){
 			osp_spin_lock(&d->mutex);
@@ -207,8 +209,8 @@ static int osprd_close_last(struct inode *inode, struct file *filp)
 				d->write_lock_pid = -1;
 			} else {
 				d->num_read_locks--;
-				pid_list_t prev = NULL;
-				pid_list_t curr = d->read_lock_pids;
+				prev = NULL;
+				curr = d->read_lock_pids;
 				while (curr != NULL){
 					if (curr->pid == current->pid){
 						if (prev != NULL)
@@ -315,9 +317,11 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 			r = wait_event_interruptible(d->blockq
 				,d->num_write_locks == 0 && d->num_read_locks == 0 && d->ticket_tail == local_ticket);
 			if (r == -ERESTARTSYS){
-				//Don't know if these 3 lines of code are necessary!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				osp_spin_lock(&d->mutex);
-				d->ticket_head--;
+				if (local_ticket == d->ticket_tail)
+					d->ticket_tail++;
+				else
+					d->ticket_head--;
 				osp_spin_unlock(&d->mutex);
 				return r;
 			}
@@ -342,9 +346,11 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 			r = wait_event_interruptible(d->blockq
 				,d->num_write_locks == 0 && d->ticket_tail == local_ticket);
 			if (r == -ERESTARTSYS){
-				//Don't know if these 3 lines of code are necessary!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				osp_spin_lock(&d->mutex);
-				d->ticket_head--;
+				if (local_ticket == d->ticket_tail)
+					d->ticket_tail++;
+				else
+					d->ticket_head--;
 				osp_spin_unlock(&d->mutex);
 				return r;
 			}
@@ -390,19 +396,18 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 
 		local_ticket = d->ticket_head;
 
-		osp_spin_lock(&d->mutex);
 		if (filp_writable){
 			if (current->pid == d->write_lock_pid || d->num_write_locks != 0 || d->num_read_locks != 0 || d->ticket_tail != local_ticket){
-				osp_spin_unlock(&d->mutex);
 				return -EBUSY;
 			}
 			if (signal_pending(current)){
-				osp_spin_unlock(&d->mutex);
 				return -ERESTARTSYS;
 			}
+			osp_spin_lock(&d->mutex);
 			d->num_write_locks = 1;
 			d->write_lock_pid = current->pid;
 		} else {
+			osp_spin_lock(&d->mutex);
 			pid_list_t curr = d->read_lock_pids;
 			while (curr != NULL){
 				if (curr->pid == current->pid)
@@ -413,15 +418,17 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 				else
 					curr = curr->next;
 			}
+			osp_spin_unlock(&d->mutex);
 			if (d->num_write_locks != 0 || d->num_read_locks != 0 || d->ticket_tail != local_ticket){
-				osp_spin_unlock(&d->mutex);
+				
 				return -EBUSY;
 			}
 			if (signal_pending(current))
 			{
-				osp_spin_unlock(&d->mutex);
+				
 				return -ERESTARTSYS;
 			}
+			osp_spin_lock(&d->mutex);
 			d->num_read_locks++;
 			pid_list_t temp = NULL;
 			curr = d->read_lock_pids;
@@ -504,10 +511,9 @@ static void osprd_setup(osprd_info_t *d)
 	osp_spin_lock_init(&d->mutex);
 	d->ticket_head = d->ticket_tail = 0;
 	/* Add code here if you add fields to osprd_info_t. */
-	int num_read_locks = 0;
-	int num_write_locks = 0;
-	pid_t write_lock_pid = -1;
-	pid_list_t read_lock_pids = NULL;
+	d->num_read_locks = d->num_write_locks = 0;
+	d->write_lock_pid = -1;
+	d->read_lock_pids = NULL;
 }
 
 
