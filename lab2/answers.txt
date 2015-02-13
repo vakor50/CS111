@@ -20,3 +20,16 @@ Email: kkhemka@ucla.edu
 
 
 # Add any other information you'd like us to have below this line.
+
+Added deadlock test cases to a new file, test.pl
+
+Implemented deadlock checking using a queue mechanism which traces through
+all potentially conflicting processes to make sure they aren't waiting on
+something the current process has. Created a process queue for every disk
+and checked the queues every time a lock request arrived to scan for conflicts.
+
+
+Limitations:
+In test.pl, some of the test cases (6 and 7) fail sometimes because a random space gets
+added after the output, and other times it is ommitted. It is not consistent
+at all and is related to the read call.

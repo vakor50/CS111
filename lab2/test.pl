@@ -14,35 +14,51 @@ close FOO;
 
 # Another simple deadlock
     # 2
-    [ 'echo foo | ./osprdaccess -w -l /dev/osprda /dev/osprda & ' .
+    [ 'echo foofoo | ./osprdaccess -w -l /dev/osprda /dev/osprda ' .
       './osprdaccess -r /dev/osprda',
       "ioctl OSPRDIOCACQUIRE: Resource deadlock avoided" 
     ],
 
 # A more complex deadlock
     # 3
-    [ 'echo deadlock| ./osprdaccess -w -l -d 0.1 /dev/osprda /dev/osprdb & ' .
-      'echo deadlock| ./osprdaccess -w -l -d 0.1 /dev/osprdb /dev/osprda',
+    [ 'echo deadl1 | ./osprdaccess -w -l -d 0.1 /dev/osprda /dev/osprdb & ' .
+      'echo deadl2 | ./osprdaccess -w -l -d 0.1 /dev/osprdb /dev/osprda',
       "ioctl OSPRDIOCACQUIRE: Resource deadlock avoided" 
     ],
 
-
-# multiple writes
+# Even more complex deadlock
     # 4
-    [ '(echo test1 | ./osprdaccess -w) && ' .
-      '(echo test2 | ./osprdaccess -w) && ' .
-      '(./osprdaccess -r 16 | hexdump -C)',
-      "00000000 74 65 73 74 32 0a 00 00 00 00 00 00 00 00 00 00 |test2...........| " .
-      "00000010" 
+    [    
+      '(echo deadl1 | ./osprdaccess -w -l -d 0.1 /dev/osprda /dev/osprdb ) & ' .
+      '(echo deadl2 | ./osprdaccess -w -l -d 0.1 /dev/osprdb /dev/osprdc ) & ' .
+      '(echo deadl3 | ./osprdaccess -w -l -d 0.1 /dev/osprdc /dev/osprda ) ' ,
+      "ioctl OSPRDIOCACQUIRE: Resource deadlock avoided"
     ],
 
+# Even more complex deadlock
     # 5
-    [ '(echo test1 | ./osprdaccess -w) && ' .
-      '(echo test2 | ./osprdaccess -w -o 5) && ' .
-      '(./osprdaccess -r 16 | hexdump -C)',
-      "00000000 74 65 73 74 31 74 65 73 74 32 0a 00 00 00 00 00 |test1test2......| " .
-      "00000010" 
+    [    
+      '(echo deadl1 | ./osprdaccess -w -l -d 0.1 /dev/osprda /dev/osprdb ) & ' .
+      '(echo deadl2 | ./osprdaccess -w -l -d 0.1 /dev/osprdb /dev/osprdc ) & ' .
+      '(echo deadl3 | ./osprdaccess -w -l -d 0.1 /dev/osprdc /dev/osprdd ) & ' .
+      '(echo deadl4 | ./osprdaccess -w -l -d 0.1 /dev/osprdd /dev/osprda ) ' ,
+      "ioctl OSPRDIOCACQUIRE: Resource deadlock avoided"
     ],
+
+# Another simple deadlock
+    # 6
+    [    
+      '(echo deadl1 | ./osprdaccess -w -l -d 0.1 /dev/osprda /dev/osprdb ) & ' .
+      '(./osprdaccess -r 6 -l -d 0.1 /dev/osprdb /dev/osprda ) ' ,
+      "ioctl OSPRDIOCACQUIRE: Resource deadlock avoided"
+    ],
+# Try Acquire test, should pass
+    # 7
+    [ 'echo deadl1 | ./osprdaccess -r -l -d 0.1 /dev/osprda /dev/osprdb & ' .
+      'echo deadl2 | ./osprdaccess -r -L -d 0.1 /dev/osprdb /dev/osprda',
+      "" 
+    ]
+
     );
 
 my($ntest) = 0;

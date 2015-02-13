@@ -45,11 +45,12 @@ static int nsectors = 32;
 module_param(nsectors, int, 0);
 
 /*--------------------------------*/
-typedef struct pid_list* pid_list_t;
+typedef struct pid_list *pid_list_t;
 struct pid_list 
 {
 	pid_t pid;
-	struct pid_list* next;
+	struct pid_list *next;
+	int checked;
 };
 /*--------------------------------*/
 
@@ -74,9 +75,9 @@ typedef struct osprd_info {
 	         in detecting deadlock. */
 	int num_read_locks;				// counter for read locks
 	int num_write_locks;			// counter for write locks
-	
-	pid_t write_lock_pid;			// pid of write lock
-	pid_list_t read_lock_pids;		// linked list of pids of read locks 
+
+	pid_list_t lock_holder;		//Holds a list of all processes holding a lock on disk
+	pid_list_t lock_waiting;	//Holds a list of all proceeses waiting for a lock on disk		
 	
 	// The following elements are used internally; you don't need
 	// to understand them.
@@ -184,6 +185,7 @@ static int osprd_open(struct inode *inode, struct file *filp)
 	return 0;
 }
 
+static pid_list_t remove_from_list(pid_list_t start, pid_t p);
 
 // This function is called when a /dev/osprdX file is finally closed.
 // (If the file descriptor was dup2ed, this function is called only when the
@@ -199,46 +201,187 @@ static int osprd_close_last(struct inode *inode, struct file *filp)
 		// as appropriate.
 
 		// Your code here.
-		pid_list_t prev;
-		pid_list_t curr;
-
 		if (filp->f_flags & F_OSPRD_LOCKED){
 			osp_spin_lock(&d->mutex);
+			//Checks if write lock or read lock
 			if (filp_writable){
 				d->num_write_locks = 0;
-				d->write_lock_pid = -1;
 			} else {
 				d->num_read_locks--;
-				prev = NULL;
-				curr = d->read_lock_pids;
-				while (curr != NULL){
-					if (curr->pid == current->pid){
-						if (prev != NULL)
-							prev->next = curr->next;
-						else
-							d->read_lock_pids = curr->next;
-						kfree(curr);
-						break;
-					} else {
-						prev = curr;
-						curr = curr->next;
-					}
-				}
 			}
+			//Deadlock Code
+			d->lock_holder = remove_from_list(d->lock_holder,current->pid);
+			//End Deadlock Code
 			osp_spin_unlock(&d->mutex);
 			filp->f_flags &= ~F_OSPRD_LOCKED;
 			wake_up_all(&d->blockq);
 			return 0;
 		}
-
 		// This line avoids compiler warnings; you may remove it.
 		(void) filp_writable, (void) d;
-
 	}
-
 	return 0;
 }
 
+/*Deadlock section inserted for lab 2*/
+
+//Adds a pid node to the linked list
+static pid_list_t add_to_list(pid_list_t start, pid_t p){
+	pid_list_t curr = start;
+	pid_list_t temp = kmalloc(sizeof(struct pid_list), GFP_ATOMIC);
+	temp->pid = p;
+	temp->next = NULL;
+	temp->checked = 0;
+	//If list is empty
+	if (curr == NULL){
+		start = temp;
+	} else {
+		//Otherwise loop to find the last item and place new node after.
+		while (curr != NULL){
+			if (curr->next == NULL){
+				curr->next = temp;
+				break;
+			} else
+				curr = curr->next;
+		}
+	}
+	return start;
+}
+
+//Removes a pid node with the given pid parametere from the linked list
+static pid_list_t remove_from_list(pid_list_t start, pid_t p){
+	pid_list_t curr = start;
+	pid_list_t prev = NULL;
+	while (curr != NULL){
+		if (curr->pid == p){
+			if (prev != NULL)
+				prev->next = curr->next;
+			else
+				start = curr->next;
+			kfree(curr);
+			break;
+		} else {
+			prev = curr;
+			curr = curr->next;
+		}
+	}
+	return start;
+}
+
+//Add the nodes from src list to dest list
+static pid_list_t add_to_list_from_list(pid_list_t dest, pid_list_t src){
+	pid_list_t curr = dest;
+	pid_list_t curr2 = src;
+	while (curr2 != NULL){
+		curr = add_to_list(curr,curr2->pid);
+		curr2 = curr2->next;
+	}
+	if (dest != NULL)
+		printk("%d\n", dest->pid);
+	return curr;
+}
+
+//Checks if the pid is somewhere in the linked list
+static pid_list_t in_list(pid_list_t start, pid_t p){
+	pid_list_t curr = start;
+	while (curr != NULL){
+		if (curr->pid == p)
+			return curr;
+		else
+			curr = curr->next;
+	}
+	return NULL;
+}
+
+//Extracts the pid from the first node and removes the node
+static pid_t extract_first_pid(pid_list_t *start){
+	pid_list_t curr = *start;
+	if (curr == NULL)
+		return -1;
+	pid_t p = curr->pid;
+	*start = curr->next;
+	kfree(curr);
+	return p;
+}
+
+//Checks for deadlock
+static int check_deadlock(osprd_info_t *d){
+	int i, disk_no = -1;
+	pid_list_t check_queue = NULL;
+	int flag;
+	pid_list_t temp;
+	pid_t p;
+	osprd_info_t *d2;
+	int r_value = 0;
+
+	//Gets the disk number currently being use
+	for (i = 0; i < NOSPRD; i++){
+		if (&osprds[i] == d){
+			disk_no = i;
+			break;
+		}
+	}
+
+	for (;;){
+		//If disk number is valid
+		if (disk_no != -1){
+			d2 = &osprds[disk_no];
+			//Checks if the current process is holding a lock on the disk
+			osp_spin_lock(&d2->mutex);
+			temp = in_list(d2->lock_holder, current->pid);
+			osp_spin_unlock(&d2->mutex);
+			//If a lock is being held by the current process already, then deadlock
+			if (temp != NULL){
+				r_value = 1;
+				break;
+			}
+			//Gets the list of processes waiting for current disk to keep checking for conflict
+			osp_spin_lock(&d2->mutex);
+			check_queue = add_to_list_from_list(check_queue, d2->lock_holder);
+			osp_spin_unlock(&d2->mutex);
+		}
+		//If there is no process conflict
+		if (check_queue == NULL)
+			break;
+		//Checks the next process in the queue
+		p = extract_first_pid(&check_queue);
+		flag = 0;
+
+		//Finds out which disk that process is waiting for
+		for (i = 0; i < NOSPRD; i++){
+			osp_spin_lock(&(osprds[i].mutex));
+			temp = in_list(osprds[i].lock_waiting, p);
+			osp_spin_unlock(&(osprds[i].mutex));
+			if (temp != NULL && temp->checked == 0){
+				temp->checked = 1;
+				disk_no = i;
+				flag = 1;
+				break;
+			}
+		}
+		if (flag != 1)
+			disk_no = -1;
+	}
+	//After finding a deadlock or not, resets the checked value of the list nodes
+	for (i = 0; i < NOSPRD; i++){
+		temp = osprds[i].lock_waiting;
+		osp_spin_lock(&(osprds[i].mutex));
+		while (temp != NULL){
+			temp->checked = 0;
+			temp = temp->next;
+		}
+		osp_spin_unlock(&(osprds[i].mutex));
+	}
+
+	//Empties the queue
+	while (check_queue != NULL){
+		extract_first_pid(&check_queue);
+	}
+	kfree(check_queue);
+	return r_value;
+}
+
+/*End deadlock section inserted for lab 2*/
 
 /*
  * osprd_lock
@@ -304,19 +447,29 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// Your code here (instead of the next two lines).
 		
 		//This checks for already locked function. If already locked, then deadlock.
-		if (filp->f_flags & F_OSPRD_LOCKED)
-			return -EDEADLK;
 
+		if (check_deadlock(d))
+			return -EDEADLK;
+			
 		osp_spin_lock(&d->mutex);
 		local_ticket = d->ticket_head++;
+		//Deadlock Code
+		d->lock_waiting = add_to_list(d->lock_waiting,current->pid);
+		//End Deadlock Code
 		osp_spin_unlock(&d->mutex);
 
+		//If write lock request
 		if (filp_writable){
-			if (current->pid == d->write_lock_pid)
-				return -EDEADLK;
+			//Waiting for the condition to pass
 			r = wait_event_interruptible(d->blockq
 				,d->num_write_locks == 0 && d->num_read_locks == 0 && d->ticket_tail == local_ticket);
+			//Deadlock Code
+			osp_spin_lock(&d->mutex);
+			d->lock_waiting = remove_from_list(d->lock_waiting,current->pid);
+			osp_spin_unlock(&d->mutex);
+			//End Deadlock Code
 			if (r == -ERESTARTSYS){
+				//Before exiting, reset the values
 				osp_spin_lock(&d->mutex);
 				if (local_ticket == d->ticket_tail)
 					d->ticket_tail++;
@@ -327,25 +480,17 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 			}
 			osp_spin_lock(&d->mutex);
 			d->num_write_locks = 1;
-			d->write_lock_pid = current->pid;
 		} else {
-			osp_spin_lock(&d->mutex);
-			pid_list_t curr = d->read_lock_pids;
-			while (curr != NULL){
-				if (curr->pid == current->pid)
-				{
-					osp_spin_unlock(&d->mutex);
-					return -EDEADLK;
-				}
-				else
-				{
-					curr = curr->next;
-				}
-			}
-			osp_spin_unlock(&d->mutex);
+			//Waiting for the condition to pass
 			r = wait_event_interruptible(d->blockq
 				,d->num_write_locks == 0 && d->ticket_tail == local_ticket);
+			//Deadlock Code
+			osp_spin_lock(&d->mutex);
+			d->lock_waiting = remove_from_list(d->lock_waiting,current->pid);
+			osp_spin_unlock(&d->mutex);
+			//End Deadlock Code
 			if (r == -ERESTARTSYS){
+				//Before exiting, reset the values
 				osp_spin_lock(&d->mutex);
 				if (local_ticket == d->ticket_tail)
 					d->ticket_tail++;
@@ -356,31 +501,13 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 			}
 			osp_spin_lock(&d->mutex);
 			d->num_read_locks++;
-			pid_list_t temp = NULL;
-			curr = d->read_lock_pids;
-			//Checks if the list is empty.
-			if (curr == NULL){
-				curr = kmalloc(sizeof(pid_list_t), GFP_ATOMIC);
-				curr->pid = current->pid;
-				curr->next = NULL;
-			} else {
-				//Otherwise loop to find the last item and place new node after.
-				while (curr != NULL){
-					if (curr->next == NULL){
-						temp = kmalloc(sizeof(pid_list_t), GFP_ATOMIC);
-						temp->pid = current->pid;
-						curr->next = temp;
-						break;
-					} else{
-					curr = curr->next;
-				}
-				}
-			}
 		}
+		//Deadlock Code
+		d->lock_holder = add_to_list(d->lock_holder,current->pid);
+		//End Deadlock Code
 		filp->f_flags |= F_OSPRD_LOCKED;
 		d->ticket_tail++;
 		osp_spin_unlock(&d->mutex);
-
 	} else if (cmd == OSPRDIOCTRYACQUIRE) {
 
 		// EXERCISE: ATTEMPT to lock the ramdisk.
@@ -397,7 +524,8 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		local_ticket = d->ticket_head;
 
 		if (filp_writable){
-			if (current->pid == d->write_lock_pid || d->num_write_locks != 0 || d->num_read_locks != 0 || d->ticket_tail != local_ticket){
+			//Check the conditions for blocking 
+			if (d->num_write_locks != 0 || d->num_read_locks != 0 || d->ticket_tail != local_ticket){
 				return -EBUSY;
 			}
 			if (signal_pending(current)){
@@ -405,22 +533,9 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 			}
 			osp_spin_lock(&d->mutex);
 			d->num_write_locks = 1;
-			d->write_lock_pid = current->pid;
 		} else {
-			osp_spin_lock(&d->mutex);
-			pid_list_t curr = d->read_lock_pids;
-			while (curr != NULL){
-				if (curr->pid == current->pid)
-				{
-					osp_spin_unlock(&d->mutex);
-					return -EBUSY;
-				}
-				else
-					curr = curr->next;
-			}
-			osp_spin_unlock(&d->mutex);
-			if (d->num_write_locks != 0 || d->num_read_locks != 0 || d->ticket_tail != local_ticket){
-				
+			//Check the conditions for blocking 
+			if (d->num_write_locks != 0 || d->ticket_tail != local_ticket){
 				return -EBUSY;
 			}
 			if (signal_pending(current))
@@ -430,26 +545,10 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 			}
 			osp_spin_lock(&d->mutex);
 			d->num_read_locks++;
-			pid_list_t temp = NULL;
-			curr = d->read_lock_pids;
-			//Checks if the list is empty.
-			if (curr == NULL){
-				curr = kmalloc(sizeof(pid_list_t), GFP_ATOMIC);
-				curr->pid = current->pid;
-				curr->next = NULL;
-			} else {
-				//Otherwise loop to find the last item and place new node after.
-				while (curr != NULL){
-					if (curr->next == NULL){
-						temp = kmalloc(sizeof(pid_list_t), GFP_ATOMIC);
-						temp->pid = current->pid;
-						curr->next = temp;
-						break;
-					} else
-						curr = curr->next;
-				}
-			}
 		}
+		//Deadlock Code
+		d->lock_holder = add_to_list(d->lock_holder,current->pid);
+		//End Deadlock Code
 		filp->f_flags |= F_OSPRD_LOCKED;
 		d->ticket_tail++;
 		d->ticket_head++;
@@ -469,31 +568,18 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 			osp_spin_lock(&d->mutex);
 			if (filp_writable){
 				d->num_write_locks = 0;
-				d->write_lock_pid = -1;
 			} else {
 				d->num_read_locks--;
-				//pid_list_t temp = NULL;
-				pid_list_t prev = NULL;
-				pid_list_t curr = d->read_lock_pids;
-				while (curr != NULL){
-					if (curr->pid == current->pid){
-						if (prev != NULL)
-							prev->next = curr->next;
-						else
-							d->read_lock_pids = curr->next;
-						kfree(curr);
-						break;
-					} else {
-						prev = curr;
-						curr = curr->next;
-					}
-				}
 			}
+			//Deadlock Code
+			d->lock_holder = remove_from_list(d->lock_holder,current->pid);
+			//End Deadlock Code
 			osp_spin_unlock(&d->mutex);
 			filp->f_flags &= ~F_OSPRD_LOCKED;
 			wake_up_all(&d->blockq);
 			r = 0;
 		} else
+			//File was not locked
 			r = -EINVAL;
 
 	} else
@@ -512,8 +598,7 @@ static void osprd_setup(osprd_info_t *d)
 	d->ticket_head = d->ticket_tail = 0;
 	/* Add code here if you add fields to osprd_info_t. */
 	d->num_read_locks = d->num_write_locks = 0;
-	d->write_lock_pid = -1;
-	d->read_lock_pids = NULL;
+	d->lock_holder = d->lock_waiting = NULL;
 }
 
 
