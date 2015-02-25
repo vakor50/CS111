@@ -452,9 +452,11 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 * the loop.  For now we do this all the time.
 		 *
 		 * EXERCISE: Your code here */
-		r = 1;		/* Fix me! */
-		break;		/* Fix me! */
-
+		if (((f_pos - 2) * OSPFS_DIRENTRY_SIZE) >= dir_oi->oi_size)
+		{
+			r = 1;		/* Fix me! */
+			break;		/* Fix me! */
+		}
 		/* Get a pointer to the next entry (od) in the directory.
 		 * The file system interprets the contents of a
 		 * directory-file as a sequence of ospfs_direntry structures.
@@ -476,6 +478,28 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 */
 
 		/* EXERCISE: Your code here */
+		od = ospfs_inode_data(dir_oi, offset);
+		if (od->od_ino)
+		{
+			ospfs_inode_t *oi = ospfs_inode(od->od_ino);
+			uint32_t file_type;
+
+	 		if (oi->oi_ftype == OSPFS_FTYPE_REG)
+				file_type = DT_REG;
+			else if (oi->oi_ftype == OSPFS_FTYPE_DIR)
+				file_type = DT_DIR;
+			else 
+				file_type = DT_LNK;
+
+			ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, typef);
+			
+			if (ok_so_far < 0) 
+			{
+				r = 0;
+				break;
+			}
+		}
+		f_pos++;
 	}
 
 	// Save the file position and return!
