@@ -576,7 +576,21 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 static uint32_t
 allocate_block(void)
 {
-	/* EXERCISE: Your code here */
+	int os_nblocks = ospfs_super->os_nblocks;
+	void* start_bitmap = ospfs_block(OSPFS_FREEMAP_BLK);
+	int current_block = 0;
+	
+	while(current_block < os_nblocks)
+	{
+		if(bitvector_test(start_bitmap, current_block) == 1)
+		{
+			bitvector_clear(start_bitmap, current_block);
+			return current_block;
+		}
+		current_block++;
+	}
+	
+	// Bits representing every block were checked and allocated, so disk is full
 	return 0;
 }
 
@@ -596,6 +610,14 @@ static void
 free_block(uint32_t blockno)
 {
 	/* EXERCISE: Your code here */
+	int os_nblocks = ospfs_super->os_nblocks;
+  	int boundary = ospfs_super->os_firstinob + ospfs_super->os_firstinob + ospfs_super->os_ninodes/OSPFS_BLKINODES;
+
+	if(blockno > boundary)
+	{
+		void* bitmap_block = ospfs_block(OSPFS_FREEMAP_BLK + (blockno / OSPFS_BLKBITSIZE));
+    		bitvector_set(bitmap_block, (blockno % OSPFS_BLKBITSIZE));
+	}
 }
 
 
@@ -955,10 +977,20 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	// Support files opened with the O_APPEND flag.  To detect O_APPEND,
 	// use struct file's f_flags field and the O_APPEND bit.
 	/* EXERCISE: Your code here */
+	
+	if (filp->f_flags & O_APPEND)
+		*f_pos = oi->oi_size;
 
 	// If the user is writing past the end of the file, change the file's
 	// size to accomodate the request.  (Use change_size().)
 	/* EXERCISE: Your code here */
+
+	if ((*f_pos + count) > oi->oi_size)
+	{
+		// if failed to change size of file
+		if (change_size(oi, (*f_pos + count)) < 0)
+			goto done;
+	}
 
 	// Copy data block by block
 	while (amount < count && retval >= 0) {
@@ -978,8 +1010,16 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 		// read user space.
 		// Keep track of the number of bytes moved in 'n'.
 		/* EXERCISE: Your code here */
-		retval = -EIO; // Replace these lines
-		goto done;
+		
+		n = OSPFS_BLKSIZE - (*f_pos % OSPFS_BLKSIZE);
+
+		if (n > count - amount)
+			n = count - amount;
+
+		if (copy_from_user(data + (*f_pos % OSPFS_BLKSIZE), buffer, n) != 0)
+			return -EFAULT;
+		//retval = -EIO; // Replace these lines
+		//goto done;
 
 		buffer += n;
 		amount += n;
