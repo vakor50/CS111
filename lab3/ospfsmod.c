@@ -679,7 +679,7 @@ indir_index(uint32_t b)
 		return -1;
 	if (indir2_index(b) == -1)
 		return 0;
-	return ((b - (OSPFS_NDIRECT + OSPFS_NINDIRECT))/OSPFS_NINDIRECT)
+	return ((b - (OSPFS_NDIRECT + OSPFS_NINDIRECT))/OSPFS_NINDIRECT);
 }
 
 
