@@ -545,6 +545,13 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 
 	od->od_ino = 0;
 	oi->oi_nlink--;
+
+	//dir_oi->oi_nlink--;
+
+	//Symbolic Link Deletion
+	if (oi->oi_ftype != OSPFS_FTYPE_SYMLINK && oi->oi_nlink == 0)
+		change_size(oi,0);
+
 	return 0;
 }
 
@@ -1113,7 +1120,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 	}
 
     done:
-	return (retval >= 0 ? amount : retval);
+		return (retval >= 0 ? amount : retval);
 }
 
 
@@ -1194,7 +1201,7 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	}
 
     done:
-	return (retval >= 0 ? amount : retval);
+		return (retval >= 0 ? amount : retval);
 }
 
 
@@ -1315,7 +1322,28 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
 	/* EXERCISE: Your code here. */
-	
+	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
+	ospfs_direntry_t * entry = NULL;
+
+	if (dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1 == 0)
+		return -EIO;
+	if (dst_dentry->d_name.len > OSPFS_MAXNAMELEN)
+		return -ENAMETOOLONG;
+	if (find_direntry(dir_oi, dst_dentry->d_name.name, dst_dentry->d_name.len) != NULL)
+		return -EEXIST;
+
+	entry = create_blank_direntry(dir_oi);
+	if (IS_ERR(entry))
+		return PTR_ERR(entry);
+
+	if (copy_from_user(entry->od_name,dst_dentry->d_name.name, dst_dentry->d_name.len))
+		return -EIO;
+	entry->od_name[dst_dentry->d_name.len] = '\0';
+	entry->od_ino = src_dentry->d_inode->i_ino;
+
+	ospfs_inode(src_dentry->d_inode->i_ino)->oi_nlink++;
+	//dir_oi->oi_nlink++;
+
 	return -EINVAL;
 }
 
@@ -1383,8 +1411,8 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 
 	if (copy_from_user(entry->od_name, dentry->d_name.name, dentry->d_name.len))
 		return -EIO;
-	entry->od_ino = ino_num;
 	entry->od_name[dentry->d_name.len] = '\0';
+	entry->od_ino = ino_num;
 
 	inode->oi_size = 0;
 	inode->oi_ftype = OSPFS_FTYPE_REG;
