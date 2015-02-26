@@ -1315,6 +1315,7 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
 	/* EXERCISE: Your code here. */
+	
 	return -EINVAL;
 }
 
@@ -1357,7 +1358,8 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	ospfs_inode_t *inode;
 	uint32_t ino_num = 0;
 
-
+	if (dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1 == 0)
+		return -EIO;
 	if (dentry->d_name.len > OSPFS_MAXNAMELEN)
 		return -ENAMETOOLONG;
 	if (find_direntry(dir_oi, dentry->d_name.name,dentry->d_name.len) != NULL)
@@ -1379,8 +1381,9 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	//Do we need this code?
 	//dir_oi->oi_nlink++;
 
+	if (copy_from_user(entry->od_name, dentry->d_name.name, dentry->d_name.len))
+		return -EIO;
 	entry->od_ino = ino_num;
-	copy_from_user(entry->od_name, dentry->d_name.name, dentry->d_name.len);
 	entry->od_name[dentry->d_name.len] = '\0';
 
 	inode->oi_size = 0;
