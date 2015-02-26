@@ -491,7 +491,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 			else 
 				file_type = DT_LNK;
 
-			ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, typef);
+			ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, file_type);
 			
 			if (ok_so_far < 0) 
 			{
