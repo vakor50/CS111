@@ -1161,7 +1161,6 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 
 	if ((*f_pos + count) > oi->oi_size)
 	{
-		// if failed to change size of file
 		if (change_size(oi, (*f_pos + count)) < 0)
 			goto done;
 	}
@@ -1171,6 +1170,18 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 		uint32_t blockno = ospfs_inode_blockno(oi, *f_pos);
 		uint32_t n;
 		char *data;
+
+		if (*f_pos == oi->oi_size)
+		{
+			if (oi->oi_size == OSPFS_MAXFILESIZE)
+				return -EIO;
+
+			oi->oi_size++;
+			blockno = ospfs_inode_blockno(oi, *f_pos);
+			oi->oi_size--;
+		}
+		else
+			blockno = ospfs_inode_blockno(oi, *f_pos);
 
 		if (blockno == 0) {
 			retval = -EIO;
@@ -1189,9 +1200,12 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 
 		if (n > count - amount)
 			n = count - amount;
-
-		if (copy_from_user(data + (*f_pos % OSPFS_BLKSIZE), buffer, n) != 0)
+		
+		if (copy_from_user(data + (*f_pos % OSPFS_BLKSIZE), buffer, n) > 0)
 			return -EFAULT;
+			
+		if (((*f_pos + n) - oi->oi_size) < 0)
+			oi->oi_size += (*f_pos + n) - oi->oi_size;
 		//retval = -EIO; // Replace these lines
 		//goto done;
 
