@@ -486,11 +486,11 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 			//ospfs_inode_t *oi = ospfs_inode(od->od_ino);
 			uint32_t file_type;
 
-	 		if (oi->oi_ftype == OSPFS_FTYPE_REG)
+	 		if (entry_oi->oi_ftype == OSPFS_FTYPE_REG)
 				file_type = DT_REG;
-			else if (oi->oi_ftype == OSPFS_FTYPE_DIR)
+			else if (entry_oi->oi_ftype == OSPFS_FTYPE_DIR)
 				file_type = DT_DIR;
-			else if (oi->oi_ftype == OSPFS_FTYPE_SYMLINK)
+			else if (entry_oi->oi_ftype == OSPFS_FTYPE_SYMLINK)
 				file_type = DT_LNK;
 
 			ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, file_type);
