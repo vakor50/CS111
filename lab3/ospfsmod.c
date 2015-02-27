@@ -587,16 +587,16 @@ allocate_block(void)
 {
 	int os_nblocks = ospfs_super->os_nblocks;
 	void* start_bitmap = ospfs_block(OSPFS_FREEMAP_BLK);
-	int current_block = 0;
 	
-	while(current_block < os_nblocks)
+	int i = 0;
+	while(i < ospfs_super->os_nblocks)
 	{
-		if(bitvector_test(start_bitmap, current_block) == 1)
+		if(bitvector_test(start_bitmap, i) == 1)
 		{
-			bitvector_clear(start_bitmap, current_block);
-			return current_block;
+			bitvector_clear(start_bitmap, i);
+			return i;
 		}
-		current_block++;
+		i++;
 	}
 	
 	// Bits representing every block were checked and allocated, so disk is full
@@ -619,14 +619,18 @@ static void
 free_block(uint32_t blockno)
 {
 	/* EXERCISE: Your code here */
-	int os_nblocks = ospfs_super->os_nblocks;
-  	int boundary = ospfs_super->os_firstinob + ospfs_super->os_firstinob + ospfs_super->os_ninodes/OSPFS_BLKINODES;
+	//int os_nblocks = ospfs_super->os_nblocks;
+  	//int boundary = ospfs_super->os_firstinob + ospfs_super->os_firstinob + ospfs_super->os_ninodes/OSPFS_BLKINODES;
 
-	if(blockno > boundary)
-	{
-		void* bitmap_block = ospfs_block(OSPFS_FREEMAP_BLK + (blockno / OSPFS_BLKBITSIZE));
-    		bitvector_set(bitmap_block, (blockno % OSPFS_BLKBITSIZE));
-	}
+	//if(blockno > boundary)
+	//{
+	//	void* bitmap_block = ospfs_block(OSPFS_FREEMAP_BLK + (blockno / OSPFS_BLKBITSIZE));
+    	//	bitvector_set(bitmap_block, (blockno % OSPFS_BLKBITSIZE));
+	//}
+	
+	if (blockno >= ospfs_super->os_ninodes || blockno <= (ospfs_super->os_firstinob + OSPFS_BLKINODES))
+		return
+	bitvector_set(ospfs_block(OSPFS_FREEMAP_BLK), blockno);
 }
 
 
