@@ -772,8 +772,8 @@ add_block(ospfs_inode_t *oi)
 		return retval;
 
 	//If the size of the file is 0 but the first block is already allocated
-	if (oi->oi_size == 0 && oi->oi_direct[0] != 0)
-		n = 1;
+	//if (oi->oi_size == 0 && oi->oi_direct[0] != 0)
+	//	n = 1;
 
 	direct_num = direct_index(n);
 	indir_num = indir_index(n);
@@ -890,6 +890,7 @@ add_block(ospfs_inode_t *oi)
 static int
 remove_block(ospfs_inode_t *oi)
 {
+	printk(KERN_ALERT "REACHED REMOVE BLOCK\n");
 	// current number of blocks in file
 	uint32_t n = ospfs_size2nblocks(oi->oi_size);
 
@@ -960,6 +961,7 @@ remove_block(ospfs_inode_t *oi)
 		}
 	}
 	oi->oi_size -= OSPFS_BLKSIZE;
+	printk(KERN_ALERT "ENDED REMOVE BLOCK\n");
 	return 0;
 }
 
@@ -1005,7 +1007,7 @@ change_size(ospfs_inode_t *oi, uint32_t new_size)
 {
 	uint32_t old_size = oi->oi_size;
 	int r = 0;
-
+	printk(KERN_ALERT "Inode Size: %d\n", old_size);
 	while (ospfs_size2nblocks(oi->oi_size) < ospfs_size2nblocks(new_size)) {
 	        /* EXERCISE: Your code here */
 		r = add_block(oi);
@@ -1025,6 +1027,9 @@ change_size(ospfs_inode_t *oi, uint32_t new_size)
 	/* EXERCISE: Make sure you update necessary file meta data
 	             and return the proper value. */
 	oi->oi_size = new_size;
+	printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
+	if (oi->oi_size == 11264)
+		printk(KERN_ALERT "This is correct so far\n");
 	return r; // Replace this line
 }
 
@@ -1084,6 +1089,7 @@ ospfs_notify_change(struct dentry *dentry, struct iattr *attr)
 static ssize_t
 ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 {
+	printk(KERN_ALERT "REACHED READ\n");
 	ospfs_inode_t *oi = ospfs_inode(filp->f_dentry->d_inode->i_ino);
 	int retval = 0;
 	size_t amount = 0;
@@ -1136,6 +1142,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 	}
 
     done:
+    	printk(KERN_ALERT "ENDED READ\n");
 		return (retval >= 0 ? amount : retval);
 }
 
@@ -1160,6 +1167,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 static ssize_t
 ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *f_pos)
 {
+	printk(KERN_ALERT "REACHED WRITE\n");
 	ospfs_inode_t *oi = ospfs_inode(filp->f_dentry->d_inode->i_ino);
 	int retval = 0;
 	size_t amount = 0;
@@ -1167,6 +1175,7 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	// Support files opened with the O_APPEND flag.  To detect O_APPEND,
 	// use struct file's f_flags field and the O_APPEND bit.
 	/* EXERCISE: Your code here */
+	printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
 	
 	if (filp->f_flags & O_APPEND)
 		*f_pos = oi->oi_size;
@@ -1205,7 +1214,7 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 		if (n > (count - amount))
 			n = count - amount;
 		
-		if (copy_from_user(data + (*f_pos % OSPFS_BLKSIZE), buffer, n) > 0)
+		if (copy_from_user(data + (*f_pos % OSPFS_BLKSIZE), buffer, n) != 0)
 			return -EFAULT;
 		//retval = -EIO; // Replace these lines
 		//goto done;
@@ -1216,6 +1225,8 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	}
 
     done:
+    	printk(KERN_ALERT "Inode Size in WRITE: %d\n", oi->oi_size);
+    	printk(KERN_ALERT "ENDED WRITE\n");
 		return (retval >= 0 ? amount : retval);
 }
 
@@ -1337,6 +1348,7 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
 	/* EXERCISE: Your code here. */
+	printk(KERN_ALERT "REACHED LINK\n");
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	ospfs_direntry_t * entry = NULL;
 
@@ -1346,6 +1358,8 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 		return -ENAMETOOLONG;
 	if (find_direntry(dir_oi, dst_dentry->d_name.name, dst_dentry->d_name.len) != NULL)
 		return -EEXIST;
+
+	dst_dentry->d_inode->i_ino = src_dentry->d_inode->i_ino;
 
 	entry = create_blank_direntry(dir_oi);
 	if (IS_ERR(entry))
@@ -1358,7 +1372,7 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 
 	ospfs_inode(src_dentry->d_inode->i_ino)->oi_nlink++;
 	//dir_oi->oi_nlink++;
-
+	printk(KERN_ALERT "ENDED LINK\n");
 	return 0;
 }
 
@@ -1397,9 +1411,9 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	uint32_t entry_ino = 0;
 	/* EXERCISE: Your code here. */
+	printk(KERN_ALERT "REACHED CREATE\n");
 	ospfs_direntry_t * entry = NULL;
 	ospfs_inode_t *inode;
-	uint32_t ino_num = 0;
 
 	if (dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1 == 0)
 		return -EIO;
@@ -1413,18 +1427,18 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 		return PTR_ERR(entry);
 
 	//Find free inode
-	for (ino_num = 0; ino_num < ospfs_super->os_ninodes; ino_num++){
-		inode = ospfs_inode(ino_num);
+	for (entry_ino = 0; entry_ino < ospfs_super->os_ninodes; entry_ino++){
+		inode = ospfs_inode(entry_ino);
 		if (inode->oi_nlink == 0)
 			break;
 	}
-	if (ino_num == ospfs_super->os_ninodes)
+	if (entry_ino == ospfs_super->os_ninodes)
 		return -ENOSPC;
 
 	//Do we need this code?
 	//dir_oi->oi_nlink++;
 
-	entry->od_ino = ino_num;
+	entry->od_ino = entry_ino;
 	memcpy(entry->od_name, dentry->d_name.name, dentry->d_name.len);
 	entry->od_name[dentry->d_name.len] = '\0';
 
@@ -1436,6 +1450,7 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	inode->oi_indirect = 0;
 	inode->oi_indirect2 = 0;
 
+	printk(KERN_ALERT "ENDED CREATE\n");
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
 	   getting here. */
@@ -1446,6 +1461,7 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 		d_instantiate(dentry, i);
 		return 0;
 	}
+
 }
 
 
