@@ -423,6 +423,7 @@ ospfs_dir_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *ign
 static int
 ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 {
+	printk(KERN_ALERT "REACHED READDIR\n");
 	struct inode *dir_inode = filp->f_dentry->d_inode;
 	ospfs_inode_t *dir_oi = ospfs_inode(dir_inode->i_ino);
 	uint32_t f_pos = filp->f_pos;
@@ -504,7 +505,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		}
 		f_pos++;
 	}
-
+	printk(KERN_ALERT "ENDED READDIR\n");
 	// Save the file position and return!
 	filp->f_pos = f_pos;
 	return r;
@@ -790,27 +791,33 @@ add_block(ospfs_inode_t *oi)
 	}
 	//Now we move to the first indirect block  - using allocated[0]
 	else if (indir2_num == -1){
-		if (oi->oi_indirect != 0)
-			return -EIO;
-		if (!(allocated[0] = allocate_block()))
-			goto done;
-		indir_block = allocated[0];
-		indir_data = ospfs_block(indir_block);
-		memset(indir_data, 0, OSPFS_BLKSIZE);
+		printk(KERN_ALERT "REACHED FIRST INDIRECT BLOCK\n");
+		
+		if (oi->oi_indirect == 0){
+			if (!(allocated[0] = allocate_block()))
+				goto done;
+			indir_block = allocated[0];
+			indir_data = ospfs_block(indir_block);
+			memset(indir_data, 0, OSPFS_BLKSIZE);
+		}
 
 		if (indir_data[direct_num] != 0){
 			retval = -EIO;
 			goto done;
 		}
+
 		if (!(indir_data[direct_num] = allocate_block()))
 			goto done;
-
 		memset(ospfs_block(indir_data[direct_num]), 0, OSPFS_BLKSIZE);
 		
-		oi->oi_indirect = indir_block;
+		if (oi->oi_indirect == 0)
+			oi->oi_indirect = indir_block;
+
+		printk(KERN_ALERT "ENDED FIRST INDIRECT BLOCK\n");
 	} 
 	//If there is a doubly indirect block - using allocated[1]
 	else if (!indir2_num){
+		printk(KERN_ALERT "REACHED DOUBLY INDIRECT BLOCK\n");
 		if (!oi->oi_indirect2){
 			if (!(allocated[1] = allocate_block()))
 				goto done;
@@ -842,9 +849,11 @@ add_block(ospfs_inode_t *oi)
 		
 		oi->oi_indirect2 = indir2_block;
 		indir2_data[direct_num] = indir_block;
+		printk(KERN_ALERT "ENDED DOUBLY INDIRECT BLOCK\n");
 	}
 
 	oi->oi_size += OSPFS_BLKSIZE;
+	printk(KERN_ALERT "CHANGED SIZE OF OI\n");
 	return 0;
 
 	done:
