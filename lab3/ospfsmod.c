@@ -452,7 +452,8 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 * the loop.  For now we do this all the time.
 		 *
 		 * EXERCISE: Your code here */
-		if (((f_pos - 2) * OSPFS_DIRENTRY_SIZE) >= dir_oi->oi_size)
+		//if (((f_pos - 2) * OSPFS_DIRENTRY_SIZE) >= dir_oi->oi_size)
+		if ((f_pos) > (OSPFS_DIRENTRY_SIZE * dir_oi->oi_size))
 		{
 			r = 1;		/* Fix me! */
 			break;		/* Fix me! */
@@ -479,25 +480,26 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 
 		/* EXERCISE: Your code here */
 		od = ospfs_inode_data(dir_oi, ((f_pos - 2) * OSPFS_DIRENTRY_SIZE));
-		if (od->od_ino)
+		entry_oi = ospfs_inode(od->od_ino);
+		if (entry_oi)
 		{
-			ospfs_inode_t *oi = ospfs_inode(od->od_ino);
+			//ospfs_inode_t *oi = ospfs_inode(od->od_ino);
 			uint32_t file_type;
 
 	 		if (oi->oi_ftype == OSPFS_FTYPE_REG)
 				file_type = DT_REG;
 			else if (oi->oi_ftype == OSPFS_FTYPE_DIR)
 				file_type = DT_DIR;
-			else 
+			else if (oi->oi_ftype == OSPFS_FTYPE_SYMLINK)
 				file_type = DT_LNK;
 
 			ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, file_type);
 			
-			if (ok_so_far < 0) 
-			{
-				r = 0;
-				break;
-			}
+			//if (ok_so_far < 0) 
+			//{
+			//	r = 0;
+			//	break;
+			//}
 		}
 		f_pos++;
 	}
@@ -1098,7 +1100,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		// into user space.
 		// Use variable 'n' to track number of bytes moved.
 		/* EXERCISE: Your code here */
-		if (count + (*f_pos % OSPFS_BLKSIZE) - amount > OSPFS_BLKSIZE)
+		if ((count + (*f_pos % OSPFS_BLKSIZE) - amount) > OSPFS_BLKSIZE)
 			n = OSPFS_BLKSIZE - (*f_pos % OSPFS_BLKSIZE);
 		else
 			n = count - amount;
