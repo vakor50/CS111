@@ -1496,56 +1496,30 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	/* EXERCISE: Your code here. */
 	//return -EINVAL;
 	
-	ospfs_symlink_inode_t *new_inode;
-	
-	ospfs_direntry_t *new_directory;
-	
-	// check -ENAMETOOLONG
-	if (dentry->d_name.len > OSPFS_MAXNAMELEN || strlen(symname) > OSPFS_MAXNAMELEN)
-		return -ENAMETOOLONG;
-	// check -EEXIST
-	if (find_direntry(ospfs_inode(dir->i_ino), dentry->d_name.name, dentry->d_name.len))
+	ospfs_symlink_inode_t* link;
+
+	// check if name too long
+	if (dentry->d_name.len > OSPFS_MAXNAMELEN ||
+		strlen(symname) > OSPFS_MAXSYMLINKLEN)
+        return -ENAMETOOLONG;
+	// check if directory entry already exists
+	if (find_direntry(ospfs_inode(dir->i_ino),
+		dentry->d_name.name, dentry->d_name.len))
 		return -EEXIST;
-	
+
 	// create new symlinked file
 	entry_ino = ospfs_create(dir, dentry, dir_oi->oi_mode, NULL);
 	if (entry_ino < 0)
 		return entry_ino;
-	entry_ino = find_direntry(ospfs_inode(dir->i_ino), dentry->d_name.name, dentry->d_name.len)->od_ino;
-	new_inode = (ospfs_symlink_inode_t*) ospfs_inode(entry_ino);
-	
-	//find empty directory entry
-	new_directory = create_blank_direntry(dir_oi);
-	// check valid directory
-	if(IS_ERR(new_directory))
-		return PTR_ERR(new_directory);
-	
-	// find empty inode
-	while (entry_ino < ospfs_super->os_ninodes)
-	{
-		new_inode = ospfs_inode(entry_ino);
-		//found empty inode
-		if(new_inode && new_inode->oi_nlink == 0)
-			break;
-		entry_ino++;
-	}
-	
-	// case: didn't find free inode
-	if (entry_ino == ospfs_super->os_ninodes)
-		return -ENOSPC;
-	
-	// fill inode
-	new_inode->oi_ftype = OSPFS_FTYPE_SYMLINK;
-	new_inode->oi_nlink = 1;
-	new_inode->oi_size = strlen(symname);
-	//strncpy(new_inode->oi_symlink, symname, new_inode->oi_size);
-	//new_inode->oi_symlink[new_inode->oi_size] = 0;
-	memcpy(new_inode->oi_symlink, symname, strlen(symname));
-	
-	// fill directory
-	new_directory->od_ino = entry_ino;
-	strncpy(new_directory->od_name, dentry->d_name.name, dentry->d_name.len);
-	new_directory->od_name[dentry->d_name.len] = 0;
+	entry_ino = find_direntry(ospfs_inode(dir->i_ino),
+		dentry->d_name.name, dentry->d_name.len)->od_ino;
+	link = (ospfs_symlink_inode_t*) ospfs_inode(entry_ino);
+
+	// copy file information
+	link->oi_size = strlen(symname);
+	link->oi_ftype = OSPFS_FTYPE_SYMLINK;
+	link->oi_nlink = 1;
+	memcpy(link->oi_symlink, symname, strlen(symname));
 	
 	//
 	
