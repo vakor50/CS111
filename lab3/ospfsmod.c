@@ -1492,9 +1492,71 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 {
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	uint32_t entry_ino = 0;
-
+	
+	ospfs_direntry_t *new_directory;
+	ospfs_symlink_inode_t *new_inode;
 	/* EXERCISE: Your code here. */
-	return -EINVAL;
+	
+	// check -ENAMETOOLONG
+	if (dentry->d_name.len > OSPFS_MAXNAMELEN || strlen(symname) > OSPFS_MAXNAMELEN)
+		return -ENAMETOOLONG;
+	// check -EEXIST
+	if (find_direntry(dir_oi,dentry->d_name.name,dentry->d_name.len))
+		return -EEXIST;	
+	
+	//find empty directory entry
+	new_directory = create_blank_direntry(dir_oi);
+	// check valid directory
+	if(IS_ERR(new_directory))
+		return PTR_ERR(new_directory);
+	
+	// find empty inode
+	while (entry_ino < ospfs_super->os_ninodes)
+	{
+		new_inode = ospfs_inode(entry_ino);
+		//found empty inode
+		if(new_inode && new_inode->oi_nlink == 0)
+			break;
+		entry_ino++;
+	}
+	
+	if (nswrites_to_crash != -1)
+	{
+		if (nswrites_to_crash < -1)
+			eprintk("nswrites_to_crash less than -1!\n");
+		else if (nswrites_to_crash == 0)
+			return 0;
+		else
+			nswrites_to_crash--;
+	}
+	
+	// case: didn't find free inode
+	if (entry_ino == ospfs_super->os_ninodes)
+		return -ENOSPC;
+	
+	// fill inode
+	new_inode->oi_ftype = OSPFS_FTYPE_SYMLINK;
+	new_inode->oi_nlink = 1;
+	new_inode->oi_size = strlen(symname);
+	strncpy(new_inode->oi_symlink, symname, new_inode->oi_size);
+	new_inode->oi_symlink[new_inode->oi_size] = 0;
+	
+	if(nswrites_to_crash != -1)
+	{
+		if (nswrites_to_crash < -1)
+			eprintk("nswrites_to_crash less than -1!\n");
+		else if (nswrites_to_crash == 0)
+			return 0;
+		else
+			nswrites_to_crash--;
+	}
+	
+	// fill directory
+	new_directory->od_ino = entry_ino;
+	strncpy(new_directory->od_name, dentry->d_name.name, dentry->d_name.len);
+	new_directory->od_name[dentry->d_name.len] = 0;
+	
+	//return -EINVAL;
 
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
