@@ -103,9 +103,9 @@ close FOO;
     ],
     
     # 18: overwriting files should affect all hardlinks to that file
-#	[ 'echo hello > test/hardlinktest ; ln test/hardlinktest test/hardlinktest2 ; echo goodbye > test/hardlinktest2 ; cat test/hardlinktest ; rm test/hardlinktest2',
-#	  'goodbye'
-#	],
+	[ 'echo hello > test/hardlinktest ; ln test/hardlinktest test/hardlinktest2 ; echo goodbye > test/hardlinktest2 ; cat test/hardlinktest ; rm test/hardlinktest2',
+	  'goodbye'
+	],
 	
 	# 19: removing one hardlink should not remove the file itself
 #	[ 'echo hello > test/filetoremove ; ln test/filetoremove test/filetokeep ; echo goodbye > test/filetoremove ; rm test/filetoremove ; cat test/filetokeep ; rm test/filetokeep',
@@ -129,12 +129,12 @@ close FOO;
     
     # create a symbolic link
     # 18
-    [ 'echo this is foo > test/foo; ' .
-      'ln -s foo test/sym && ' .
-      'diff test/sym test/foo && ' .
-      'rm test/sym test/foo',
-      ''
-    ],
+    #[ 'echo this is foo > test/foo; ' .
+    #  'ln -s foo test/sym && ' .
+    #  'diff test/sym test/foo && ' .
+    #  'rm test/sym test/foo',
+    #  ''
+    #],
 
     # create a symbolic link and change the file it points to
     # 19
