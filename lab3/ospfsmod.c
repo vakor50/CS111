@@ -1494,8 +1494,8 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	uint32_t entry_ino = 0;
 	
 	/* EXERCISE: Your code here. */
-	return -EINVAL;
-	/*
+	//return -EINVAL;
+	
 	ospfs_symlink_inode_t *new_inode;
 	
 	ospfs_direntry_t *new_directory;
@@ -1548,7 +1548,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	new_directory->od_name[dentry->d_name.len] = 0;
 	
 	//
-	*/
+	
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
 	   getting here. */
