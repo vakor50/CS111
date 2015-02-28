@@ -1630,39 +1630,9 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
 	// Exercise: Your code here.
 
-	//nd_set_link(nd, oi->oi_symlink);
-	//return (void *) 0;
-	/*--------------------------------------------*/
-	
-	// check for conditional symlink
-	if (strncmp(oi->oi_symlink, "root?", 5) == 0) {
-		// find the pivot between first and second paths
-		int pivot = strchr(oi->oi_symlink, ':') - oi->oi_symlink;
-
-		// root user
-		if (current->uid == 0) {
-			// use null-terminator to indicate ending
-			oi->oi_symlink[pivot] = '\0';
-			nd_set_link(nd, oi->oi_symlink + 5 + 1); // use first path
-		}
-		// normal user
-		else
-			nd_set_link(nd, oi->oi_symlink + pivot + 1); // use second path
-	}
-	else
-		nd_set_link(nd, oi->oi_symlink);
-
-	return (void *) 0;
-	
-	/*--------------------------------------------*/
-	
-	/*
-	ospfs_symlink_inode_t *oi =
-		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
-	// Exercise: Your code here.
 	char *path;
-	
-	//if not conditional link, set path and return
+
+	// If this isn't a conditonal link, set the path and return
 	if(oi->oi_symlink[0] != '?')
 	{
 		nd_set_link(nd, oi->oi_symlink);
@@ -1689,7 +1659,6 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	// All clear!
 	nd_set_link(nd, path + 2);
 	return (void *) 0;
-	*/
 }
 
 
