@@ -1547,90 +1547,53 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	/* EXERCISE: Your code here. */
 	//return -EINVAL;
 	
-	ospfs_symlink_inode_t *new_inode_loc = NULL; // Location of the inode for the symlink
-	ospfs_direntry_t *od;
+	if (!dir || !dentry || !symname)
+		return -EINVAL;
 
-	char *qmark;
-	char *colon;
+	if ((dentry->d_name.len == 0) || (strlen(symname) == 0))
+		return -EINVAL;
 
-	(void)dir_oi; // Silences compiler warning
-
-	// Error conditions!
-
-	// Overflow sanity checking
-	if (dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1	== 0)
-		return -EIO;
-
-	// Is the name too long?
-	else if (dentry->d_name.len > OSPFS_MAXNAMELEN)
+	if ((dentry->d_name.len > OSPFS_MAXNAMELEN) || (strlen(symname) > OSPFS_MAXSYMLINKLEN))
 		return -ENAMETOOLONG;
 
-	// See if the file already exists
-	else if (find_direntry(dir_oi, dentry->d_name.name, dentry->d_name.len) != NULL)
+	struct dentry *sym_tmp = ospfs_dir_lookup(dir, dentry, NULL);
+	if (IS_ERR(sym_tmp))
+		return PTR_ERR(sym_tmp);
+	if (sym_tmp->d_inode)
 		return -EEXIST;
 
-	// Determine what inode we can use... helps us detect out of space errors
-	// Start at 2 since the first two inodes are special
-	entry_ino = find_free_inode();
-	new_inode_loc = (ospfs_symlink_inode_t *) ospfs_inode(entry_ino);
+	ospfs_inode_t *oi = ospfs_block(ospfs_super->os_firstinob);
+	ospfs_inode_t *sym_oi = NULL;
+	int zerofill = 0;
+	for (entry_ino = 0; entry_ino < ospfs_super->os_ninodes; entry_ino++) {
+		sym_oi = &oi[entry_ino];
+		if (!sym_oi->oi_nlink) //link count 0 means free inode
+			break;
+		sym_oi = NULL;
+	}
 
-	if(entry_ino == 0)
+	if (!sym_oi || (entry_ino == ospfs_super->os_ninodes)) //no free inode
 		return -ENOSPC;
-	else if(new_inode_loc == NULL)
+	if (copy_from_user(sym_oi, &zerofill, OSPFS_INODESIZE))
 		return -EIO;
-
-	// Get our new entry
-	od = create_blank_direntry(dir_oi);
+	
+	ospfs_direntry_t *od = create_blank_direntry(dir_oi);
 	if (IS_ERR(od))
 		return PTR_ERR(od);
 
-	// Check to see for symbolic links
-	// and store a modified version of the link name for look_up ease later
-	qmark = strpbrk(symname, "?");
-	colon = strpbrk(symname, ":");
+	if(copy_from_user(od, &entry_ino, 4)) //inode number
+		return -EIO;
+	if(copy_from_user(od+4, dentry->d_name.name, dentry->d_name.len)) //name
+		return -EIO;
 
-	if(qmark && colon && colon > qmark) // conditional mode
-	{
-		// We will strip off the "root?" prefix, as this is the only condition in this lab
-		// next we will store the string as "?<root_path>\0:<not_root_path>\0>". The "?" char
-		// tells us we are in conditional mode, while the first NULL byte will be used to tell
-		// nd_set_link when the end of the string is, without having to make a copy of it.
-
-		// Check the lengh given the modified string we are storing
-		// We need to +1 for the extra NULL byte
-		size_t root_path_len = colon - qmark + 1;
-		size_t other_path_len = strlen(colon);
-
-		if(root_path_len + other_path_len > OSPFS_MAXNAMELEN)
-			return -ENAMETOOLONG;
-
-		new_inode_loc->oi_size = strlen(qmark) + 1; // The size is everything from "?" to end, plus the extra NULL
-		strncpy(new_inode_loc->oi_symlink, qmark, root_path_len - 1);
-		new_inode_loc->oi_symlink[root_path_len - 1] = '\0';
-
-		strncpy(new_inode_loc->oi_symlink + root_path_len, colon, other_path_len);
-		new_inode_loc->oi_symlink[new_inode_loc->oi_size] = '\0';
-	}
-	else // regular symlink
-	{
-		size_t name_len = strlen(symname);
-		if (name_len > OSPFS_MAXSYMLINKLEN)
-			return -ENAMETOOLONG;
-
-		new_inode_loc->oi_size = name_len;
-		strncpy(new_inode_loc->oi_symlink, symname, new_inode_loc->oi_size);
-		new_inode_loc->oi_symlink[new_inode_loc->oi_size] = '\0';
-	}
-
-	// Set the meta information for the inode. Setting all the defaults so as to not anger @ipetkov
-	new_inode_loc->oi_ftype = OSPFS_FTYPE_SYMLINK;
-	new_inode_loc->oi_nlink = 1;
-
-	strncpy(od->od_name, dentry->d_name.name, dentry->d_name.len);
-	od->od_name[dentry->d_name.len] = 0;
-	od->od_ino = entry_ino;
-
-	dir_oi->oi_nlink++;
+	ospfs_symlink_inode_t temp;
+	temp.oi_size = strlen(symname);
+	temp.oi_ftype = OSPFS_FTYPE_SYMLINK;
+	temp.oi_nlink = 1;
+	strcpy(temp.oi_symlink, symname);
+	
+	if(copy_from_user(sym_oi, &temp, OSPFS_INODESIZE))
+		return -EIO;
 	
 	
 	/* Execute this code after your function has successfully created the
@@ -1666,36 +1629,62 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	ospfs_symlink_inode_t *oi =
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
 	// Exercise: Your code here.
+//nd_set_link(nd, oi->oi_symlink);
+	//return (void *) 0;
+	/*--------------------------------------------*/
+	
+	// check for conditional symlink
+	if (strncmp(oi->oi_symlink, "root?", 5) == 0) {
+		// find the pivot between first and second paths
+		int pivot = strchr(oi->oi_symlink, ':') - oi->oi_symlink;
 
+		// root user
+		if (current->uid == 0) {
+			// use null-terminator to indicate ending
+			oi->oi_symlink[pivot] = '\0';
+			nd_set_link(nd, oi->oi_symlink + 5 + 1); // use first path
+		}
+		// normal user
+		else
+			nd_set_link(nd, oi->oi_symlink + pivot + 1); // use second path
+	}
+	else
+		nd_set_link(nd, oi->oi_symlink);
+
+	return (void *) 0;
+	
+	/*--------------------------------------------*/
+	
+	/*
+	ospfs_symlink_inode_t *oi =
+		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
+	// Exercise: Your code here.
 	char *path;
-
-	// If this isn't a conditonal link, set the path and return
+	
+	//if not conditional link, set path and return
 	if(oi->oi_symlink[0] != '?')
 	{
 		nd_set_link(nd, oi->oi_symlink);
 		return (void *) 0;
 	}
-
 	// If root, give a pointer to the start of the root path
 	if(current->uid == 0)
 	{
 		nd_set_link(nd, oi->oi_symlink + 1);
 		return (void *) 0;
 	}
-
 	// Otherwise fast forward to the non-root path
 	path = oi->oi_symlink;
 	while(*path != '\0')
 		path++;
-
 	// We've hit a null byte. Make sure we are still within our string
 	// and the next is in fact ":"
 	if(path - oi->oi_symlink >= oi->oi_size || path[1] != ':')
 		return ERR_PTR(-EIO);
-
 	// All clear!
 	nd_set_link(nd, path + 2);
 	return (void *) 0;
+	*/
 }
 
 
