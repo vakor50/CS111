@@ -1493,11 +1493,12 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	uint32_t entry_ino = 0;
 	
+	/* EXERCISE: Your code here. */
+	return -EINVAL;
+	/*
 	ospfs_symlink_inode_t *new_inode;
 	
 	ospfs_direntry_t *new_directory;
-	
-	/* EXERCISE: Your code here. */
 	
 	// check -ENAMETOOLONG
 	if (dentry->d_name.len > OSPFS_MAXNAMELEN || strlen(symname) > OSPFS_MAXNAMELEN)
@@ -1546,8 +1547,8 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	strncpy(new_directory->od_name, dentry->d_name.name, dentry->d_name.len);
 	new_directory->od_name[dentry->d_name.len] = 0;
 	
-	//return -EINVAL;
-
+	//
+	*/
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
 	   getting here. */
@@ -1580,6 +1581,13 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	ospfs_symlink_inode_t *oi =
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
 	// Exercise: Your code here.
+
+	nd_set_link(nd, oi->oi_symlink);
+	return (void *) 0;
+	/*
+	ospfs_symlink_inode_t *oi =
+		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
+	// Exercise: Your code here.
 	char *path;
 	
 	//if not conditional link, set path and return
@@ -1609,6 +1617,7 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	// All clear!
 	nd_set_link(nd, path + 2);
 	return (void *) 0;
+	*/
 }
 
 
