@@ -108,19 +108,19 @@ close FOO;
 	],
 	
 	# 19: removing one hardlink should not remove the file itself
-#	[ 'echo hello > test/filetoremove ; ln test/filetoremove test/filetokeep ; echo goodbye > test/filetoremove ; rm test/filetoremove ; cat test/filetokeep ; rm test/filetokeep',
-#	  'goodbye'
+	[ 'echo hello > test/filetoremove ; ln test/filetoremove test/filetokeep ; echo goodbye > test/filetoremove ; rm test/filetoremove ; cat test/filetokeep ; rm test/filetokeep',
+	'goodbye'
 #	],
 
 	# 20: symlinks
-#	[ 'ln -s test/hello.txt thelink ; echo "World" >> test/hello.txt ; diff test/hello.txt thelink && echo Same contents ; rm thelink',
-#	  'Same contents'
-#	],
+	[ 'ln -s test/hello.txt thelink ; echo "World" >> test/hello.txt ; diff test/hello.txt thelink && echo Same contents ; rm thelink',
+	  'Same contents'
+	],
 
 	# 21: conditional symlinks as root
-#	[ 'echo "Not root" > notroot ; echo "Root" > root ; ln -s root?root:notroot amiroot ; cat amiroot',
-#	  'Root'
-#	],
+	[ 'echo "Not root" > notroot ; echo "Root" > root ; ln -s root?root:notroot amiroot ; cat amiroot',
+	  'Root'
+	],
 
 	# 22: conditional symlinks as non-root
 #	[ 'su user -c "cat amiroot ; rm amiroot root notroot"',
