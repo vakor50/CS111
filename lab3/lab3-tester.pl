@@ -6,15 +6,16 @@ $lines++ while defined($_ = <FOO>);
 close FOO;
 
 @tests = (
-    # test reading
+    # test reading 
+    # 1
     [ 'diff base/hello.txt test/hello.txt >/dev/null 2>&1 && echo $?',
       "0"
     ],
-    
+    # 2
     [ 'cmp base/pokercats.gif test/pokercats.gif >/dev/null 2>&1 && echo $?',
       "0"
     ],
-        
+    # 3
     [ 'ls -l test/pokercats.gif | awk "{ print \$5 }"',
       "91308"
     ],
@@ -22,37 +23,41 @@ close FOO;
     # test writing
     # We use dd to write because it doesn't initially truncate, and it can
     # be told to seek forward to a particular point in the disk.
+    # 4
     [ "echo Bybye | dd bs=1 count=5 of=test/hello.txt conv=notrunc >/dev/null 2>&1 ; cat test/hello.txt",
       "Bybye, world!"
     ],
-    
+    # 5
     [ "echo Hello | dd bs=1 count=5 of=test/hello.txt conv=notrunc >/dev/null 2>&1 ; cat test/hello.txt",
       "Hello, world!"
     ],
-    
+    # 6
     [ "echo gi | dd bs=1 count=2 seek=7 of=test/hello.txt conv=notrunc >/dev/null 2>&1 ; cat test/hello.txt",
       "Hello, girld!"
     ],
-    
+    # 7
     [ "echo worlds galore | dd bs=1 count=13 seek=7 of=test/hello.txt conv=notrunc >/dev/null 2>&1 ; cat test/hello.txt",
       "Hello, worlds galore"
     ],
-    
+    # 8
     [ "echo 'Hello, world!' > test/hello.txt ; cat test/hello.txt",
       "Hello, world!"
     ],
     
     # create a file
+    # 9
     [ 'touch test/file1 && echo $?',
       "0"
     ],
 
     # read directory
+    # 10
     [ 'touch test/dir-contents.txt ; ls test | tee test/dir-contents.txt | grep file1',
       'file1'
     ],
 
     # write files, remove them, then read dir again
+    # 11
     [ 'ls test | dd bs=1 of=test/dir-contents.txt >/dev/null 2>&1; ' .
       ' touch test/foo test/bar test/baz && '.
       ' rm    test/foo test/bar test/baz && '.
@@ -61,36 +66,98 @@ close FOO;
     ],
 
     # remove the last file
+    # 12
     [ 'rm -f test/dir-contents.txt && ls test | grep dir-contents.txt',
       ''
     ],
 
 
     # write to a file
+    # 13
     [ 'echo hello > test/file1 && cat test/file1',
       'hello'
     ],
     
     # append to a file
+    # 14
     [ 'echo hello > test/file1 ; echo goodbye >> test/file1 && cat test/file1',
       'hello goodbye'
     ],
 
     # delete a file
+    # 15
     [ 'rm -f test/file1 && ls test | grep file1',
       ''
     ],
 
     # make a larger file for indirect blocks
+    # 16
     [ 'yes | head -n 5632 > test/yes.txt && ls -l test/yes.txt | awk \'{ print $5 }\'',
       '11264'
     ],
    
     # truncate the large file
+    # 17
     [ 'echo truncernated11 > test/yes.txt | ls -l test/yes.txt | awk \'{ print $5 }\' ; rm test/yes.txt',
       '15'
     ],
+    
+    # create symbolic link
+    # 18
+    [ 'echo foo fight > test/foo; ' .
+      'ln -s foo test/sym && ' .
+      'diff test/sym test/foo && ' .
+      'rm test/sym test/foo',
+      ''
+    ],
+    
+    # create symbolic link, change file it points to
+    # 19
+    [ 'echo foo fight > test/foo; ' .
+      'ln -s foo test/sym && ' .
+      'rm test/foo && ' .
+      'echo bar fight > test/foo && ' .
+      'cat test/sym && rm test/sym test/foo' ,
+      'bar fight'
+    ],
 
+    # check symlink being interpreted relative to the working path
+    # 20
+    [ 'echo foo fight > test/foo; ' .
+      'ln -s foo test/sym && ' .
+      'ln -s foomsg.txt test/subdir/sym && ' .
+      'diff <( cat test/foo ) test/sym && ' .
+      'diff <( cat test/subdir/foomsg.txt) test/subdir/sym; ' .
+      'cd test/subdir; ' .
+      'diff <( cat ../foo ) ../sym && ' .
+      'diff <( cat foomsg.txt) sym; ' .
+      'cd ../..; ' .
+      'rm test/sym test/subdir/sym test/foo',
+      ''
+    ],
+
+    # check conditional symlnk
+    # 21
+    [ 'cd test; '.
+      'echo root_node > rt.txt; ' .
+      'echo not_root_node > not_rt.txt; ' .
+      'chmod 777 not_rt.txt; ' .
+      'ln -s root?rt.txt:not_rt.txt amiroot && ' .
+      'cat amiroot && ' .
+      'su user -c "cat amiroot"; ' .
+      'rm rt.txt not_rt.txt amiroot; ' .
+      'cd ..',
+      "root is not root"
+    ],
+
+    # another check that symlinks work relative to current path
+    # 22
+    [ 'echo this is foo > test/foo; ' .
+      'ln -s ../foo test/subdir/sym && ' .
+      'diff test/foo test/subdir/sym && ' .
+      'rm test/subdir/sym test/foo',
+      ''
+    ]
 );
 
 my($ntest) = 0;
