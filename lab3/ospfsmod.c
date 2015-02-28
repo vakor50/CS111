@@ -761,6 +761,7 @@ add_block(ospfs_inode_t *oi)
 
 	/* EXERCISE: Your code here */
 	uint32_t direct_num, indir_num, indir2_num;
+	uint32_t direct_block = 0;
 	uint32_t indir_block = 0;
 	uint32_t indir2_block = 0;
 	uint32_t *indir_data = NULL;
@@ -799,19 +800,28 @@ add_block(ospfs_inode_t *oi)
 			indir_block = allocated[0];
 			indir_data = ospfs_block(indir_block);
 			memset(indir_data, 0, OSPFS_BLKSIZE);
-		}
 
-		if (indir_data[direct_num] != 0){
-			retval = -EIO;
-			goto done;
-		}
+			if (indir_data[direct_num] != 0){
+				retval = -EIO;
+				goto done;
+			}
 
-		if (!(indir_data[direct_num] = allocate_block()))
-			goto done;
-		memset(ospfs_block(indir_data[direct_num]), 0, OSPFS_BLKSIZE);
-		
-		if (oi->oi_indirect == 0)
-			oi->oi_indirect = indir_block;
+			if (!(indir_data[direct_num] = allocate_block()))
+				goto done;
+			memset(ospfs_block(indir_data[direct_num]), 0, OSPFS_BLKSIZE);
+			
+			if (oi->oi_indirect == 0)
+				oi->oi_indirect = indir_block;
+
+		} else{
+			if (!(direct_block = allocate_block()))
+				goto done;
+
+			memset(ospfs_block(direct_block), 0, OSPFS_BLKSIZE);
+			
+			indir_data = ospfs_block(oi->oi_indirect);
+			indir_data[direct_num] = direct_block;
+		}
 
 		printk(KERN_ALERT "ENDED FIRST INDIRECT BLOCK\n");
 	} 
@@ -1007,7 +1017,7 @@ change_size(ospfs_inode_t *oi, uint32_t new_size)
 {
 	uint32_t old_size = oi->oi_size;
 	int r = 0;
-	printk(KERN_ALERT "Inode Size: %d\n", old_size);
+	//printk(KERN_ALERT "Inode Size: %d\n", old_size);
 	while (ospfs_size2nblocks(oi->oi_size) < ospfs_size2nblocks(new_size)) {
 	        /* EXERCISE: Your code here */
 		r = add_block(oi);
@@ -1027,7 +1037,7 @@ change_size(ospfs_inode_t *oi, uint32_t new_size)
 	/* EXERCISE: Make sure you update necessary file meta data
 	             and return the proper value. */
 	oi->oi_size = new_size;
-	printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
+	//printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
 	if (oi->oi_size == 11264)
 		printk(KERN_ALERT "This is correct so far\n");
 	return r; // Replace this line
@@ -1175,7 +1185,7 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	// Support files opened with the O_APPEND flag.  To detect O_APPEND,
 	// use struct file's f_flags field and the O_APPEND bit.
 	/* EXERCISE: Your code here */
-	printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
+	//printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
 	
 	if (filp->f_flags & O_APPEND)
 		*f_pos = oi->oi_size;
@@ -1225,7 +1235,7 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	}
 
     done:
-    	printk(KERN_ALERT "Inode Size in WRITE: %d\n", oi->oi_size);
+    	//printk(KERN_ALERT "Inode Size in WRITE: %d\n", oi->oi_size);
     	printk(KERN_ALERT "ENDED WRITE\n");
 		return (retval >= 0 ? amount : retval);
 }
@@ -1359,16 +1369,19 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 	if (find_direntry(dir_oi, dst_dentry->d_name.name, dst_dentry->d_name.len) != NULL)
 		return -EEXIST;
 
-	dst_dentry->d_inode->i_ino = src_dentry->d_inode->i_ino;
+	//dst_dentry->d_inode->i_ino = src_dentry->d_inode->i_ino;
 
 	entry = create_blank_direntry(dir_oi);
 	if (IS_ERR(entry))
 		return PTR_ERR(entry);
 
 	entry->od_ino = src_dentry->d_inode->i_ino;
-	if (copy_from_user(entry->od_name,dst_dentry->d_name.name, dst_dentry->d_name.len))
-		return -EIO;
+	//if (copy_from_user(entry->od_name,dst_dentry->d_name.name, dst_dentry->d_name.len))
+	//	return -EIO;
+	memcpy(entry->od_name,dst_dentry->d_name.name, dst_dentry->d_name.len);
 	entry->od_name[dst_dentry->d_name.len] = '\0';
+
+	//dst_dentry = entry;
 
 	ospfs_inode(src_dentry->d_inode->i_ino)->oi_nlink++;
 	//dir_oi->oi_nlink++;
