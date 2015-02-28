@@ -1582,8 +1582,79 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
 	// Exercise: Your code here.
 
-	nd_set_link(nd, oi->oi_symlink);
+	//nd_set_link(nd, oi->oi_symlink);
+	//return (void *) 0;
+	/*--------------------------------------------*/
+	
+	// Indexes we use for loops
+	int i = 0;
+	int k = 0;
+	
+	// Find indices of '?' and ':'
+	int q_index = find_first_index(oi->oi_symlink, '?');
+	int c_index = find_first_index(oi->oi_symlink, ':'); 
+	
+	// Prepare for storing condition and possible destinations
+	char* cond;		// The condition, which is compared to root
+	char* dest;		// The conditional symlink destination
+	
+	// eprintk("SYMLINK TYPE: ");
+	
+	// If both are found, we have a conditional symlink
+	if(q_index != -1 && c_index != -1)
+	{
+		// eprintk("Conditional Symlink\n");
+		// Allocate data
+		cond = kmalloc(oi->oi_size, GFP_ATOMIC);
+		dest = kmalloc(oi->oi_size, GFP_ATOMIC);
+		
+		// Find condition, which is from the string beginning to ?
+		for(i = 0; i < q_index; i++)
+		{
+			cond[i] = oi->oi_symlink[i];
+		}
+		cond[i] = 0;
+		
+		// We need to be root, and the symlink set to root to meet conditions
+		if(current->uid == 0 && strcmp(cond, "root") == 0)
+		{
+			// Find the first destination, which is between ? and :
+			for(i = (q_index + 1); i < c_index; i++)
+			{
+				dest[k] = oi->oi_symlink[i];
+				k++;
+			}
+			dest[k] = 0;
+			
+			// Set the symlink
+			nd_set_link(nd, dest);
+		}
+		else
+		{
+			// Find the second destination, which from the : to string end
+			for(i = (c_index + 1); oi->oi_symlink[i] != '\0'; i++)
+			{
+				dest[k] = oi->oi_symlink[i];
+				k++;
+			}
+			dest[k] = 0;
+			
+			// Set the symlink
+			nd_set_link(nd, dest);
+		}
+	}
+	
+	// Otherwise, it's just a normal symlink
+	else
+	{
+		// eprintk("Normal Symlink\n");
+		nd_set_link(nd, oi->oi_symlink);
+	}
+	
 	return (void *) 0;
+	
+	/*--------------------------------------------*/
+	
 	/*
 	ospfs_symlink_inode_t *oi =
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
