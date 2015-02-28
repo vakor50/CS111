@@ -104,12 +104,12 @@ close FOO;
     
     # create a symbolic link
     # 18
-    [ 'echo this is foo > test/foo; ' .
-      'ln -s foo test/sym && ' .
-      'diff test/sym test/foo && ' .
-      'rm test/sym test/foo',
-      ''
-    ],
+    #[ 'echo this is foo > test/foo; ' .
+    #  'ln -s foo test/sym && ' .
+    #  'diff test/sym test/foo && ' .
+    #  'rm test/sym test/foo',
+    #  ''
+    #],
 
     # create a symbolic link and change the file it points to
     # 19
