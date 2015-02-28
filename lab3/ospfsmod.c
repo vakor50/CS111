@@ -1547,53 +1547,30 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	/* EXERCISE: Your code here. */
 	//return -EINVAL;
 	
-	if (!dir || !dentry || !symname)
-		return -EINVAL;
+	ospfs_symlink_inode_t* link;
 
-	if ((dentry->d_name.len == 0) || (strlen(symname) == 0))
-		return -EINVAL;
-
-	if ((dentry->d_name.len > OSPFS_MAXNAMELEN) || (strlen(symname) > OSPFS_MAXSYMLINKLEN))
-		return -ENAMETOOLONG;
-
-	struct dentry *sym_tmp = ospfs_dir_lookup(dir, dentry, NULL);
-	if (IS_ERR(sym_tmp))
-		return PTR_ERR(sym_tmp);
-	if (sym_tmp->d_inode)
+	// check if name too long
+	if (dentry->d_name.len > OSPFS_MAXNAMELEN ||
+		strlen(symname) > OSPFS_MAXSYMLINKLEN)
+        return -ENAMETOOLONG;
+	// check if directory entry already exists
+	if (find_direntry(ospfs_inode(dir->i_ino),
+		dentry->d_name.name, dentry->d_name.len))
 		return -EEXIST;
 
-	ospfs_inode_t *oi = ospfs_block(ospfs_super->os_firstinob);
-	ospfs_inode_t *sym_oi = NULL;
-	int zerofill = 0;
-	for (entry_ino = 0; entry_ino < ospfs_super->os_ninodes; entry_ino++) {
-		sym_oi = &oi[entry_ino];
-		if (!sym_oi->oi_nlink) //link count 0 means free inode
-			break;
-		sym_oi = NULL;
-	}
+	// create new symlinked file
+	entry_ino = ospfs_create(dir, dentry, dir_oi->oi_mode, NULL);
+	if (entry_ino < 0)
+		return entry_ino;
+	entry_ino = find_direntry(ospfs_inode(dir->i_ino),
+		dentry->d_name.name, dentry->d_name.len)->od_ino;
+	link = (ospfs_symlink_inode_t*) ospfs_inode(entry_ino);
 
-	if (!sym_oi || (entry_ino == ospfs_super->os_ninodes)) //no free inode
-		return -ENOSPC;
-	if (copy_from_user(sym_oi, &zerofill, OSPFS_INODESIZE))
-		return -EIO;
-	
-	ospfs_direntry_t *od = create_blank_direntry(dir_oi);
-	if (IS_ERR(od))
-		return PTR_ERR(od);
-
-	if(copy_from_user(od, &entry_ino, 4)) //inode number
-		return -EIO;
-	if(copy_from_user(od+4, dentry->d_name.name, dentry->d_name.len)) //name
-		return -EIO;
-
-	ospfs_symlink_inode_t temp;
-	temp.oi_size = strlen(symname);
-	temp.oi_ftype = OSPFS_FTYPE_SYMLINK;
-	temp.oi_nlink = 1;
-	strcpy(temp.oi_symlink, symname);
-	
-	if(copy_from_user(sym_oi, &temp, OSPFS_INODESIZE))
-		return -EIO;
+	// copy file information
+	link->oi_size = strlen(symname);
+	link->oi_ftype = OSPFS_FTYPE_SYMLINK;
+	link->oi_nlink = 1;
+	memcpy(link->oi_symlink, symname, strlen(symname));
 	
 	
 	/* Execute this code after your function has successfully created the
