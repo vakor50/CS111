@@ -1358,7 +1358,7 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
 	/* EXERCISE: Your code here. */
-	/*
+	
 	printk(KERN_ALERT "REACHED LINK\n");
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	ospfs_direntry_t * entry = NULL;
@@ -1388,9 +1388,9 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 	//dir_oi->oi_nlink++;
 	printk(KERN_ALERT "ENDED LINK\n");
 	return 0;
-	*/
 	
 	
+	/*
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	ospfs_inode_t *src_oi = ospfs_inode(src_dentry->d_inode->i_ino);
 	ospfs_direntry_t *new_entry;
@@ -1423,6 +1423,7 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 	dir_oi->oi_nlink++;
 
 	return 0;
+	*/
 }
 
 // ospfs_create
