@@ -1541,16 +1541,6 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	//new_inode->oi_symlink[new_inode->oi_size] = 0;
 	memcpy(new_inode->oi_symlink, symname, strlen(symname));
 	
-	if(nswrites_to_crash != -1)
-	{
-		if (nswrites_to_crash < -1)
-			eprintk("nswrites_to_crash less than -1!\n");
-		else if (nswrites_to_crash == 0)
-			return 0;
-		else
-			nswrites_to_crash--;
-	}
-	
 	// fill directory
 	new_directory->od_ino = entry_ino;
 	strncpy(new_directory->od_name, dentry->d_name.name, dentry->d_name.len);
