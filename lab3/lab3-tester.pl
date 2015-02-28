@@ -152,7 +152,7 @@ close FOO;
 
     # another check that symlinks work relative to current path
     # 22
-    [ 'echo this is foo > test/foo; ' .
+    [ 'echo foo fight > test/foo; ' .
       'ln -s ../foo test/subdir/sym && ' .
       'diff test/foo test/subdir/sym && ' .
       'rm test/subdir/sym test/foo',
