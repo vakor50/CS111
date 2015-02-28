@@ -553,8 +553,8 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 	//dir_oi->oi_nlink--;
 
 	//Symbolic Link Deletion
-	if (oi->oi_ftype != OSPFS_FTYPE_SYMLINK && oi->oi_nlink == 0)
-		change_size(oi,0);
+	//if (oi->oi_ftype != OSPFS_FTYPE_SYMLINK && oi->oi_nlink == 0)
+	//	change_size(oi,0);
 
 	return 0;
 }
