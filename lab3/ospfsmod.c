@@ -1035,27 +1035,31 @@ static int
 change_size(ospfs_inode_t *oi, uint32_t new_size)
 {
 	uint32_t old_size = oi->oi_size;
-	uint32_t final_size = (old_size > new_size ? new_size : old_size);
 	int r = 0;
-
+	//printk(KERN_ALERT "Inode Size: %d\n", old_size);
 	while (ospfs_size2nblocks(oi->oi_size) < ospfs_size2nblocks(new_size)) {
+	        /* EXERCISE: Your code here */
 		r = add_block(oi);
-
-		// If no space is left, reset the file back to the old size
-		// The second loop will take care of this if we modify new_size
-		if(r == -ENOSPC)
-		{
+		if (r == -ENOSPC){
 			new_size = old_size;
-			break;
 		}
-
-		if(r == -EIO)
-			return -EIO;
+		if (r == -EIO)
+			return -EIO; // Replace this line
 	}
 	while (ospfs_size2nblocks(oi->oi_size) > ospfs_size2nblocks(new_size)) {
-		if(remove_block(oi) == -EIO)
-			return -EIO;
+	        /* EXERCISE: Your code here */
+		r = remove_block(oi);
+		if (r == -EIO)
+			return -EIO; // Replace this line
 	}
+
+	/* EXERCISE: Make sure you update necessary file meta data
+	             and return the proper value. */
+	oi->oi_size = new_size;
+	//printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
+	if (oi->oi_size == 11264)
+		printk(KERN_ALERT "This is correct so far\n");
+	return r; // Replace this line
 
 	// Reset the size back to what it was if the file grew, or down to what it shrank to
 	oi->oi_size = final_size;
