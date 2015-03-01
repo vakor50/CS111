@@ -1531,8 +1531,8 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	//return -EINVAL;
 	
 	// new symlink
-	ospfs_symlink_inode_t *new_ino = NULL; //new_inode_loc
-	ospfs_direntry_t *new_dir; //od
+	ospfs_symlink_inode_t *new_ino = NULL; 
+	ospfs_direntry_t *new_dir; 
 
 	//(void)dir_oi;
 
@@ -1587,7 +1587,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 
 	new_ino->oi_ftype = OSPFS_FTYPE_SYMLINK;
 	new_ino->oi_nlink = 1;
-	strncpy(od->od_name, dentry->d_name.name, dentry->d_name.len);
+	strncpy(new_dir->od_name, dentry->d_name.name, dentry->d_name.len);
 	new_dir->od_name[dentry->d_name.len] = 0;
 	new_dir->od_ino = entry_ino;
 	dir_oi->oi_nlink++;
