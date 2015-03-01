@@ -1120,22 +1120,36 @@ ospfs_notify_change(struct dentry *dentry, struct iattr *attr)
 static ssize_t
 ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 {
-	//printk(KERN_ALERT "REACHED READ\n");
 	ospfs_inode_t *oi = ospfs_inode(filp->f_dentry->d_inode->i_ino);
 	int retval = 0;
 	size_t amount = 0;
 
 	// Make sure we don't read past the end of the file!
 	// Change 'count' so we never read past the end of the file.
-	/* EXERCISE: Your code here */
-	if ((*f_pos + count) > oi->oi_size)
+	/* COMPLETED EXERCISE: Your code here */
+
+	// Check that both the requested offset and the count are within bounds
+	// as well as check for any overflows of *f_pos
+	// Otherwise modify the count to read within the file's bounds
+
+	// Note: if *f_pos is past the end of the file, we set the count to 0
+	// without signaling an -EIO error, as this seems to be the preferred
+	// behavior which the default test suite expects.
+	if(*f_pos + count < *f_pos)
+		return -EIO;
+	else if(*f_pos >= oi->oi_size)
+		count = 0;
+	else if(*f_pos + count > oi->oi_size)
 		count = oi->oi_size - *f_pos;
-		
+
 	// Copy the data to user block by block
 	while (amount < count && retval >= 0) {
 		uint32_t blockno = ospfs_inode_blockno(oi, *f_pos);
 		uint32_t n;
 		char *data;
+
+		uint32_t data_offset; // Data offset from the start of the block
+		uint32_t bytes_left_to_copy = count - amount;
 
 		// ospfs_inode_blockno returns 0 on error
 		if (blockno == 0) {
@@ -1149,30 +1163,26 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		// Copy data into user space. Return -EFAULT if unable to write
 		// into user space.
 		// Use variable 'n' to track number of bytes moved.
-		/* EXERCISE: Your code here */
-		if ((count + (*f_pos % OSPFS_BLKSIZE) - amount) > OSPFS_BLKSIZE)
-			n = OSPFS_BLKSIZE - (*f_pos % OSPFS_BLKSIZE);
-		else
-			n = count - amount;
-			
-		retval = copy_to_user(buffer, data, n);
-		
-		if (retval < 0)
-		{
-			retval = -EFAULT;
-			goto done;
-		}
-		
-		//retval = -EIO; // Replace these lines
-		//goto done;
+		/* COMPLETED EXERCISE: Your code here */
+
+		data_offset = *f_pos % OSPFS_BLKSIZE;
+
+		n = OSPFS_BLKSIZE - data_offset;
+
+		// Copy bytes either until we hit the end
+		// of the block or satisfy the user
+		if(n > bytes_left_to_copy)
+			n = bytes_left_to_copy;
+
+		if(copy_to_user(buffer, data + data_offset, n) > 0)
+			return -EFAULT;
 
 		buffer += n;
 		amount += n;
 		*f_pos += n;
 	}
-	
-	done:
-	//printk(KERN_ALERT "ENDED READ\n");
+
+    done:
 	return (retval >= 0 ? amount : retval);
 }
 
