@@ -1239,8 +1239,13 @@ remove_block(ospfs_inode_t *oi)
 static int
 change_size(ospfs_inode_t *oi, uint32_t new_size)
 {
+	
 	uint32_t old_size = oi->oi_size;
 	int r = 0;
+	/*---------v---------*/
+	if(dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1 == 0)
+		return ERR_PTR(-EIO);
+	/*---------^---------*/
 	//printk(KERN_ALERT "Inode Size: %d\n", old_size);
 	while (ospfs_size2nblocks(oi->oi_size) < ospfs_size2nblocks(new_size)) {
 	        /* EXERCISE: Your code here */
@@ -1260,7 +1265,17 @@ change_size(ospfs_inode_t *oi, uint32_t new_size)
 
 	/* EXERCISE: Make sure you update necessary file meta data
 	             and return the proper value. */
+	
+	
+	/*
 	oi->oi_size = new_size;
+	*/
+	/*-----------*/
+	
+	oi->oi_size = final_size;
+	
+	
+	
 	//printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
 	if (oi->oi_size == 11264)
 		printk(KERN_ALERT "This is correct so far\n");
@@ -1673,6 +1688,9 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 	ospfs_direntry_t * entry;
 	uint32_t empty_dir;
 	int retval = 0;
+	
+	if(dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1 == 0)
+		return ERR_PTR(-EIO);
 
 	for (empty_dir = 0; empty_dir < dir_oi->oi_size; empty_dir += OSPFS_DIRENTRY_SIZE){
 		entry = ospfs_inode_data(dir_oi, empty_dir);
@@ -1824,6 +1842,7 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	uint32_t entry_ino = 0;
 	/* EXERCISE: Your code here. */
 	printk(KERN_ALERT "REACHED CREATE\n");
+	/*
 	ospfs_direntry_t * entry = NULL;
 	ospfs_inode_t *inode;
 
@@ -1861,11 +1880,75 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	inode->oi_direct[0] = 0;
 	inode->oi_indirect = 0;
 	inode->oi_indirect2 = 0;
+	*/
+	
+	/*------------------------------*/
+	
+	ospfs_inode_t *file_oi = NULL;
+	ospfs_direntry_t *new_entry = NULL;
+	uint32_t block_no = 0;
+	int retval = 0;
+	struct inode *i;
 
+	// Sanity check the inode and check that we can add another link
+	// without overflowing and marking the inode for deletion
+	if(dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1 == 0)
+		return -EIO;
+
+	if(dentry->d_name.len > OSPFS_MAXNAMELEN)
+		return -ENAMETOOLONG;
+
+	if(find_direntry(dir_oi, dentry->d_name.name, dentry->d_name.len) != NULL)
+		return -EEXIST;
+
+	new_entry = create_blank_direntry(dir_oi);
+	if(IS_ERR(new_entry))
+	{
+		retval = PTR_ERR(new_entry);
+		goto error_cleanup;
+	}
+
+	// Get an inode and check if there is an available block to be allocated
+	entry_ino = find_free_inode();
+	block_no = allocate_block();
+	if(entry_ino == 0 || block_no == 0)
+	{
+		retval = -ENOSPC;
+		goto error_cleanup;
+	}
+
+	// Since there is an available block, we free it again. If a write is attempted
+	// another block will be allocated. We do this to avoid block leaks from operations
+	// like touching a file and immediately deleting it. Since nothing was written
+	// the module will believe no blocks have been allocated.
+	free_block(block_no);
+	file_oi = ospfs_inode(entry_ino);
+
+	if(file_oi == NULL)
+	{
+		retval = -EIO;
+		goto error_cleanup;
+	}
+
+	// We've successfully created a new file, set it's flags,
+	// increment the directory's link count, and set the new dentry
+	file_oi->oi_size = 0;
+	file_oi->oi_ftype = OSPFS_FTYPE_REG;
+	file_oi->oi_nlink = 1;
+	file_oi->oi_mode = mode;
+	file_oi->oi_direct[0] = 0;
+
+	dir_oi->oi_nlink++;
+
+	new_entry->od_ino = entry_ino;
+	memcpy(new_entry->od_name, dentry->d_name.name, dentry->d_name.len);
+	new_entry->od_name[dentry->d_name.len] = '\0';
+	
 	printk(KERN_ALERT "ENDED CREATE\n");
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
 	   getting here. */
+	   /*
 	{
 		struct inode *i = ospfs_mk_linux_inode(dir->i_sb, entry_ino);
 		if (!i)
@@ -1873,6 +1956,24 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 		d_instantiate(dentry, i);
 		return 0;
 	}
+	*/
+	
+	/*----------------*/
+	
+	i = ospfs_mk_linux_inode(dir->i_sb, entry_ino);
+	if (!i)
+		return -ENOMEM;
+	d_instantiate(dentry, i);
+	return 0;
+
+	error_cleanup:
+		if(block_no != 0)
+			free_block(block_no);
+
+		if(!IS_ERR(new_entry) && new_entry != NULL)
+			new_entry->od_ino = 0;
+
+		return retval;
 
 }
 
@@ -2035,8 +2136,9 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 		if (!i)
 			return -ENOMEM;
 		d_instantiate(dentry, i);
-		return 0;
+		
 	}
+	return 0;
 }
 
 
