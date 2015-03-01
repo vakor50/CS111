@@ -1546,7 +1546,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	
 	/* EXERCISE: Your code here. */
 	//return -EINVAL;
-	
+	/*
 	ospfs_symlink_inode_t *new_inode_loc = NULL; // Location of the inode for the symlink
 	ospfs_direntry_t *od;
 
@@ -1631,12 +1631,12 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	od->od_ino = entry_ino;
 
 	dir_oi->oi_nlink++;
-	
+	*/
 	
 	/*---------------------------------------*/
 	
 	
-	/*
+	
 	ospfs_symlink_inode_t* link;
 
 	// check if name too long
@@ -1662,7 +1662,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	link->oi_nlink = 1;
 	memcpy(link->oi_symlink, symname, strlen(symname));
 	
-	*/
+	
 	
 	
 	/* Execute this code after your function has successfully created the
