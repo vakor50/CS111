@@ -1644,30 +1644,40 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	eprintk("follow link\n");
 	ospfs_symlink_inode_t *oi =
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
-	// Exercise: Your code here.
-
-	//nd_set_link(nd, oi->oi_symlink);
-	//return (void *) 0;
-	/*--------------------------------------------*/
 	
-	// check for conditional symlink
-	if (strncmp(oi->oi_symlink, "root?", 5) == 0) {
-		// find the pivot between first and second paths
-		int pivot = strchr(oi->oi_symlink, ':') - oi->oi_symlink;
+	/**
+	 * As above, a conditional symlink will be formatted
+	 * as "?<root_path>\0:<not_root_path>\0>"
+	 */
 
-		// root user
-		if (current->uid == 0) {
-			// use null-terminator to indicate ending
-			oi->oi_symlink[pivot] = '\0';
-			nd_set_link(nd, oi->oi_symlink + 5 + 1); // use first path
-		}
-		// normal user
-		else
-			nd_set_link(nd, oi->oi_symlink + pivot + 1); // use second path
-	}
-	else
+	char *path;
+
+	// If this isn't a conditonal link, set the path and return
+	if(oi->oi_symlink[0] != '?')
+	{
 		nd_set_link(nd, oi->oi_symlink);
+		return (void *) 0;
+	}
 
+	// If root, give a pointer to the start of the root path
+	if(current->uid == 0)
+	{
+		nd_set_link(nd, oi->oi_symlink + 1);
+		return (void *) 0;
+	}
+
+	// Otherwise fast forward to the non-root path
+	path = oi->oi_symlink;
+	while(*path != '\0')
+		path++;
+
+	// We've hit a null byte. Make sure we are still within our string
+	// and the next is in fact ":"
+	if(path - oi->oi_symlink >= oi->oi_size || path[1] != ':')
+		return ERR_PTR(-EIO);
+
+	// All clear!
+	nd_set_link(nd, path + 2);
 	return (void *) 0;
 }
 
