@@ -1358,7 +1358,8 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
 	/* EXERCISE: Your code here. */
-	
+	/*------------------------------------------------------*/
+	/*
 	printk(KERN_ALERT "REACHED LINK\n");
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	ospfs_direntry_t * entry = NULL;
@@ -1388,9 +1389,9 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 	//dir_oi->oi_nlink++;
 	printk(KERN_ALERT "ENDED LINK\n");
 	return 0;
+	*/
+	/*------------------------------------------------------*/
 	
-	
-	/*
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	ospfs_inode_t *src_oi = ospfs_inode(src_dentry->d_inode->i_ino);
 	ospfs_direntry_t *new_entry;
@@ -1423,7 +1424,6 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 	dir_oi->oi_nlink++;
 
 	return 0;
-	*/
 }
 
 // ospfs_create
@@ -1546,7 +1546,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	
 	/* EXERCISE: Your code here. */
 	//return -EINVAL;
-	/*
+	
 	ospfs_symlink_inode_t *new_inode_loc = NULL; // Location of the inode for the symlink
 	ospfs_direntry_t *od;
 
@@ -1632,10 +1632,11 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 
 	dir_oi->oi_nlink++;
 	*/
+	
 	/*---------------------------------------*/
 	
 	
-	
+	/*
 	ospfs_symlink_inode_t* link;
 
 	// check if name too long
@@ -1661,7 +1662,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	link->oi_nlink = 1;
 	memcpy(link->oi_symlink, symname, strlen(symname));
 	
-	
+	*/
 	
 	
 	/* Execute this code after your function has successfully created the
@@ -1695,14 +1696,16 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
 	eprintk("follow link\n");
 	
-	
 	ospfs_symlink_inode_t *oi =
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
+		
 	// Exercise: Your code here.
-//nd_set_link(nd, oi->oi_symlink);
+	//nd_set_link(nd, oi->oi_symlink);
 	//return (void *) 0;
+	
 	/*--------------------------------------------*/
 	
+	/*
 	// check for conditional symlink
 	if (strncmp(oi->oi_symlink, "root?", 5) == 0) 
 	{
@@ -1723,10 +1726,11 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 		nd_set_link(nd, oi->oi_symlink);
 
 	return (void *) 0;
+	*/
 	
 	/*--------------------------------------------*/
 	
-	/*
+	
 	// Exercise: Your code here.
 	char *path;
 	
@@ -1753,7 +1757,7 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	// All clear!
 	nd_set_link(nd, path + 2);
 	return (void *) 0;
-	*/
+	
 }
 
 
