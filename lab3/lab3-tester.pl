@@ -103,19 +103,19 @@ close FOO;
     ],
     
     # 18: overwriting files should affect all hardlinks to that file
-	[ 'echo hello > test/hardlinktest ; ln test/hardlinktest test/hardlinktest2 ; echo goodbye > test/hardlinktest2 ; cat test/hardlinktest ; rm test/hardlinktest2',
-	  'goodbye'
-	],
+    #	[ 'echo hello > test/hardlinktest ; ln test/hardlinktest test/hardlinktest2 ; echo goodbye > test/hardlinktest2 ; cat test/hardlinktest ; rm test/hardlinktest2',
+	#  'goodbye'
+	#],
 	
 	# 19: removing one hardlink should not remove the file itself
-	[ 'echo hello > test/filetoremove ; ln test/filetoremove test/filetokeep ; echo goodbye > test/filetoremove ; rm test/filetoremove ; cat test/filetokeep ; rm test/filetokeep',
-	  'goodbye'
-	],
+	#[ 'echo hello > test/filetoremove ; ln test/filetoremove test/filetokeep ; echo goodbye > test/filetoremove ; rm test/filetoremove ; cat test/filetokeep ; rm test/filetokeep',
+	#  'goodbye'
+	#],
 
 	# 20: symlinks
-	[ 'ln -s test/hello.txt thelink ; echo "World" >> test/hello.txt ; diff test/hello.txt thelink && echo Same contents ; rm thelink',
-	  'Same contents'
-	],
+	#[ 'ln -s test/hello.txt thelink ; echo "World" >> test/hello.txt ; diff test/hello.txt thelink && echo Same contents ; rm thelink',
+	#  'Same contents'
+	#],
 
 	# 21: conditional symlinks as root
 #	[ 'echo "Not root" > notroot ; echo "Root" > root ; ln -s root?root:notroot amiroot ; cat amiroot',
@@ -138,51 +138,51 @@ close FOO;
 
     # create a symbolic link and change the file it points to
     # 19
-    #[ 'echo this is foo > test/foo; ' .
-    #  'ln -s foo test/sym && ' .
-    #  'rm test/foo && ' .
-    #  'echo this is now bar > test/foo && ' .
-    #  'cat test/sym && rm test/sym test/foo' ,
-    #  'this is now bar'
-    #],
+    [ 'echo this is foo > test/foo; ' .
+      'ln -s foo test/sym && ' .
+      'rm test/foo && ' .
+      'echo this is now bar > test/foo && ' .
+      'cat test/sym && rm test/sym test/foo' ,
+      'this is now bar'
+    ],
 
     # check that a symlink is being interpreted relative to the working path
     # 20
-    #[ 'echo this is foo > test/foo; ' .
-    #  'ln -s foo test/sym && ' .
-    #  'ln -s message.txt test/subdir/sym && ' .
-    #  'diff <( cat test/foo ) test/sym && ' .
-    #  'diff <( cat test/subdir/message.txt) test/subdir/sym; ' .
-    #  'cd test/subdir; ' .
-    #  'diff <( cat ../foo ) ../sym && ' .
-    #  'diff <( cat message.txt) sym; ' .
-    #  'cd ../..; ' .
-    #  'rm test/sym test/subdir/sym test/foo',
-    #  ''
-    #],
+    [ 'echo this is foo > test/foo; ' .
+      'ln -s foo test/sym && ' .
+      'ln -s message.txt test/subdir/sym && ' .
+      'diff <( cat test/foo ) test/sym && ' .
+      'diff <( cat test/subdir/message.txt) test/subdir/sym; ' .
+      'cd test/subdir; ' .
+      'diff <( cat ../foo ) ../sym && ' .
+      'diff <( cat message.txt) sym; ' .
+      'cd ../..; ' .
+      'rm test/sym test/subdir/sym test/foo',
+      ''
+    ],
 
     # check conditional symlnk
-    ## 21
-    #[ 'cd test; '.
-    #  'echo Root > root.txt; ' .
-    #  'echo Not root > not_root.txt; ' .
-    #  'chmod 777 not_root.txt; ' .
-    #  'ln -s root?root.txt:not_root.txt amiroot && ' .
-    #  'cat amiroot && ' .
-    #  'su user -c "cat amiroot"; ' .
-    #  'rm root.txt not_root.txt amiroot; ' .
-    #  'cd ..',
-    #  "Root Not root"
-    #],
+    # 21
+    [ 'cd test; '.
+      'echo Root > root.txt; ' .
+      'echo Not root > not_root.txt; ' .
+      'chmod 777 not_root.txt; ' .
+      'ln -s root?root.txt:not_root.txt amiroot && ' .
+      'cat amiroot && ' .
+      'su user -c "cat amiroot"; ' .
+      'rm root.txt not_root.txt amiroot; ' .
+      'cd ..',
+      "Root Not root"
+    ],
 
     # another check that symlinks work relative to current path
     # 22
-    #[ 'echo this is foo > test/foo; ' .
-    #  'ln -s ../foo test/subdir/sym && ' .
-    #  'diff test/foo test/subdir/sym && ' .
-    #  'rm test/subdir/sym test/foo',
-    #  ''
-    #]
+    [ 'echo this is foo > test/foo; ' .
+      'ln -s ../foo test/subdir/sym && ' .
+      'diff test/foo test/subdir/sym && ' .
+      'rm test/subdir/sym test/foo',
+      ''
+    ]
 );
 
 my($ntest) = 0;
