@@ -505,7 +505,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 * advance to the next directory entry.
 		 */
 		 
-		 od = ospfs_inode_data(dir_oi, curr_file_byte_offset);
+		 od = ospfs_inode_data(dir_oi, ((f_pos - 2) * OSPFS_DIRENTRY_SIZE));
 		 entry_oi = ospfs_inode(od->od_ino);
 
 		 if (entry_oi == NULL || od->od_ino == 0) // We can get an empty result. If so, move on
