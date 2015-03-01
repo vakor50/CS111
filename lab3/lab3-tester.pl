@@ -109,8 +109,8 @@ close FOO;
 	
 	# 19: removing one hardlink should not remove the file itself
 	[ 'echo hello > test/filetoremove ; ln test/filetoremove test/filetokeep ; echo goodbye > test/filetoremove ; rm test/filetoremove ; cat test/filetokeep ; rm test/filetokeep',
-	'goodbye'
-#	],
+	  'goodbye'
+	],
 
 	# 20: symlinks
 	[ 'ln -s test/hello.txt thelink ; echo "World" >> test/hello.txt ; diff test/hello.txt thelink && echo Same contents ; rm thelink',
