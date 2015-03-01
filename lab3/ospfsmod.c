@@ -1060,10 +1060,6 @@ change_size(ospfs_inode_t *oi, uint32_t new_size)
 	if (oi->oi_size == 11264)
 		printk(KERN_ALERT "This is correct so far\n");
 	return r; // Replace this line
-
-	// Reset the size back to what it was if the file grew, or down to what it shrank to
-	oi->oi_size = final_size;
-	return r;
 }
 
 
