@@ -443,14 +443,12 @@ ospfs_dir_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *ign
 static int
 ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 {
+	printk(KERN_ALERT "REACHED READDIR\n");
 	struct inode *dir_inode = filp->f_dentry->d_inode;
 	ospfs_inode_t *dir_oi = ospfs_inode(dir_inode->i_ino);
 	uint32_t f_pos = filp->f_pos;
 	int r = 0;		/* Error return value, if any */
 	int ok_so_far = 0;	/* Return value from 'filldir' */
-
-	uint32_t curr_file_byte_offset = 0; /* The offset in the inode */
-	int file_type; /* Looked-up value for each directory entry's filetype */
 
 	// f_pos is an offset into the directory's data, plus two.
 	// The "plus two" is to account for "." and "..".
@@ -480,9 +478,8 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 * of each directory entry. If this exceeds our offset position
 		 * (offset by 2 to account for . and ..), we're out of directory
 		 * to read. */
-
-		 curr_file_byte_offset = (f_pos - 2) * OSPFS_DIRENTRY_SIZE;
-		if (curr_file_byte_offset >= dir_oi->oi_size)
+		 
+		if (((f_pos - 2) * OSPFS_DIRENTRY_SIZE) >= dir_oi->oi_size)
 		{
 			r = 1;
 			break;
@@ -507,11 +504,8 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 * your function should advance f_pos by the proper amount to
 		 * advance to the next directory entry.
 		 */
-
-		// Get the appropriate directory entry for our position
+		 
 		 od = ospfs_inode_data(dir_oi, curr_file_byte_offset);
-
-		 // Look up the appropriate inode.
 		 entry_oi = ospfs_inode(od->od_ino);
 
 		 if (entry_oi == NULL || od->od_ino == 0) // We can get an empty result. If so, move on
@@ -519,34 +513,22 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 	f_pos++;
 		 	continue;
 		 }
+		if (entry_oi)
+		{
+			uint32_t file_type = 0;
 
-		 // Lookup the filetype of the file for filldir
-		 switch (entry_oi->oi_ftype)
-		 {
-		 	case OSPFS_FTYPE_REG: 		// File
-		 		file_type = DT_REG;
-		 		break;
+	 		if (entry_oi->oi_ftype == OSPFS_FTYPE_REG)
+				file_type = DT_REG;
+			else if (entry_oi->oi_ftype == OSPFS_FTYPE_DIR)
+				file_type = DT_DIR;
+			else if (entry_oi->oi_ftype == OSPFS_FTYPE_SYMLINK)
+				file_type = DT_LNK;
 
-		 	case OSPFS_FTYPE_DIR: 		// Directory
-		 		file_type = DT_DIR;
-		 		break;
-
-		 	case OSPFS_FTYPE_SYMLINK:	// Symlink
-		 		file_type = DT_LNK;
-		 		break;
-
-		 	default:					// This is a problem: bail out
-		 		r = 1;
-		 		continue;
-		 		break; // We'll never reach this, but it silences a warning
-		 }
-
-		 // We now have all of the information the callback needs, so run it
-		 ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, file_type); 
-
-		 f_pos++;
+			ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, file_type);
+		}
+		f_pos++;
 	}
-
+	printk(KERN_ALERT "ENDED READDIR\n");
 	// Save the file position and return!
 	filp->f_pos = f_pos;
 	return r;
