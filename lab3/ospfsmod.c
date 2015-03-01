@@ -1377,35 +1377,37 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
-	/* EXERCISE: Your code here. */
-	//printk(KERN_ALERT "REACHED LINK\n");
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
-	ospfs_direntry_t * entry = NULL;
+	ospfs_inode_t *src_oi = ospfs_inode(src_dentry->d_inode->i_ino);
+	ospfs_direntry_t *new_entry;
 
-	if (dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1 == 0)
+	// Check that the block is actually valid and check for link count overflows
+	// We don't want to accidentally free an inode by zeroing it's link count
+	// Also check that we are actually dealing with a directory inode
+	if(dir_oi == NULL || dir_oi->oi_nlink + 1 == 0 || dir_oi->oi_ftype != OSPFS_FTYPE_DIR)
 		return -EIO;
-	if (dst_dentry->d_name.len > OSPFS_MAXNAMELEN)
+
+	if(dst_dentry->d_name.len > OSPFS_MAXSYMLINKLEN)
 		return -ENAMETOOLONG;
-	if (find_direntry(dir_oi, dst_dentry->d_name.name, dst_dentry->d_name.len) != NULL)
+
+	if(find_direntry(dir_oi, dst_dentry->d_name.name, dst_dentry->d_name.len) != NULL)
 		return -EEXIST;
 
-	//dst_dentry->d_inode->i_ino = src_dentry->d_inode->i_ino;
+	new_entry = create_blank_direntry(dir_oi);
 
-	entry = create_blank_direntry(dir_oi);
-	if (IS_ERR(entry))
-		return PTR_ERR(entry);
+	if(IS_ERR(new_entry))
+		return PTR_ERR(new_entry);
+	else if(new_entry == NULL)
+		return -EIO;
 
-	entry->od_ino = src_dentry->d_inode->i_ino;
-	//if (copy_from_user(entry->od_name,dst_dentry->d_name.name, dst_dentry->d_name.len))
-	//	return -EIO;
-	memcpy(entry->od_name,dst_dentry->d_name.name, dst_dentry->d_name.len);
-	entry->od_name[dst_dentry->d_name.len] = '\0';
+	new_entry->od_ino = src_dentry->d_inode->i_ino;
+	memcpy(new_entry->od_name, dst_dentry->d_name.name, dst_dentry->d_name.len);
+	new_entry->od_name[dst_dentry->d_name.len] = '\0';
 
-	//dst_dentry = entry;
+	// Increase the links on both the source file and the link's parent directory
+	src_oi->oi_nlink++;
+	dir_oi->oi_nlink++;
 
-	ospfs_inode(src_dentry->d_inode->i_ino)->oi_nlink++;
-	//dir_oi->oi_nlink++;
-	//printk(KERN_ALERT "ENDED LINK\n");
 	return 0;
 }
 
