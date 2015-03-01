@@ -1705,7 +1705,7 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	
 	/*--------------------------------------------*/
 	
-	/*
+	
 	// check for conditional symlink
 	if (strncmp(oi->oi_symlink, "root?", 5) == 0) 
 	{
@@ -1726,11 +1726,11 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 		nd_set_link(nd, oi->oi_symlink);
 
 	return (void *) 0;
-	*/
+	
 	
 	/*--------------------------------------------*/
 	
-	
+	/*
 	// Exercise: Your code here.
 	char *path;
 	
@@ -1757,7 +1757,7 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	// All clear!
 	nd_set_link(nd, path + 2);
 	return (void *) 0;
-	
+	*/
 }
 
 
