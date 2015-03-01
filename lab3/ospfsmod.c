@@ -1631,7 +1631,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	od->od_ino = entry_ino;
 
 	dir_oi->oi_nlink++;
-	*/
+	
 	
 	/*---------------------------------------*/
 	
