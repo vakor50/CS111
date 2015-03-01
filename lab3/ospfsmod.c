@@ -470,19 +470,13 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		ospfs_inode_t *entry_oi;
 
 		/* If at the end of the directory, set 'r' to 1 and exit
-		 * the loop.
+		 * the loop.  For now we do this all the time.
 		 *
-		 * We do this through a bit of extrapolation. We can determine
-		 * the effective directory length based on the directory's
-		 * "file size": it is a multiple of this size and the size
-		 * of each directory entry. If this exceeds our offset position
-		 * (offset by 2 to account for . and ..), we're out of directory
-		 * to read. */
-		 
+		 * EXERCISE: Your code here */
 		if (((f_pos - 2) * OSPFS_DIRENTRY_SIZE) >= dir_oi->oi_size)
 		{
-			r = 1;
-			break;
+			r = 1;		/* Fix me! */
+			break;		/* Fix me! */
 		}
 
 		/* Get a pointer to the next entry (od) in the directory.
@@ -505,6 +499,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 * advance to the next directory entry.
 		 */
 		 
+		 /* EXERCISE: Your code here */
 		 od = ospfs_inode_data(dir_oi, ((f_pos - 2) * OSPFS_DIRENTRY_SIZE));
 		 entry_oi = ospfs_inode(od->od_ino);
 
@@ -556,8 +551,8 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 	ospfs_direntry_t *od;
 
 	od = NULL; // silence compiler warning; entry_off indicates when !od
-	for (entry_off = 0; entry_off < dir_oi->oi_size;
-	     entry_off += OSPFS_DIRENTRY_SIZE) {
+	for (entry_off = 0; entry_off < dir_oi->oi_size; entry_off += OSPFS_DIRENTRY_SIZE) 
+	{
 		od = ospfs_inode_data(dir_oi, entry_off);
 		if (od->od_ino > 0
 		    && strlen(od->od_name) == dentry->d_name.len
@@ -565,8 +560,9 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 			break;
 	}
 
-	if (entry_off == dir_oi->oi_size) {
-		printk("<1>ospfs_unlink should not fail!\n");
+	if (entry_off == dir_oi->oi_size) 
+	{
+		// ospfs_unlink should not fail!
 		return -ENOENT;
 	}
 
@@ -611,16 +607,13 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 static uint32_t
 allocate_block(void)
 {
-	void *freemap = ospfs_block(OSPFS_FREEMAP_BLK);
-	uint32_t i;
-
-	// The freemap and inode blocks should all be marked as allocated
-	// thus it should be safe to iterate over them
-	for(i = OSPFS_FREEMAP_BLK; i < ospfs_super->os_nblocks; i++)
+	void *start_bitmap = ospfs_block(OSPFS_FREEMAP_BLK);
+	int i;
+	for (i = OSPFS_FREEMAP_BLK; i < ospfs_super->os_nblocks; i++)
 	{
-		if(bitvector_test(freemap, i))
+		if (bitvector_test(start_bitmap, i))
 		{
-			bitvector_clear(freemap, i);
+			bitvector_clear(start_bitmap, i);
 			return i;
 		}
 	}
@@ -642,16 +635,12 @@ allocate_block(void)
 static void
 free_block(uint32_t blockno)
 {
-	// We can free any block after the last inode block
-	uint32_t last_inode_block = ospfs_super->os_firstinob + OSPFS_BLKINODES;
-	void *freemap = ospfs_block(OSPFS_FREEMAP_BLK);
-
-	// Check for invalid block numbers
-	if(blockno >= ospfs_super->os_ninodes || blockno <= last_inode_block)
+	/* EXERCISE: Your code here */
+	
+	if (blockno >= ospfs_super->os_ninodes || blockno <= (ospfs_super->os_firstinob + OSPFS_BLKINODES))
 		return;
-
-	// Free the block
-	bitvector_set(freemap, blockno);
+	
+	bitvector_set(ospfs_block(OSPFS_FREEMAP_BLK), blockno);
 }
 
 
@@ -708,18 +697,12 @@ indir2_index(uint32_t b)
 static int32_t
 indir_index(uint32_t b)
 {
-	// Check if the block is contained directly in the inode
-	if(b < OSPFS_NDIRECT)
+	// Your code here.
+	if (b < OSPFS_NDIRECT)
 		return -1;
-
-	// If indir2_index reports -1 we don't need the doubly indirect block
-	// and the file block is contained in the indirect block
-	if(indir2_index(b) == -1)
+	if (indir2_index(b) == -1)
 		return 0;
-
-	// Otherwise we have to utilize the doubly indirect block
-	b -= OSPFS_NDIRECT + OSPFS_NINDIRECT;
-	return b / OSPFS_NINDIRECT;
+	return ((b - (OSPFS_NDIRECT + OSPFS_NINDIRECT))/OSPFS_NINDIRECT);
 }
 
 
@@ -735,11 +718,11 @@ indir_index(uint32_t b)
 static int32_t
 direct_index(uint32_t b)
 {
-	if(b < OSPFS_NDIRECT)
+	// Your code here.
+	if (b < OSPFS_NDIRECT)
 		return b;
-
-	b -= OSPFS_NDIRECT;
-	return b % OSPFS_NINDIRECT;
+		
+	return (b - OSPFS_NDIRECT) % OSPFS_NINDIRECT;
 }
 
 
@@ -783,6 +766,7 @@ add_block(ospfs_inode_t *oi)
 	// keep track of allocations to free in case of -ENOSPC
 	uint32_t allocated[2] = { 0, 0 };
 
+	/* EXERCISE: Your code here */
 	int32_t index_indir2;
 	int32_t index_indir;
 	int32_t index_direct;
