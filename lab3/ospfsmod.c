@@ -1538,7 +1538,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 
 	if (OSPFS_MAXNAMELEN < dentry->d_name.len || OSPFS_MAXNAMELEN < strlen(symname)) //dentry name too long
 		return -ENAMETOOLONG;
-	else if (((dir_oi->oi_nlink + 1) == 0) || (dir_oi->oi_ftype != OSPFS_FTYPE_DIR) // overflow
+	else if (((dir_oi->oi_nlink + 1) == 0) || (dir_oi->oi_ftype != OSPFS_FTYPE_DIR)) // overflow
 		return -EIO;
 	else if (find_direntry(dir_oi, dentry->d_name.name, dentry->d_name.len) != NULL) // file exists
 		return -EEXIST;
