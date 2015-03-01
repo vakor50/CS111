@@ -1181,19 +1181,104 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	ospfs_inode_t *oi = ospfs_inode(filp->f_dentry->d_inode->i_ino);
 	int retval = 0;
 	size_t amount = 0;
+	
+	if(filp->f_flags & O_APPEND)
+		*f_pos = oi->oi_size;
+
+	// If the user is writing past the end of the file, change the file's
+	// size to accomodate the request.  (Use change_size().)
+	/* COMPLETED EXERCISE: Your code here */
+
+	// Check for overflows in trying to write at an offset larger than possible
+	// and avoid shrinking the file as a result (and destroying data).
+	if(*f_pos + count < *f_pos)
+		return -EIO;
+
+	// Grow the file if needed and signal any -EIO or -ENOSPC errors
+	if(*f_pos + count >= oi->oi_size)
+		retval = change_size(oi, *f_pos + count);
+
+	if(retval != 0)
+		return retval;
+
+	// Copy data block by block
+	while (amount < count && retval >= 0) {
+		uint32_t blockno;
+		uint32_t n;
+		int32_t appended = 0;
+		char *data;
+
+		uint32_t data_offset; // Data offset from the start of the block
+		uint32_t bytes_left_to_copy = count - amount;
+
+		// ospfs_inode_blockno reports an error when *f_pos == oi->oi_size
+		// thus we artificially increase for it to work right. The allocated
+		// size has already been grown so we won't go out of bounds
+		if(*f_pos == oi->oi_size)
+		{
+			if(oi->oi_size == OSPFS_MAXFILESIZE)
+				return -EIO;
+
+			oi->oi_size++;
+			blockno = ospfs_inode_blockno(oi, *f_pos);
+			oi->oi_size--;
+		}
+		else // No extra precautions necessary
+			blockno = ospfs_inode_blockno(oi, *f_pos);
+
+		if (blockno == 0) {
+			retval = -EIO;
+			goto done;
+		}
+
+		data = ospfs_block(blockno);
+
+		// Figure out how much data is left in this block to write.
+		// Copy data from user space. Return -EFAULT if unable to read
+		// read user space.
+		// Keep track of the number of bytes moved in 'n'.
+		/* COMPLETED EXERCISE: Your code here */
+
+		data_offset = *f_pos % OSPFS_BLKSIZE;
+		n = OSPFS_BLKSIZE - data_offset;
+
+		// Copy bytes either until we hit the end
+		// of the block or satisfy the user
+		if(n > bytes_left_to_copy)
+			n = bytes_left_to_copy;
+
+		if(copy_from_user(data + data_offset, buffer, n) > 0)
+			return -EFAULT;
+
+		appended = (*f_pos + n) - oi->oi_size;
+
+		if(appended < 0)
+			appended = 0;
+
+		oi->oi_size += appended;
+		buffer += n;
+		amount += n;
+		*f_pos += n;
+	}
+	
+	
+	/*------------------------*/
 
 	// Support files opened with the O_APPEND flag.  To detect O_APPEND,
 	// use struct file's f_flags field and the O_APPEND bit.
 	/* EXERCISE: Your code here */
 	//printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
 	
+	
+	
+	/*
 	if (filp->f_flags & O_APPEND)
 		*f_pos = oi->oi_size;
-
+	*/
 	// If the user is writing past the end of the file, change the file's
 	// size to accomodate the request.  (Use change_size().)
 	/* EXERCISE: Your code here */
-
+	/*
 	if ((*f_pos + count) >= oi->oi_size)
 	{
 		if (change_size(oi, (*f_pos + count)) < 0)
@@ -1212,13 +1297,13 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 		}
 
 		data = ospfs_block(blockno);
-
+*/
 		// Figure out how much data is left in this block to write.
 		// Copy data from user space. Return -EFAULT if unable to read
 		// read user space.
 		// Keep track of the number of bytes moved in 'n'.
 		/* EXERCISE: Your code here */
-		
+		/*
 		n = OSPFS_BLKSIZE - (*f_pos % OSPFS_BLKSIZE);
 
 		if (n > (count - amount))
@@ -1232,8 +1317,9 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 		buffer += n;
 		amount += n;
 		*f_pos += n;
+		
 	}
-
+	*/
     done:
     	//printk(KERN_ALERT "Inode Size in WRITE: %d\n", oi->oi_size);
     	printk(KERN_ALERT "ENDED WRITE\n");
