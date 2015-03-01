@@ -118,9 +118,9 @@ close FOO;
 	],
 
 	# 21: conditional symlinks as root
-	[ 'echo "Not root" > notroot ; echo "Root" > root ; ln -s root?root:notroot amiroot ; cat amiroot',
-	  'Root'
-	],
+#	[ 'echo "Not root" > notroot ; echo "Root" > root ; ln -s root?root:notroot amiroot ; cat amiroot',
+#	  'Root'
+#	],
 
 	# 22: conditional symlinks as non-root
 #	[ 'su user -c "cat amiroot ; rm amiroot root notroot"',
@@ -129,12 +129,12 @@ close FOO;
     
     # create a symbolic link
     # 18
-    [ 'echo this is foo > test/foo; ' .
-      'ln -s foo test/sym && ' .
-      'diff test/sym test/foo && ' .
-      'rm test/sym test/foo',
-      ''
-    ],
+#    [ 'echo this is foo > test/foo; ' .
+#      'ln -s foo test/sym && ' .
+#      'diff test/sym test/foo && ' .
+#      'rm test/sym test/foo',
+#      ''
+#    ],
 
     # create a symbolic link and change the file it points to
     # 19
