@@ -1634,57 +1634,32 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 static int
 ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 {
-	// eprintk("CREATING A SYMLINK\n");
-	
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
-	uint32_t entry_ino = 2;
-  	ospfs_symlink_inode_t *new_inode;
-  	ospfs_direntry_t *od;
-  
-  	// Check for -EEXIST
-  	if(find_direntry(dir_oi, dentry->d_name.name, dentry->d_name.len) != NULL)
-  	{
-    		return -EEXIST;
-  	}
-    
-  	// Find an open inode
-  	while(entry_ino < ospfs_super->os_ninodes)
-  	{
-    		new_inode = (ospfs_symlink_inode_t*)ospfs_inode(entry_ino);
-    		// Check the nlinks to see if this inode is free
-    		if(new_inode->oi_nlink == 0)
-      			break;
-    
-		entry_ino++;
-  	}
-  
-  	// If there are no free inodes left
-  	if(entry_ino >= ospfs_super->os_ninodes)
-    		return -ENOSPC;
-  
-  	// Find an open directory entry
-  	od = create_blank_direntry(dir_oi);
-  	if (IS_ERR(od))
-    		return PTR_ERR(od);
-  
-  	// Make sure either name isn't too long
-  	if(strlen(symname) > OSPFS_MAXSYMLINKLEN)
-    		return -ENAMETOOLONG;
-    
-  	if(dentry->d_name.len > OSPFS_MAXNAMELEN)
-    		return -ENAMETOOLONG;
-  
-  	// Fill in inode with symname, size and type
-  	new_inode->oi_ftype = OSPFS_FTYPE_SYMLINK;
-  	new_inode->oi_nlink = 1;
-  	new_inode->oi_size = strlen(symname);
-  	strncpy(new_inode->oi_symlink, symname, new_inode->oi_size);
-  	new_inode->oi_symlink[new_inode->oi_size] = 0;
-  
-  	// Fill in directory entry with inode number and dentry info
-	strncpy(od->od_name, dentry->d_name.name, dentry->d_name.len);
-	od->od_name[dentry->d_name.len] = 0;
-  	od->od_ino = entry_ino;
+	uint32_t entry_ino = 0;
+	ospfs_symlink_inode_t* link;
+
+	// check if name too long
+	if (dentry->d_name.len > OSPFS_MAXNAMELEN ||
+		strlen(symname) > OSPFS_MAXSYMLINKLEN)
+        return -ENAMETOOLONG;
+	// check if directory entry already exists
+	if (find_direntry(ospfs_inode(dir->i_ino),
+		dentry->d_name.name, dentry->d_name.len))
+		return -EEXIST;
+
+	// create new symlinked file
+	entry_ino = ospfs_create(dir, dentry, dir_oi->oi_mode, NULL);
+	if (entry_ino < 0)
+		return entry_ino;
+	entry_ino = find_direntry(ospfs_inode(dir->i_ino),
+		dentry->d_name.name, dentry->d_name.len)->od_ino;
+	link = (ospfs_symlink_inode_t*) ospfs_inode(entry_ino);
+
+	// copy file information
+	link->oi_size = strlen(symname);
+	link->oi_ftype = OSPFS_FTYPE_SYMLINK;
+	link->oi_nlink = 1;
+	memcpy(link->oi_symlink, symname, strlen(symname));
 
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
@@ -1694,9 +1669,6 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 		if (!i)
 			return -ENOMEM;
 		d_instantiate(dentry, i);
-		
-		// eprintk("SYMLINK CREATION FINISHED\n");
-		
 		return 0;
 	}
 }
