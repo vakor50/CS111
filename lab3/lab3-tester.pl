@@ -136,8 +136,17 @@ close FOO;
       ''
     ],
 
+    # another check that symlinks work relative to current path
+    # 21
+    [ 'echo this is foo > test/foo; ' .
+      'ln -s ../foo test/subdir/sym && ' .
+      'diff test/foo test/subdir/sym && ' .
+      'rm test/subdir/sym test/foo',
+      ''
+    ],
+
     # check conditional symlnk
-    ## 21
+    # 22
     [ 'cd test; '.
       'echo Root > root.txt; ' .
       'echo Not root > not_root.txt; ' .
@@ -148,16 +157,9 @@ close FOO;
       'rm root.txt not_root.txt amiroot; ' .
       'cd ..',
       "Root Not root"
-    ],
-
-    # another check that symlinks work relative to current path
-    # 22
-    [ 'echo this is foo > test/foo; ' .
-      'ln -s ../foo test/subdir/sym && ' .
-      'diff test/foo test/subdir/sym && ' .
-      'rm test/subdir/sym test/foo',
-      ''
     ]
+
+    
 );
 
 my($ntest) = 0;
