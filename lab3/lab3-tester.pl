@@ -137,7 +137,7 @@ close FOO;
     ],
 
     # check conditional symlnk
-    # 21
+    ## 21
     [ 'cd test; '.
       'echo Root > root.txt; ' .
       'echo Not root > not_root.txt; ' .
