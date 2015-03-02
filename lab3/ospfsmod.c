@@ -216,6 +216,26 @@ ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset)
 	return (uint8_t *) ospfs_block(blockno) + (offset % OSPFS_BLKSIZE);
 }
 
+static inline uint32_t
+find_free_inode(void)
+{
+	uint32_t inode_no;
+	ospfs_inode_t *new_inode_loc;
+
+	// Determine what inode we can use... helps us detect out of space errors
+	// Start at 2 since the first two inodes are special
+	for (inode_no = 2; inode_no < ospfs_super->os_ninodes; inode_no++)
+	{
+		new_inode_loc = ospfs_inode(inode_no);
+
+		if (new_inode_loc->oi_nlink == 0)
+			return inode_no;
+	}
+
+	// If we've gotten this far, there are no free inodes to use
+	return 0;
+}
+
 
 /*****************************************************************************
  * LOW-LEVEL FILE SYSTEM FUNCTIONS
@@ -328,7 +348,7 @@ ospfs_delete_dentry(struct dentry *dentry)
 /*****************************************************************************
  * DIRECTORY OPERATIONS
  *
- * EXERCISE: Finish 'ospfs_dir_readdir' and 'ospfs_symlink'.
+ * COMPLETED EXERCISE: Finish 'ospfs_dir_readdir' and 'ospfs_symlink'.
  */
 
 // ospfs_dir_lookup(dir, dentry, ignore)
@@ -418,7 +438,7 @@ ospfs_dir_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *ign
 //   Returns: 1 at end of directory, 0 if filldir returns < 0 before the end
 //     of the directory, and -(error number) on error.
 //
-//   EXERCISE: Finish implementing this function.
+//   COMPLETED EXERCISE: Finish implementing this function.
 
 static int
 ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
@@ -454,11 +474,11 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 *
 		 * EXERCISE: Your code here */
 		if (((f_pos - 2) * OSPFS_DIRENTRY_SIZE) >= dir_oi->oi_size)
-		//if ((f_pos) > (OSPFS_DIRENTRY_SIZE * dir_oi->oi_size))
 		{
 			r = 1;		/* Fix me! */
 			break;		/* Fix me! */
 		}
+
 		/* Get a pointer to the next entry (od) in the directory.
 		 * The file system interprets the contents of a
 		 * directory-file as a sequence of ospfs_direntry structures.
@@ -478,14 +498,18 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 * your function should advance f_pos by the proper amount to
 		 * advance to the next directory entry.
 		 */
+		 
+		 /* EXERCISE: Your code here */
+		 od = ospfs_inode_data(dir_oi, ((f_pos - 2) * OSPFS_DIRENTRY_SIZE));
+		 entry_oi = ospfs_inode(od->od_ino);
 
-		/* EXERCISE: Your code here */
-		od = ospfs_inode_data(dir_oi, ((f_pos - 2) * OSPFS_DIRENTRY_SIZE));
-		entry_oi = ospfs_inode(od->od_ino);
-
+		 if (entry_oi == NULL || od->od_ino == 0) // We can get an empty result. If so, move on
+		 {
+		 	f_pos++;
+		 	continue;
+		 }
 		if (entry_oi)
 		{
-			//ospfs_inode_t *oi = ospfs_inode(od->od_ino);
 			uint32_t file_type = 0;
 
 	 		if (entry_oi->oi_ftype == OSPFS_FTYPE_REG)
@@ -496,12 +520,6 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 				file_type = DT_LNK;
 
 			ok_so_far = filldir(dirent, od->od_name, strlen(od->od_name), f_pos, od->od_ino, file_type);
-			
-			//if (ok_so_far < 0) 
-			//{
-			//	r = 0;
-			//	break;
-			//}
 		}
 		f_pos++;
 	}
@@ -522,7 +540,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 //
 //   Returns: 0 if success and -ENOENT on entry not found.
 //
-//   EXERCISE: Make sure that deleting symbolic links works correctly.
+//   COMPLETED EXERCISE: Make sure that deleting symbolic links works correctly.
 
 static int
 ospfs_unlink(struct inode *dirino, struct dentry *dentry)
@@ -533,8 +551,8 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 	ospfs_direntry_t *od;
 
 	od = NULL; // silence compiler warning; entry_off indicates when !od
-	for (entry_off = 0; entry_off < dir_oi->oi_size;
-	     entry_off += OSPFS_DIRENTRY_SIZE) {
+	for (entry_off = 0; entry_off < dir_oi->oi_size; entry_off += OSPFS_DIRENTRY_SIZE) 
+	{
 		od = ospfs_inode_data(dir_oi, entry_off);
 		if (od->od_ino > 0
 		    && strlen(od->od_name) == dentry->d_name.len
@@ -542,19 +560,21 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 			break;
 	}
 
-	if (entry_off == dir_oi->oi_size) {
-		printk("<1>ospfs_unlink should not fail!\n");
+	if (entry_off == dir_oi->oi_size) 
+	{
+		// ospfs_unlink should not fail!
 		return -ENOENT;
 	}
 
 	od->od_ino = 0;
 	oi->oi_nlink--;
 
-	//dir_oi->oi_nlink--;
+	// Lower the parent directory's link count as well
+	dir_oi->oi_nlink--;
 
-	//Symbolic Link Deletion
-	//if (oi->oi_ftype != OSPFS_FTYPE_SYMLINK && oi->oi_nlink == 0)
-	//	change_size(oi,0);
+	// Handle symbolic link deletion: actually remove the file if it's gone
+	if (oi->oi_nlink == 0 && oi->oi_ftype != OSPFS_FTYPE_SYMLINK)
+		change_size(oi, 0);
 
 	return 0;
 }
@@ -564,7 +584,7 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 /*****************************************************************************
  * FREE-BLOCK BITMAP OPERATIONS
  *
- * EXERCISE: Implement these functions.
+ * COMPLETED EXERCISE: Implement these functions.
  */
 
 // allocate_block()
@@ -587,21 +607,16 @@ ospfs_unlink(struct inode *dirino, struct dentry *dentry)
 static uint32_t
 allocate_block(void)
 {
-	//int os_nblocks = ospfs_super->os_nblocks;
-	void* start_bitmap = ospfs_block(OSPFS_FREEMAP_BLK);
-	
-	int i = 0;
-	while(i < ospfs_super->os_nblocks)
+	void *start_bitmap = ospfs_block(OSPFS_FREEMAP_BLK);
+	int i;
+	for (i = OSPFS_FREEMAP_BLK; i < ospfs_super->os_nblocks; i++)
 	{
-		if(bitvector_test(start_bitmap, i))
+		if (bitvector_test(start_bitmap, i))
 		{
 			bitvector_clear(start_bitmap, i);
 			return i;
 		}
-		i++;
 	}
-	
-	// Bits representing every block were checked and allocated, so disk is full
 	return 0;
 }
 
@@ -621,17 +636,10 @@ static void
 free_block(uint32_t blockno)
 {
 	/* EXERCISE: Your code here */
-	//int os_nblocks = ospfs_super->os_nblocks;
-  	//int boundary = ospfs_super->os_firstinob + ospfs_super->os_firstinob + ospfs_super->os_ninodes/OSPFS_BLKINODES;
-
-	//if(blockno > boundary)
-	//{
-	//	void* bitmap_block = ospfs_block(OSPFS_FREEMAP_BLK + (blockno / OSPFS_BLKBITSIZE));
-    	//	bitvector_set(bitmap_block, (blockno % OSPFS_BLKBITSIZE));
-	//}
 	
 	if (blockno >= ospfs_super->os_ninodes || blockno <= (ospfs_super->os_firstinob + OSPFS_BLKINODES))
 		return;
+	
 	bitvector_set(ospfs_block(OSPFS_FREEMAP_BLK), blockno);
 }
 
@@ -639,7 +647,7 @@ free_block(uint32_t blockno)
 /*****************************************************************************
  * FILE OPERATIONS
  *
- * EXERCISE: Finish off change_size, read, and write.
+ * COMPLETED EXERCISE: Finish off change_size, read, and write.
  *
  * The find_*, add_block, and remove_block functions are only there to support
  * the change_size function.  If you prefer to code change_size a different
@@ -663,15 +671,15 @@ free_block(uint32_t blockno)
 // Returns: 0 if block index 'b' requires using the doubly indirect
 //	       block, -1 if it does not.
 //
-// EXERCISE: Fill in this function.
+// COMPLETED EXERCISE: Fill in this function.
 
 static int32_t
 indir2_index(uint32_t b)
 {
-	// Your code here.
-	if (b >= (OSPFS_NDIRECT + OSPFS_NINDIRECT))
-		return 0;
-	return -1;
+	if(b < OSPFS_NDIRECT + OSPFS_NINDIRECT)
+		return -1;
+
+	return 0;
 }
 
 
@@ -684,7 +692,7 @@ indir2_index(uint32_t b)
 //	    otherwise, the offset of the relevant indirect block within
 //		the doubly indirect block.
 //
-// EXERCISE: Fill in this function.
+// COMPLETED EXERCISE: Fill in this function.
 
 static int32_t
 indir_index(uint32_t b)
@@ -705,7 +713,7 @@ indir_index(uint32_t b)
 // Returns: the index of block b in the relevant indirect block or the direct
 //	    block array.
 //
-// EXERCISE: Fill in this function.
+// COMPLETED EXERCISE: Fill in this function.
 
 static int32_t
 direct_index(uint32_t b)
@@ -713,8 +721,7 @@ direct_index(uint32_t b)
 	// Your code here.
 	if (b < OSPFS_NDIRECT)
 		return b;
-	//if (indir2_index(b) == -1)
-	//	return (b - OSPFS_NDIRECT);
+		
 	return (b - OSPFS_NDIRECT) % OSPFS_NINDIRECT;
 }
 
@@ -735,7 +742,7 @@ direct_index(uint32_t b)
 //          then oi->oi_size should remain unchanged. Any newly
 //          allocated blocks should be erased (set to zero).
 //
-// EXERCISE: Finish off this function.
+// COMPLETED EXERCISE: Finish off this function.
 //
 // Remember that allocating a new data block may require allocating
 // as many as three disk blocks, depending on whether a new indirect
@@ -757,7 +764,7 @@ add_block(ospfs_inode_t *oi)
 	uint32_t n = ospfs_size2nblocks(oi->oi_size);
 
 	// keep track of allocations to free in case of -ENOSPC
-	uint32_t *allocated[2] = { 0, 0 };
+	uint32_t allocated[2] = { 0, 0 };
 
 	/* EXERCISE: Your code here */
 	uint32_t direct_num, indir_num, indir2_num;
@@ -782,7 +789,8 @@ add_block(ospfs_inode_t *oi)
 	
 
 	//We are in the direct blocks in the inode
-	if (indir_num == -1){
+	if (indir_num == -1)
+	{
 		if (oi->oi_direct[direct_num] != 0)
 			return -EIO;
 		if (!(allocated[0] = allocate_block()))
@@ -791,17 +799,20 @@ add_block(ospfs_inode_t *oi)
 		oi->oi_direct[direct_num] = allocated[0];
 	}
 	//Now we move to the first indirect block  - using allocated[0]
-	else if (indir2_num == -1){
+	else if (indir2_num == -1)
+	{
 		printk(KERN_ALERT "REACHED FIRST INDIRECT BLOCK\n");
 		
-		if (oi->oi_indirect == 0){
+		if (oi->oi_indirect == 0)
+		{
 			if (!(allocated[0] = allocate_block()))
 				goto done;
 			indir_block = allocated[0];
 			indir_data = ospfs_block(indir_block);
 			memset(indir_data, 0, OSPFS_BLKSIZE);
 
-			if (indir_data[direct_num] != 0){
+			if (indir_data[direct_num] != 0)
+			{
 				retval = -EIO;
 				goto done;
 			}
@@ -812,8 +823,9 @@ add_block(ospfs_inode_t *oi)
 			
 			if (oi->oi_indirect == 0)
 				oi->oi_indirect = indir_block;
-
-		} else{
+		}
+		else
+		{
 			if (!(direct_block = allocate_block()))
 				goto done;
 
@@ -826,20 +838,25 @@ add_block(ospfs_inode_t *oi)
 		printk(KERN_ALERT "ENDED FIRST INDIRECT BLOCK\n");
 	} 
 	//If there is a doubly indirect block - using allocated[1]
-	else if (!indir2_num){
+	else if (!indir2_num)
+	{
 		printk(KERN_ALERT "REACHED DOUBLY INDIRECT BLOCK\n");
-		if (!oi->oi_indirect2){
+		if (!oi->oi_indirect2)
+		{
 			if (!(allocated[1] = allocate_block()))
 				goto done;
 			indir2_block = allocated[1];
 			indir2_data = ospfs_block(indir2_block);
 			memset(indir2_data, 0, OSPFS_BLKSIZE);
-		} else{
+		} 
+		else
+		{
 			indir2_block = oi->oi_indirect2;
 			indir2_data = ospfs_block(indir2_block);
 		}
 
-		if (!indir2_data[direct_num]){
+		if (!indir2_data[direct_num])
+		{
 			if (!(allocated[0] = allocate_block()))
 				goto done;
 			indir_block = allocated[0];
@@ -847,7 +864,8 @@ add_block(ospfs_inode_t *oi)
 			memset(indir_data, 0, OSPFS_BLKSIZE);
 		}
 
-		if (indir_data[direct_num] != 0){
+		if (indir_data[direct_num] != 0)
+		{
 			retval = -EIO;
 			goto done;
 		}
@@ -888,7 +906,7 @@ add_block(ospfs_inode_t *oi)
 //          instance if an indirect block that should be there isn't),
 //          then oi->oi_size should remain unchanged.
 //
-// EXERCISE: Finish off this function.
+// COMPLETED EXERCISE: Finish off this function.
 //
 // Remember that you must free any indirect and doubly-indirect blocks
 // that are no longer necessary after shrinking the file.  Removing a
@@ -905,6 +923,7 @@ remove_block(ospfs_inode_t *oi)
 	uint32_t n = ospfs_size2nblocks(oi->oi_size);
 
 	/* EXERCISE: Your code here */
+	
 	uint32_t indir2_num, indir_num, direct_num;
 	uint32_t indir_block = 0;
 	uint32_t indir2_block = 0;
@@ -1010,14 +1029,14 @@ remove_block(ospfs_inode_t *oi)
 //         (The value that the final add_block or remove_block set it to
 //          is probably not correct).
 //
-//   EXERCISE: Finish off this function.
+//   COMPLETED EXERCISE: Finish off this function.
 
 static int
 change_size(ospfs_inode_t *oi, uint32_t new_size)
 {
 	uint32_t old_size = oi->oi_size;
 	int r = 0;
-	//printk(KERN_ALERT "Inode Size: %d\n", old_size);
+	printk(KERN_ALERT "Inode Size: %d\n", old_size);
 	while (ospfs_size2nblocks(oi->oi_size) < ospfs_size2nblocks(new_size)) {
 	        /* EXERCISE: Your code here */
 		r = add_block(oi);
@@ -1037,7 +1056,7 @@ change_size(ospfs_inode_t *oi, uint32_t new_size)
 	/* EXERCISE: Make sure you update necessary file meta data
 	             and return the proper value. */
 	oi->oi_size = new_size;
-	//printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
+	printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
 	if (oi->oi_size == 11264)
 		printk(KERN_ALERT "This is correct so far\n");
 	return r; // Replace this line
@@ -1094,7 +1113,7 @@ ospfs_notify_change(struct dentry *dentry, struct iattr *attr)
 //   as 'f_pos'; read data starting at that position, and update the position
 //   when you're done.
 //
-//   EXERCISE: Complete this function.
+//   COMPLETED EXERCISE: Complete this function.
 
 static ssize_t
 ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
@@ -1152,8 +1171,10 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 	}
 
     done:
-    	printk(KERN_ALERT "ENDED READ\n");
-		return (retval >= 0 ? amount : retval);
+    printk(KERN_ALERT "ENDED READ\n");
+    return (retval >= 0 ? amount : retval);
+    	
+		
 }
 
 
@@ -1172,7 +1193,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 //   where you cannot read past the end of the file, it is OK to write past
 //   the end of the file; this should simply change the file's size.
 //
-//   EXERCISE: Complete this function.
+//   COMPLETED EXERCISE: Complete this function.
 
 static ssize_t
 ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *f_pos)
@@ -1185,9 +1206,8 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	// Support files opened with the O_APPEND flag.  To detect O_APPEND,
 	// use struct file's f_flags field and the O_APPEND bit.
 	/* EXERCISE: Your code here */
-	//printk(KERN_ALERT "Inode Size: %d\n", oi->oi_size);
-	
-	if (filp->f_flags & O_APPEND)
+
+	if(filp->f_flags & O_APPEND)
 		*f_pos = oi->oi_size;
 
 	// If the user is writing past the end of the file, change the file's
@@ -1237,7 +1257,8 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
     done:
     	//printk(KERN_ALERT "Inode Size in WRITE: %d\n", oi->oi_size);
     	printk(KERN_ALERT "ENDED WRITE\n");
-		return (retval >= 0 ? amount : retval);
+    	return (retval >= 0 ? amount : retval);
+		
 }
 
 
@@ -1295,7 +1316,7 @@ find_direntry(ospfs_inode_t *dir_oi, const char *name, int namelen)
 //
 //	The create_blank_direntry function should use this convention.
 //
-// EXERCISE: Write this function.
+// COMPLETED EXERCISE: Write this function.
 
 static ospfs_direntry_t *
 create_blank_direntry(ospfs_inode_t *dir_oi)
@@ -1306,7 +1327,7 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 	// 2. If there's no empty entries, add a block to the directory.
 	//    Use ERR_PTR if this fails; otherwise, clear out all the directory
 	//    entries and return one of them.
-
+	
 	/* EXERCISE: Your code here. */
 	ospfs_direntry_t * entry;
 	uint32_t empty_dir;
@@ -1353,12 +1374,11 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 //               -ENOSPC       if the disk is full & the file can't be created;
 //               -EIO          on I/O error.
 //
-//   EXERCISE: Complete this function.
+//   COMPLETED EXERCISE: Complete this function.
 
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
 	/* EXERCISE: Your code here. */
-	
 	printk(KERN_ALERT "REACHED LINK\n");
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	ospfs_direntry_t * entry = NULL;
@@ -1388,42 +1408,6 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 	//dir_oi->oi_nlink++;
 	printk(KERN_ALERT "ENDED LINK\n");
 	return 0;
-	
-	
-	/*
-	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
-	ospfs_inode_t *src_oi = ospfs_inode(src_dentry->d_inode->i_ino);
-	ospfs_direntry_t *new_entry;
-
-	// Check that the block is actually valid and check for link count overflows
-	// We don't want to accidentally free an inode by zeroing it's link count
-	// Also check that we are actually dealing with a directory inode
-	if(dir_oi == NULL || dir_oi->oi_nlink + 1 == 0 || dir_oi->oi_ftype != OSPFS_FTYPE_DIR)
-		return -EIO;
-
-	if(dst_dentry->d_name.len > OSPFS_MAXSYMLINKLEN)
-		return -ENAMETOOLONG;
-
-	if(find_direntry(dir_oi, dst_dentry->d_name.name, dst_dentry->d_name.len) != NULL)
-		return -EEXIST;
-
-	new_entry = create_blank_direntry(dir_oi);
-
-	if(IS_ERR(new_entry))
-		return PTR_ERR(new_entry);
-	else if(new_entry == NULL)
-		return -EIO;
-
-	new_entry->od_ino = src_dentry->d_inode->i_ino;
-	memcpy(new_entry->od_name, dst_dentry->d_name.name, dst_dentry->d_name.len);
-	new_entry->od_name[dst_dentry->d_name.len] = '\0';
-
-	// Increase the links on both the source file and the link's parent directory
-	src_oi->oi_nlink++;
-	dir_oi->oi_nlink++;
-
-	return 0;
-	*/
 }
 
 // ospfs_create
@@ -1453,7 +1437,7 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 //   2. Find an empty inode.  Set the 'entry_ino' variable to its inode number.
 //   3. Initialize the directory entry and inode.
 //
-//   EXERCISE: Complete this function.
+//   COMPLETED EXERCISE: Complete this function.
 
 static int
 ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidata *nd)
@@ -1511,7 +1495,6 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 		d_instantiate(dentry, i);
 		return 0;
 	}
-
 }
 
 
@@ -1535,18 +1518,18 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 //               -ENOSPC       if the disk is full & the file can't be created;
 //               -EIO          on I/O error.
 //
-//   EXERCISE: Complete this function.
+//   COMPLETED EXERCISE: Complete this function.
 
 static int
 ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 {
-	eprintk("Symlink\n");
+	printk(KERN_ALERT "Symlink\n");
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	uint32_t entry_ino = 0;
 	
 	/* EXERCISE: Your code here. */
 	//return -EINVAL;
-	/*
+	
 	ospfs_symlink_inode_t *new_inode_loc = NULL; // Location of the inode for the symlink
 	ospfs_direntry_t *od;
 
@@ -1631,38 +1614,6 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	od->od_ino = entry_ino;
 
 	dir_oi->oi_nlink++;
-	*/
-	/*---------------------------------------*/
-	
-	
-	
-	ospfs_symlink_inode_t* link;
-
-	// check if name too long
-	if (dentry->d_name.len > OSPFS_MAXNAMELEN ||
-		strlen(symname) > OSPFS_MAXSYMLINKLEN)
-        return -ENAMETOOLONG;
-	// check if directory entry already exists
-	if (find_direntry(ospfs_inode(dir->i_ino),
-		dentry->d_name.name, dentry->d_name.len))
-		return -EEXIST;
-
-	// create new symlinked file
-	entry_ino = ospfs_create(dir, dentry, dir_oi->oi_mode, NULL);
-	if (entry_ino < 0)
-		return entry_ino;
-	entry_ino = find_direntry(ospfs_inode(dir->i_ino),
-		dentry->d_name.name, dentry->d_name.len)->od_ino;
-	link = (ospfs_symlink_inode_t*) ospfs_inode(entry_ino);
-
-	// copy file information
-	link->oi_size = strlen(symname);
-	link->oi_ftype = OSPFS_FTYPE_SYMLINK;
-	link->oi_nlink = 1;
-	memcpy(link->oi_symlink, symname, strlen(symname));
-	
-	
-	
 	
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
@@ -1684,7 +1635,7 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 //   Inputs: dentry -- the symbolic link's directory entry
 //           nd     -- to be filled in with the symbolic link's destination
 //
-//   Exercise: Expand this function to handle conditional symlinks.  Conditional
+//   COMPLETED Exercise: Expand this function to handle conditional symlinks.  Conditional
 //   symlinks will always be created by users in the following form
 //     root?/path/1:/path/2.
 //   (hint: Should the given form be changed in any way to make this method
@@ -1693,68 +1644,44 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 static void *
 ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
-	eprintk("follow link\n");
-	
-	
+	printk(KERN_ALERT "follow link\n");
 	ospfs_symlink_inode_t *oi =
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
-	// Exercise: Your code here.
-	nd_set_link(nd, oi->oi_symlink);
-	return (void *) 0;
-	/*--------------------------------------------*/
-	/*
-	// check for conditional symlink
-	if (strncmp(oi->oi_symlink, "root?", 5) == 0) 
-	{
-		// find the pivot between first and second paths
-		int pivot = strchr(oi->oi_symlink, ':') - oi->oi_symlink;
-
-		// root user
-		if (current->uid == 0) {
-			// use null-terminator to indicate ending
-			oi->oi_symlink[pivot] = '\0';
-			nd_set_link(nd, oi->oi_symlink + 5 + 1); // use first path
-		}
-		// normal user
-		else
-			nd_set_link(nd, oi->oi_symlink + pivot + 1); // use second path
-	}
-	else
-		nd_set_link(nd, oi->oi_symlink);
-
-	return (void *) 0;
-	*/
 	
-	/*--------------------------------------------*/
-	
-	/*
-	// Exercise: Your code here.
+	/**
+	 * As above, a conditional symlink will be formatted
+	 * as "?<root_path>\0:<not_root_path>\0>"
+	 */
+
 	char *path;
-	
-	//if not conditional link, set path and return
+
+	// If this isn't a conditonal link, set the path and return
 	if(oi->oi_symlink[0] != '?')
 	{
 		nd_set_link(nd, oi->oi_symlink);
 		return (void *) 0;
 	}
+
 	// If root, give a pointer to the start of the root path
 	if(current->uid == 0)
 	{
 		nd_set_link(nd, oi->oi_symlink + 1);
 		return (void *) 0;
 	}
+
 	// Otherwise fast forward to the non-root path
 	path = oi->oi_symlink;
 	while(*path != '\0')
 		path++;
+
 	// We've hit a null byte. Make sure we are still within our string
 	// and the next is in fact ":"
 	if(path - oi->oi_symlink >= oi->oi_size || path[1] != ':')
 		return ERR_PTR(-EIO);
+
 	// All clear!
 	nd_set_link(nd, path + 2);
 	return (void *) 0;
-	*/
 }
 
 
@@ -1821,6 +1748,6 @@ module_init(init_ospfs_fs)
 module_exit(exit_ospfs_fs)
 
 // Information about the module
-MODULE_AUTHOR("Skeletor");
+MODULE_AUTHOR("Kalin Khemka and Vir Thakor");
 MODULE_DESCRIPTION("OSPFS");
 MODULE_LICENSE("GPL");
