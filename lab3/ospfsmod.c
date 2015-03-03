@@ -1374,8 +1374,6 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 		return PTR_ERR(entry);
 
 	entry->od_ino = src_dentry->d_inode->i_ino;
-	//if (copy_from_user(entry->od_name,dst_dentry->d_name.name, dst_dentry->d_name.len))
-	//	return -EIO;
 	memcpy(entry->od_name,dst_dentry->d_name.name, dst_dentry->d_name.len);
 	entry->od_name[dst_dentry->d_name.len] = '\0';
 
@@ -1497,8 +1495,6 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	ospfs_inode_t *inode = NULL;
 	ospfs_symlink_inode_t *sym_inode = NULL;
 	ospfs_direntry_t *entry;
-	char *qmark;
-	char *colon;
 
 	if (dir_oi->oi_ftype != OSPFS_FTYPE_DIR || dir_oi->oi_nlink + 1	== 0)
 		return -EIO;
@@ -1525,33 +1521,14 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	if (IS_ERR(entry))
 		return PTR_ERR(entry);
 
-	// Modify conditional symlinks to simpler form
-	qmark = strpbrk(symname, "?");
-	colon = strpbrk(symname, ":");
-	if(qmark && colon && colon > qmark){ 
-	// We will remove "root?" prefix, leaving the string in the form: "?<root_path>\0:<not_root_path>\0>"
-		size_t root_path_len = colon - qmark + 1;
-		size_t other_path_len = strlen(colon);
-
-		if(root_path_len + other_path_len > OSPFS_MAXNAMELEN)
-			return -ENAMETOOLONG;
-
-		sym_inode->oi_size = strlen(qmark) + 1; // Size from "?" to end, plus the extra NULL
-		strncpy(sym_inode->oi_symlink, qmark, root_path_len - 1);
-		sym_inode->oi_symlink[root_path_len - 1] = '\0';
-		strncpy(sym_inode->oi_symlink + root_path_len, colon, other_path_len);
-		sym_inode->oi_symlink[sym_inode->oi_size] = '\0';
-	}
-	// Regular Symlink
-	else 
-	{
-		sym_inode->oi_size = strlen(symname);
-		strncpy(sym_inode->oi_symlink, symname, sym_inode->oi_size);
-		sym_inode->oi_symlink[sym_inode->oi_size] = '\0';
-	}
+	//Set values of symlink inode
+	sym_inode->oi_size = strlen(symname);
+	strncpy(sym_inode->oi_symlink, symname, sym_inode->oi_size);
+	sym_inode->oi_symlink[sym_inode->oi_size] = '\0';
 	sym_inode->oi_ftype = OSPFS_FTYPE_SYMLINK;
 	sym_inode->oi_nlink = 1;
 
+	//Set values of direntry
 	strncpy(entry->od_name, dentry->d_name.name, dentry->d_name.len);
 	entry->od_name[dentry->d_name.len] = '\0';
 	entry->od_ino = entry_ino;
@@ -1590,29 +1567,40 @@ ospfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
 	ospfs_symlink_inode_t *oi =
 		(ospfs_symlink_inode_t *) ospfs_inode(dentry->d_inode->i_ino);
-
-	char *path;
-
-	// Normal Symlink
-	if(oi->oi_symlink[0] != '?'){
+	
+	// Exercise: Your code here.
+	int i = 0;
+	int k = 0;
+	// Index of '?' and ':'
+	int q_pos = strchr(oi->oi_symlink, '?') - oi->oi_symlink;
+	int c_pos = strchr(oi->oi_symlink, ':') - oi->oi_symlink;
+	// Prepare for storing condition and possible destinations
+	char* path; // The conditional symlink destination
+	// eprintk("SYMLINK TYPE: ");
+	// If both are found, and root? matches, we have a conditional symlink
+	if(q_pos && c_pos && strncmp(oi->oi_symlink, "root?", 5) == 0)
+	{
+		path = kmalloc(oi->oi_size, GFP_ATOMIC);
+		// Checking root user id
+		if(current->uid == 0 ){
+			// Find the first path and use to set symlink
+			for(i = (q_pos + 1); i < c_pos; i++){
+				path[k] = oi->oi_symlink[i];
+				k++;
+			}
+			path[k] = 0;
+			nd_set_link(nd, path);
+		}
+		else{
+			// Find the second path and set symlink (begins after :)
+			nd_set_link(nd, oi->oi_symlink + c_pos + 1);
+		}
+	}
+	//Normal symlink
+	else
 		nd_set_link(nd, oi->oi_symlink);
-		return (void *) 0;
-	}
-
-	// If root user id, use first path
-	if(current->uid == 0){
-		nd_set_link(nd, oi->oi_symlink + 1);
-		return (void *) 0;
-	}
-
-	// Use second path otherwise
-	path = oi->oi_symlink;
-	while(*path != '\0')
-		path++;
-	if(path - oi->oi_symlink >= oi->oi_size || path[1] != ':')
-		return ERR_PTR(-EIO);
-	nd_set_link(nd, path + 2);
 	return (void *) 0;
+
 }
 
 
