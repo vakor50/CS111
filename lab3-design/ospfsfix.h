@@ -5,6 +5,11 @@
 
 #define MAX_FILENAME_LEN 1024
 
+//Define Error Messages
+#define ERROR(msg) printf("%s in %s, Line:%d\n", msg, __FILE__, __LINE__)
+#define FIXED(msg) printf("Fixed Error:%s\n", msg)
+#define UNFIXABLE(msg) printf("Error Unfixable:%s\n", msg)
+
 //Return values for the function
 #define FS_OK 0
 #define FS_FIXED 1
@@ -12,8 +17,8 @@
 
 typedef struct file_system{
 	char filename[MAX_FILENAME_LEN + 1];
-	void *buf;
-	uint32_t buflen;
+	void *buffer;
+	uint32_t buffer_size;
 
 	ospfs_super_t super;
 	ospfs_inode_t *inodes;
