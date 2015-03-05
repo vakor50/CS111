@@ -93,14 +93,34 @@ static int checks_inodes(){
 	fs.inodes = malloc(sizeof(ospfs_inode_t) * fs.super.os_ninodes);
 	memset(fs.inodes, 0, sizeof(ospfs_inode_t) * fs.super.os_ninodes);
 
+	int check;
 	for (ino_no = 1; ino_no < fs.super.os_ninodes; ino_no++){
-		//Check the inode
-		//TODO
+		check = checks_inode(ino_no);
+		if (check == FS_BROKEN)
+			return FS_BROKEN;
+		else if (check == FS_FIXED)
+			retval = FS_FIXED;
 	}
+	return retval;
 }
 
 static int checks_referenced_blocks(){
-
+	int retval = FS_OK;
+	int bitmap_block_size = fs.super.os_nblocks / OSPFS_BLKBITSIZE;
+	int inode_blocks = fs.super.os_ninodes / OSPFS_BLKBITSIZE;
+	int blocks_used;
+	
+	if ((fs.super.os_nblocks % OSPFS_BLKBITSIZE) > 0)
+		bitmap_block_size++;
+	fs.bitmap = malloc(bitmap_block_size * OSPFS_BLKSIZE);
+	
+	if ((fs.super.os_ninodes / OSPFS_BLKBITSIZE) > 0)
+		inode_blocks++;
+	blocks_used = fs.super.os_firstinob + inode_blocks;
+	for (i = 0; i < blocks_used; i++)
+		bitmap_set(i, 0); // All blocks thru inodes are used.
+	for (; i < fs.super.os_nblocks; i++)
+		bitmap_set(i, 1);
 }
 
 static int checks_directories(){
