@@ -10,23 +10,6 @@
 file_system_t fs;
 
 // These functions analyze the ospfs.
-static int checks_superblock();
-static int checks_inodes();
-static int checks_referenced_blocks();
-static int checks_directories();
-static int checks_bitmap();
-
-// Helper functions.
-static int bitmap_get(uint32_t blkno);
-static void bitmap_set(uint32_t blkno, int free);
-static int checks_inode(uint32_t ino);
-static int checks_direct_refs(ospfs_inode_t *inode);
-static int checks_indirect1_refs(ospfs_inode_t *inode);
-static int checks_indirect2_refs(ospfs_inode_t *inode);
-static int truncates_inode(ospfs_inode_t *inode, int n);
-static uint32_t file_blockno(ospfs_inode_t *inode, uint32_t offset);
-static void *file_offset(ospfs_inode_t *inode, uint32_t offset);
-
 
 int fix_file_system(){
 
@@ -301,4 +284,31 @@ ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset)
 {
 	uint32_t blockno = ospfs_inode_blockno(oi, offset);
 	return (uint8_t *) ospfs_block(blockno) + (offset % OSPFS_BLKSIZE);
+}
+
+void load_file_system(int argc, char** argv){
+
+}
+void write_fixed_file_system(){
+
+}
+
+int main (int argc, char** argv){
+	printf("Running Filesystem Image Fixer\n");
+
+	switch(fix_file_system()){
+		case FS_OK:
+			printf("Filesystem has no errors\n");
+			break;
+		case FS_FIXED:
+			printf("All errors have been fixed\n");
+			break;
+		case FS_BROKEN:
+			printf("Errors with filesystem are unfixable\n");
+			break;
+		default:
+			ERROR("You broke the file system fixer");
+			exit(1);
+	}
+	return 0;
 }

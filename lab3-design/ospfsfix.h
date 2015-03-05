@@ -10,6 +10,7 @@
 #define FIXED(msg) printf("Fixed Error:%s\n", msg)
 #define UNFIXABLE(msg) printf("Error Unfixable:%s\n", msg)
 #define CHECK(msg) printf("Checking %s\n", msg)
+#define CORRECT(msg) printf("%s is correct\n", msg)
 
 //Return values for the function
 #define FS_OK 0
@@ -28,14 +29,34 @@ typedef struct file_system{
 	void *bitmap;
 } file_system_t;
 
+extern file_system_t fs;
+
 int fix_file_system();
 
-extern file_system_t fs;
+static int checks_superblock();
+static int checks_inodes();
+static int checks_referenced_blocks();
+static int checks_directories();
+static int checks_bitmap();
+
+// Helper functions.
+static int bitmap_get(uint32_t blkno);
+static void bitmap_set(uint32_t blkno, int free);
+static int checks_inode(uint32_t ino);
+static int checks_direct_refs(ospfs_inode_t *inode);
+static int checks_indirect1_refs(ospfs_inode_t *inode);
+static int checks_indirect2_refs(ospfs_inode_t *inode);
+static int truncates_inode(ospfs_inode_t *inode, int n);
+static uint32_t file_blockno(ospfs_inode_t *inode, uint32_t offset);
+static void *file_offset(ospfs_inode_t *inode, uint32_t offset);
 
 void *block_pointer(uint32_t block_num);
 void *block_offset(uint32_t block_num, uint32_t offset);
 
 static inline uint32_t ospfs_inode_blockno(ospfs_inode_t *oi, uint32_t offset);
 static inline void *ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset)
+
+void load_file_system(int argc, char** argv);
+void write_fixed_file_system();
 
 #endif
