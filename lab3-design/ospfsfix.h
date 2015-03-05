@@ -9,6 +9,7 @@
 #define ERROR(msg) printf("%s in %s, Line:%d\n", msg, __FILE__, __LINE__)
 #define FIXED(msg) printf("Fixed Error:%s\n", msg)
 #define UNFIXABLE(msg) printf("Error Unfixable:%s\n", msg)
+#define CHECK(msg) printf("Checking %s\n", msg)
 
 //Return values for the function
 #define FS_OK 0
@@ -33,5 +34,8 @@ extern file_system_t fs;
 
 void *block_pointer(uint32_t block_num);
 void *block_offset(uint32_t block_num, uint32_t offset);
+
+static inline uint32_t ospfs_inode_blockno(ospfs_inode_t *oi, uint32_t offset);
+static inline void *ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset)
 
 #endif
