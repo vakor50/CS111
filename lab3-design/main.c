@@ -13,6 +13,7 @@ void loads_file(int argc, char **argv)
 			printf("Error: filename must not exceed %d characters\n", MAX_INPUT_FILENAME_LEN);
 			exit(1);
 		}
+		
 		if (NULL == (filp = fopen(argv[1], "r"))) {
 			perror("Error: failed to open file");
 			exit(1);
@@ -41,7 +42,7 @@ void loads_file(int argc, char **argv)
 		fclose(filp);
 	
 	} else {
-		printf("Error: invoke with \'ospfsfixer [image-file]\'\n");
+		printf("Error: use format \'ospfsfixer [image-file]\'\n");
 		exit(1);
 	}
 }

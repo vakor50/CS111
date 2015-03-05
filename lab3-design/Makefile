@@ -29,7 +29,7 @@ MODULEPATH=	/lib/modules/${KERNELRELEASE}/fs
 endif
 
 obj-m		+= ospfs.o
-ospfs-objs	:= ospfsmod.o fsimg.o
+ospfs-objs	:= ospfsmod.o fsimg.o ospfsfix.o
 BASEFILES	:= $(shell find base 2>/dev/null | grep -v '[ 	]')
 
 ospfs.ko all: fsimg.c truncate always
@@ -55,6 +55,11 @@ fsimgtoc: fsimgtoc.c
 truncate: truncate.c
 	$(CC) $< -o $@
 
+ospfsfix: ospfsfix.c 
+	$(CC) $< -o $@
+
+
+#DISTDIR := lab3-design
 DISTDIR := lab3-$(USER)
 ifeq ($(SOL),1)
 DISTDIR := sol3
@@ -83,7 +88,7 @@ tarball-nocheck: realclean
 
 clean:
 	@echo + clean
-	$(V)-rm -f fs.img fsimg.c fsimgtoc ospfsformat truncate *.o *.ko *.mod.c
+	$(V)-rm -f fsimg.c fsimgtoc ospfsformat truncate *.o *.ko *.mod.c ospfsfix #fs.img
 	$(V)-rm -f .version .*.o.flags .*.o.d .*.o.cmd .*.ko.cmd
 	$(V)-rm -rf .tmp_versions
 
@@ -91,5 +96,9 @@ realclean: clean
 	@echo + realclean
 	$(V)-rm -f write_clean
 	$(V)-rm -rf $(DISTDIR) $(DISTDIR).tar.gz labstuff.tgz
+
+test: ospfsfix
+	@printf "\n * * TESTING * *\n"
+	./tester
 
 .PHONY: all always clean distclean distdir dist tarball install
