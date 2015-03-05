@@ -67,7 +67,7 @@ static int checks_superblock(){
 	} else
 		fs.super.os_ninodes = super->os_ninodes;
 
-	printf("Passed all superblock tests\n");
+	CORRECT("superblock");
 	return retval;
 }
 
@@ -88,16 +88,19 @@ static int checks_inodes(){
 		else if (check == FS_FIXED)
 			retval = FS_FIXED;
 	}
+	CORRECT("inodes");
 	return retval;
 }
 
 static int checks_referenced_blocks() {
 	int retval = FS_OK;
-	int bitmap_block_size = fs.super.os_nblocks / OSPFS_BLKBITSIZE;
-	int inode_blocks = fs.super.os_ninodes / OSPFS_BLKBITSIZE;
 	int blocks_used;
 	int inode_ref;
 	uint32_t ino;
+	int bitmap_block_size = fs.super.os_nblocks / OSPFS_BLKBITSIZE;
+	int inode_blocks = fs.super.os_ninodes / OSPFS_BLKBITSIZE;
+
+	CHECK("referenced blocks");
 	
 	if ((fs.super.os_nblocks % OSPFS_BLKBITSIZE) > 0)
 		bitmap_block_size++;
@@ -139,6 +142,8 @@ static int checks_referenced_blocks() {
 		else if (inode_ref == FS_FIXED)
 			retval = FS_FIXED;
 	}
+
+	CORRECT("referenced blocks");
 	return retval;
 }
 
@@ -259,6 +264,27 @@ static int checks_inode(uint32_t ino){
 	return retval;
 }
 
+static int bitmap_get(uint32_t block_num) {
+	uint8_t *byte = (uint8_t *) fs.bitmap + (block_num / 8);
+	uint8_t mask = 0x01 << (7 - (block_num % 8));
+	if (*byte & mask)
+	return 1;
+	else
+	return 0;
+}
+
+
+static void bitmap_set(uint32_t blkno, int free){
+	// Finds the byte to modify and the mask to modify it.
+	uint8_t *byte = (uint8_t *) fs.bitmap + (blkno / 8);
+	uint8_t mask = 0x01 << (7 - (blkno % 8));
+	// Modifies the byte.
+	if (free)
+	*byte = *byte | mask;
+	else
+	*byte = *byte & (~mask);
+}
+
 int check_direct_refs(ospfs_inode_t * inode) {
 	int i;
 	for (i = 0; i < OSPFS_NDIRECT; i++)
@@ -290,7 +316,7 @@ int check_indirect_refs(ospfs_inode_t * inode) {
 		return FS_FIXED;
 	}
 
-	uint32_t *indirect_blocks = blkstart(inode->oi_indirect);
+	uint32_t *indirect_blocks = block_pointer(inode->oi_indirect);
 	for (i = 0; i < OSPFS_NINDIRECT; i++)
 	{
 		if (indirect_blocks[i] == 0)
@@ -319,7 +345,7 @@ int check_twice_indirect_refs(ospfs_inode_t * inode) {
 		return FS_FIXED;
 	}
 
-	uint32_t *twice_indirect_block = blkstart(inode->oi_indirect2);
+	uint32_t *twice_indirect_block = block_pointer(inode->oi_indirect2);
 	block_num = OSPFS_NDIRECT + OSPFS_NINDIRECT;
 	for (i = 0; i < OSPFS_NINDIRECT; i++) {
 		
@@ -332,7 +358,7 @@ int check_twice_indirect_refs(ospfs_inode_t * inode) {
 			return FS_FIXED;
 		}
 
-		uint32_t *indirect_block = blkstart(twice_indirect_block[i]);
+		uint32_t *indirect_block = block_pointer(twice_indirect_block[i]);
 		for (j = 0; j < OSPFS_NINDIRECT; j++) 
 		{
 			if (indirect_block[j] == 0)
@@ -362,7 +388,7 @@ int truncates_inode(ospfs_inode_t *inode, int n) {
 	}
 	else if (n < OSPFS_NDIRECT + OSPFS_NINDIRECT) 
 	{
-		uint32_t *indirect_blocks = blkstart(inode->oi_indirect);
+		uint32_t *indirect_blocks = block_pointer(inode->oi_indirect);
 
 		for (i = n - OSPFS_NDIRECT; i < OSPFS_NDIRECT + OSPFS_NINDIRECT; i++) 
 			indirect_blocks[i] = 0;
@@ -371,10 +397,10 @@ int truncates_inode(ospfs_inode_t *inode, int n) {
 	}
 	else if (n <= OSPFS_MAXFILEBLKS) 
 	{
-		uint32_t *twice_indirect_block = blkstart(inode->oi_indirect2);
+		uint32_t *twice_indirect_block = block_pointer(inode->oi_indirect2);
 		uint32_t indirect_block_num = n / OSPFS_NINDIRECT;
 		uint32_t direct_block_num = n % OSPFS_NINDIRECT;
-		uint32_t *indirect_block = blkstart(twice_indirect_block[direct_block_num]);
+		uint32_t *indirect_block = block_pointer(twice_indirect_block[direct_block_num]);
 		if (direct_block_num == 0) 
 			twice_indirect_block[indirect_block_num] = 0;
 		

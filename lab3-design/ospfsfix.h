@@ -10,7 +10,7 @@
 #define FIXED(msg) printf("Fixed Error:%s\n", msg)
 #define UNFIXABLE(msg) printf("Error Unfixable:%s\n", msg)
 #define CHECK(msg) printf("Checking %s\n", msg)
-#define CORRECT(msg) printf("%s is correct\n", msg)
+#define CORRECT(msg) printf("Passed all %s checks and fixes\n", msg)
 
 //Return values for the function
 #define FS_OK 0
@@ -39,7 +39,6 @@ static int checks_referenced_blocks();
 static int checks_directories();
 static int checks_bitmap();
 
-// Helper functions.
 static int bitmap_get(uint32_t blkno);
 static void bitmap_set(uint32_t blkno, int free);
 static int checks_inode(uint32_t ino);
@@ -47,8 +46,6 @@ static int check_direct_refs(ospfs_inode_t *inode);
 static int check_indirect_refs(ospfs_inode_t *inode);
 static int check_twice_indirect_refs(ospfs_inode_t *inode);
 static int truncates_inode(ospfs_inode_t *inode, int n);
-static uint32_t file_blockno(ospfs_inode_t *inode, uint32_t offset);
-static void *file_offset(ospfs_inode_t *inode, uint32_t offset);
 
 void *block_pointer(uint32_t block_num);
 void *block_offset(uint32_t block_num, uint32_t offset);
