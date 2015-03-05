@@ -91,13 +91,13 @@ static int checks_inodes(){
 	return retval;
 }
 
-static int checks_referenced_blocks(){
+static int checks_referenced_blocks() {
 	int retval = FS_OK;
 	int bitmap_block_size = fs.super.os_nblocks / OSPFS_BLKBITSIZE;
 	int inode_blocks = fs.super.os_ninodes / OSPFS_BLKBITSIZE;
 	int blocks_used;
-
-	CHECK("referenced blocks");
+	int inode_ref;
+	uint32_t ino;
 	
 	if ((fs.super.os_nblocks % OSPFS_BLKBITSIZE) > 0)
 		bitmap_block_size++;
@@ -110,6 +110,36 @@ static int checks_referenced_blocks(){
 		bitmap_set(i, 0); // All blocks thru inodes are used.
 	for (; i < fs.super.os_nblocks; i++)
 		bitmap_set(i, 1);
+	
+		
+	for (ino = 1; ino < fs.super.os_ninode; ino++)
+	{
+		ospfs_inode_t *inode = &fs.inodes[ino];
+		if (inode->oi_nlink == 0)
+			continue;
+			
+		if (inode->oi_ftype != OSPFS_FTYPE_REG && inode->oi_ftype != OSPFS_FTYPE_DIR)
+			continue;
+		
+		inode_ref = check_direct_refs(inode);
+		if (inode_ref == FS_BROKEN)
+			return FS_BROKEN;
+		else if (inode_ref == FS_FIXED)
+			retval = FS_FIXED;
+		
+		inode_ref = check_indirect_refs(inode)
+		if (inode_ref == FS_BROKEN)
+			return FS_BROKEN;
+		else if (inode_ref == FS_FIXED)
+			retval = FS_FIXED;
+
+		inode_ref = check_twice_indirect_refs(inode);
+		if (inode_ref == FS_BROKEN)
+			return FS_BROKEN;
+		else if (inode_ref == FS_FIXED)
+			retval = FS_FIXED;
+	}
+	return retval;
 }
 
 static int checks_directories(){
@@ -227,6 +257,143 @@ static int checks_inode(uint32_t ino){
 	printf("Current inode is correct\n");
 
 	return retval;
+}
+
+int check_direct_refs(ospfs_inode_t * inode) {
+	int i;
+	for (i = 0; i < OSPFS_NDIRECT; i++)
+	{
+		uint32_t block_num = inode->oi_direct[i];
+		if (block_num == 0)
+			return truncates_inode(inode, i);
+
+		if (bitmap_get(block_num) == 0)
+		{
+			truncates_inode(inode, i);
+			return FS_FIXED;
+		}	
+
+		bitmap_set(block_num, 0);
+	}
+	return FS_OK;
+}
+
+int check_indirect_refs(ospfs_inode_t * inode) {
+	int i;
+	
+	if (inode->oi_indirect == 0)
+		return truncates_inode(inode, OSPFS_NDIRECT);
+
+	if (bitmap_get(inode->oi_indirect) == 0)
+	{
+		truncates_inode(inode, OSPFS_NDIRECT);
+		return FS_FIXED;
+	}
+
+	uint32_t *indirect_blocks = blkstart(inode->oi_indirect);
+	for (i = 0; i < OSPFS_NINDIRECT; i++)
+	{
+		if (indirect_blocks[i] == 0)
+			return truncates_inode(inode, OSPFS_NDIRECT + i);
+
+		if (bitmap_get(indirect_blocks[i]) == 0)
+		{
+			truncates_inode(inode, OSPFS_NDIRECT + i);
+			return FS_FIXED;
+		}
+
+		bitmap_set(indirect_blocks[i], 0);
+	}
+	return FS_OK;
+}
+
+int check_twice_indirect_refs(ospfs_inode_t * inode) {
+	int i, j, block_num;
+
+	if (inode->oi_indirect2 == 0)
+		return truncates_inode(inode, OSPFS_NDIRECT + OSPFS_NINDIRECT);
+
+	if (bitmap_get(inode->oi_indirect2) == 0) 
+	{
+		truncates_inode(inode, OSPFS_NDIRECT + OSPFS_NINDIRECT);
+		return FS_FIXED;
+	}
+
+	uint32_t *twice_indirect_block = blkstart(inode->oi_indirect2);
+	block_num = OSPFS_NDIRECT + OSPFS_NINDIRECT;
+	for (i = 0; i < OSPFS_NINDIRECT; i++) {
+		
+		if (twice_indirect_block[i] == 0)
+			return truncates_inode(inode, block_num);
+
+		if (bitmap_get(twice_indirect_block[i] == 0)) 
+		{
+			truncates_inode(inode, block_num);
+			return FS_FIXED;
+		}
+
+		uint32_t *indirect_block = blkstart(twice_indirect_block[i]);
+		for (j = 0; j < OSPFS_NINDIRECT; j++) 
+		{
+			if (indirect_block[j] == 0)
+				return truncates_inode(inode, block_num);
+
+			if (bitmap_get(indirect_block[j]) == 0) {
+				truncates_inode(inode, block_num);
+				return FS_FIXED;
+			}
+			block_num++;
+		}
+	}
+	return FS_OK;
+}
+
+int truncates_inode(ospfs_inode_t *inode, int n) {
+	int i;
+	uint32_t max_file_size = n * OSPFS_BLKSIZE;
+
+	// Truncating within direct blocks.
+	if (n <= OSPFS_NDIRECT) 
+	{
+		for (i = n; i < OSPFS_NDIRECT; i++)
+			inode->oi_direct[i] = 0;
+
+		inode->oi_indirect = inode->oi_indirect2 = 0;
+	}
+	else if (n < OSPFS_NDIRECT + OSPFS_NINDIRECT) 
+	{
+		uint32_t *indirect_blocks = blkstart(inode->oi_indirect);
+
+		for (i = n - OSPFS_NDIRECT; i < OSPFS_NDIRECT + OSPFS_NINDIRECT; i++) 
+			indirect_blocks[i] = 0;
+
+		inode->oi_indirect2 = 0;
+	}
+	else if (n <= OSPFS_MAXFILEBLKS) 
+	{
+		uint32_t *twice_indirect_block = blkstart(inode->oi_indirect2);
+		uint32_t indirect_block_num = n / OSPFS_NINDIRECT;
+		uint32_t direct_block_num = n % OSPFS_NINDIRECT;
+		uint32_t *indirect_block = blkstart(twice_indirect_block[direct_block_num]);
+		if (direct_block_num == 0) 
+			twice_indirect_block[indirect_block_num] = 0;
+		
+		for (i = indirect_block_num + 1; i < OSPFS_NINDIRECT; i++)
+			twice_indirect_block[i] = 0;
+
+		// Sets remaining direct-blocks to 0.
+		for (i = direct_block_num; i < OSPFS_NINDIRECT; i++)
+			indirect_block[i] = 0;
+	}
+
+	// Updates the filesize if necessary.
+	if (max_file_size < inode->oi_size) 
+	{
+		inode->oi_size = max_file_size;
+		return FS_FIXED;
+	}
+
+	return FS_OK;
 }
 
 void *block_pointer(uint32_t block_num){
