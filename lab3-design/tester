@@ -7,9 +7,6 @@
 # Next test: checks if valid file
 ./ospfsfix not-a-file
 
-# Next test: checks what happens if not an img
-./ospfsfix main.c
-
 # Next test: a completely valid image
 ./ospfsfix fsCONTROL.img
 

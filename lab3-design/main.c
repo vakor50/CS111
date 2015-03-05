@@ -4,16 +4,41 @@
 #include <stdlib.h>
 #include "ospfsfix.h"
 
-void loads_file(int argc, char **argv)
-{
+void loads_file(int argc, char **argv);
+void writes_fixed_image();
+
+int main (int argc, char** argv){
+	printf("Running Filesystem Image Fixer\n");
+
+	loads_file(argc, argv);
+
+	switch(fix_file_system()){
+		case FS_OK:
+			printf("Filesystem has no errors\n");
+			break;
+		case FS_FIXED:
+			printf("All errors have been fixed\n");
+			writes_fixed_image();
+			break;
+		case FS_BROKEN:
+			printf("Errors with filesystem are unfixable\n");
+			break;
+		default:
+			ERROR("You broke the file system fixer");
+			exit(1);
+	}
+	return 0;
+}
+
+void loads_file(int argc, char **argv){
 	if (argc == 2) {
 		// Open file
 		FILE *filp;
-		if (MAX_INPUT_FILENAME_LEN < strlen(argv[1])) {
-			printf("Error: filename must not exceed %d characters\n", MAX_INPUT_FILENAME_LEN);
+		if (MAX_FILENAME_LEN < strlen(argv[1])) {
+			printf("Error: filename must not exceed %d characters\n", MAX_FILENAME_LEN);
 			exit(1);
 		}
-		
+
 		if (NULL == (filp = fopen(argv[1], "r"))) {
 			perror("Error: failed to open file");
 			exit(1);
@@ -24,7 +49,7 @@ void loads_file(int argc, char **argv)
 			ERROR("Error: problem reading file1");
 			exit(1);
 		}
-		if (-1 == (fs.buflen = ftell(filp))) {
+		if (-1 == (fs.buffer_size = ftell(filp))) {
 			ERROR("Error: problem with reading file2");
 			exit(1);
 		}
@@ -34,15 +59,16 @@ void loads_file(int argc, char **argv)
 		}
 		
 		// Load file contents into filesystem
-		if (NULL == (fs.buf = malloc(fs.buflen + 1))) {
+		if (NULL == (fs.buffer = malloc(fs.buffer_size + 1))) {
 			ERROR("Error: problem with reading file");
 		}
-		fread(fs.buf, 1, fs.buflen, filp);
+
+		fread(fs.buffer, 1, fs.buffer_size, filp);
 
 		fclose(filp);
 	
 	} else {
-		printf("Error: use format \'ospfsfixer [image-file]\'\n");
+		printf("Error: use format \'ospfsfix [image-file]\'\n");
 		exit(1);
 	}
 }
@@ -56,7 +82,7 @@ void writes_fixed_image()
 		return;
 	}
 
-	fwrite(blkstart(0), OSPFS_BLKSIZE, 1, filp);
+	fwrite(block_pointer(0), OSPFS_BLKSIZE, 1, filp);
 
 	// write superblock
 	size_t pad_size = OSPFS_BLKSIZE - sizeof(ospfs_super_t);
@@ -66,7 +92,7 @@ void writes_fixed_image()
 	fwrite(pad, pad_size, 1, filp);
 
 	// write bitmap
-	fwrite(fs.bitmap, OSPFS_BLKSIZE, fs.num_bitmap_blks, filp);
+	fwrite(fs.bitmap, OSPFS_BLKSIZE, fs.num_bitmap_blocks, filp);
 
 	// write inodes
 	fwrite(fs.inodes, sizeof(ospfs_inode_t), fs.super.os_ninodes, filp);
@@ -80,27 +106,7 @@ void writes_fixed_image()
 	if (fs.super.os_ninodes % OSPFS_BLKINODES)
 		inodes_block_size++;
 	
-	fwrite(blkstart(fs.super.os_firstinob + inodes_block_size), OSPFS_BLKSIZE, fs.super.os_nblocks, filp);
+	fwrite(block_pointer(fs.super.os_firstinob + inodes_block_size), OSPFS_BLKSIZE, fs.super.os_nblocks, filp);
 
 	fclose(filp);
-}
-
-int main (int argc, char** argv){
-	printf("Running Filesystem Image Fixer\n");
-
-	switch(fix_file_system()){
-		case FS_OK:
-			printf("Filesystem has no errors\n");
-			break;
-		case FS_FIXED:
-			printf("All errors have been fixed\n");
-			break;
-		case FS_BROKEN:
-			printf("Errors with filesystem are unfixable\n");
-			break;
-		default:
-			ERROR("You broke the file system fixer");
-			exit(1);
-	}
-	return 0;
 }
