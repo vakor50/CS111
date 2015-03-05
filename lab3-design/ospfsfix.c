@@ -6,15 +6,15 @@
 #include <stdlib.h>
 #include "ospfsfix.h"
 
-// This file holds the data for the filesystem.
+// Data for our file system
 file_system_t fs;
 
-// These functions analyze the ospfs.
-
+//This function analyzes the file system
 int fix_file_system(){
 
 }
 
+//Checks the superblock of the file system (Invariant 1, kind of)
 static int checks_superblock(){
 
 	CHECK("superblock");
@@ -71,15 +71,19 @@ static int checks_superblock(){
 	return retval;
 }
 
+//Checks all the inodes for errors (Invariant 1)
 static int checks_inodes(){
 	int retval = FS_OK;
 	uint32_t ino_no;
 
 	CHECK("inodes");
 
+	//Creates a new set of inodes to put the correct data
 	fs.inodes = malloc(sizeof(ospfs_inode_t) * fs.super.os_ninodes);
 	memset(fs.inodes, 0, sizeof(ospfs_inode_t) * fs.super.os_ninodes);
 
+	//Goes through every inode, checking for all references.
+	//Also fills in the set of inodes that are being used to check directories later
 	int check;
 	for (ino_no = 1; ino_no < fs.super.os_ninodes; ino_no++){
 		check = checks_inode(ino_no);
@@ -92,6 +96,7 @@ static int checks_inodes(){
 	return retval;
 }
 
+//Checks the inodes and the referenced blocks (Invariants 1, 2, 3, 4)
 static int checks_referenced_blocks() {
 	int retval = FS_OK;
 	int blocks_used;
@@ -102,28 +107,38 @@ static int checks_referenced_blocks() {
 
 	CHECK("referenced blocks");
 	
+	//Creating a new bitmap to store correct data
 	if ((fs.super.os_nblocks % OSPFS_BLKBITSIZE) > 0)
 		bitmap_block_size++;
 	fs.bitmap = malloc(bitmap_block_size * OSPFS_BLKSIZE);
 	
+	//Sets the new bitmap with data from the filesystem image
 	if ((fs.super.os_ninodes / OSPFS_BLKBITSIZE) > 0)
 		inode_blocks++;
 	blocks_used = fs.super.os_firstinob + inode_blocks;
-	for (i = 0; i < blocks_used; i++)
-		bitmap_set(i, 0); // All blocks thru inodes are used.
-	for (; i < fs.super.os_nblocks; i++)
-		bitmap_set(i, 1);
 	
-		
+	//Sets all the used inodes (Invariant 3)
+	for (i = 0; i < blocks_used; i++)
+		bitmap_set(i, 0);
+
+	//All other blocks are set to free (Invariant 4)
+	for (; i < fs.super.os_nblocks; i++)
+		bitmap_set(i, 1); 
+	
+	//Checks all the referenced blocks for inconsistencies
 	for (ino = 1; ino < fs.super.os_ninode; ino++)
 	{
 		ospfs_inode_t *inode = &fs.inodes[ino];
+
+		//Skip nodes that are empty
 		if (inode->oi_nlink == 0)
 			continue;
 			
+		//Skip nodes that aren't regular files or directories (AKA symlinks)
 		if (inode->oi_ftype != OSPFS_FTYPE_REG && inode->oi_ftype != OSPFS_FTYPE_DIR)
 			continue;
 		
+		//Checks for duplicate references throughout direct, indirect, and indirect2 blocks(Invariant 1)
 		inode_ref = check_direct_refs(inode);
 		if (inode_ref == FS_BROKEN)
 			return FS_BROKEN;
@@ -147,6 +162,7 @@ static int checks_referenced_blocks() {
 	return retval;
 }
 
+//Checks directory inodes to ensure all inodes exist and there are no repeated filenames
 static int checks_directories(){
 	int retval = FS_OK;
 	int i, direntry_num;
@@ -155,6 +171,7 @@ static int checks_directories(){
 
 	CHECK("directories");
 
+	//Reset the values of all oi_nlink variables in every inode so that we can set correct value later
 	for (i = 0; i < fs.super.os_ninodes; i++)
 		fs.inodes[i].oi_nlink = 0;
 
@@ -165,24 +182,30 @@ static int checks_directories(){
 		//We only want directory inodes becase they contain all the information
 		if (curr_inode->oi_ftype != OSPFS_FTYPE_DIR)
 			continue;
+
+		//Go through all the directory's entries
 		for (direntry_num = 0; direntry_num < curr_inode->oi_size; direntry_num++){
 			curr_direntry = ospfs_inode_data(curr_inode, direntry_num);
 
+			//Empty directory, skip it
 			if (curr_direntry->od_ino == 0)
 				continue;
 
+			//Check to make sure inode referenced exists
 			if (fs.super.os_ninodes <= curr_direntry->od_ino){
 				retval = FS_FIXED;
 				FIXED("Inode out of range");
 				continue;
 			}
 
+			//Check for a valid directory name, with the null byte at end
 			if (strchr(curr_direntry->od_name, '\0') == NULL){
 				retval = FS_FIXED;
 				FIXED("Invalid directory name");
 				continue;
 			}
 
+			//If the inode is proper, then update the link value of it
 			fs.inodes[curr_direntry->od_ino].oi_nlink++;
 		}
 	}
@@ -191,6 +214,7 @@ static int checks_directories(){
 	return retval;
 }
 
+//Checks the bitmap to make sure it is correct (Invariants 3, 4)
 static int checks_bitmap(){
 	CHECK("free block bitmap");
 
@@ -202,42 +226,55 @@ static int checks_bitmap(){
 	}
 }
 
+//Checks the inode whose number was passed in to check for validity
 static int checks_inode(uint32_t ino){
 	int retval = FS_OK;
 	int i;
-
 	ospfs_symlink_inode_t *new_sym_inode, fs_sym_inode;
 	ospfs_inode_t *new_inode;
 	ospfs_inode_t *fs_inode = block_offset(fs.super.os_firstinob, ino * OSPFS_INODESIZE);
 
-	//Empty inodes
+	//Skip if the inode is empty
 	if (fs_inode->oi_nlink == 0)
 		return retval;
 
+	//A new copy of the inode
 	new_inode = &fs.inodes[ino];
 
+	//Checks the type of inode
 	switch(fs_inode->oi_ftype){
+		//Regular files and directories have the same checks
 		case OSPFS_FTYPE_REG:
 		case OSPFS_FTYPE_DIR:
+			//Check the make sure the size is valid
 			if (fs_inode->oi_size > OSPFS_MAXFILESIZE){
 				new_inode->oi_size = OSPFS_MAXFILESIZE;
 				FIXED("Inode size too large");
 				result = FS_FIXED;
 			} else
 				new_inode->oi_size = fs_inode->oi_size;
+
+			//Ports over the mode
 			new_inode->oi_mode = fs_inode->oi_mode;
 
-			if (fs_inode->oi_indirect2 != NULL)
+			//Sets all the pointers depending on the size of the inode
+			if (new_inode->oi_size > ((OSPFS_NDIRECT + OSPFS_NINDIRECT) * OSPFS_BLKSIZE))
 				new_inode->oi_indirect2 = fs_inode->oi_indirect2;
-			if (fs_inode->oi_indirect != NULL)
+
+			if (new_inode->oi_size > (OSPFS_NDIRECT * OSPFS_BLKSIZE))
 				new_inode->oi_indirect = fs_inode->oi_indirect;
+
+			//For the direct block, we have to copy every part over
 			for (i = 0; i < OSPFS_NDIRECT; i++)
 				new_inode[i] = fs_inode->oi_direct[i];
+			
 			break;
 		case OSPFS_FTYPE_SYMLINK:
+			//Set the current symlink inode and a new copy of it
 			fs_sym_inode = (ospfs_symlink_inode_t *) fs_inode;
 			new_sym_inode = (ospfs_symlink_inode_t *) new_inode;
 
+			//Set the size to be 0 and then put in the size and destination manually
 			new_sym_inode->oi_size = 0;
 			for (i = 0; i < OSPFS_MAXSYMLINKLEN; i++){
 				new_sym_inode->oi_symlink[i] = fs_sym_inode->oi_symlink[i];
@@ -246,6 +283,7 @@ static int checks_inode(uint32_t ino){
 				else
 					new_sym_inode->oi_size++;
 			}
+			//If the file name is too large, then it truncates it at the max
 			if (new_sym_inode->oi_symlink[i] != '\0'){
 				new_sym_inode->oi_symlink[i] = '\0';
 				FIXED("Symbolic link value too long");
@@ -256,6 +294,7 @@ static int checks_inode(uint32_t ino){
 			return FS_FIXED;
 	}
 
+	//Sets the values of oi_ftype and oi_nlink to complete the new inode
 	new_inode->oi_ftype = fs_inode->oi_ftype;
 	new_inode->oi_nlink = fs_inode->oi_nlink;
 
@@ -264,27 +303,32 @@ static int checks_inode(uint32_t ino){
 	return retval;
 }
 
+//Returns the bit value from the bitmap location representing the block
 static int bitmap_get(uint32_t block_num) {
+	// Finds the byte to check and creates a mask
 	uint8_t *byte = (uint8_t *) fs.bitmap + (block_num / 8);
 	uint8_t mask = 0x01 << (7 - (block_num % 8));
 	if (*byte & mask)
-	return 1;
+		return 1;
 	else
-	return 0;
+		return 0;
 }
 
-
-static void bitmap_set(uint32_t blkno, int free){
-	// Finds the byte to modify and the mask to modify it.
+//Sets the bit value in the bitmap location representing the block
+static void bitmap_set(uint32_t blkno, int value){
+	// Finds the byte to modify and creates a mask
 	uint8_t *byte = (uint8_t *) fs.bitmap + (blkno / 8);
 	uint8_t mask = 0x01 << (7 - (blkno % 8));
 	// Modifies the byte.
-	if (free)
-	*byte = *byte | mask;
+	if (value)
+		*byte = *byte | mask;
 	else
-	*byte = *byte & (~mask);
+		*byte = *byte & (~mask);
 }
 
+//Checks the direct block references and puts them in a set of "proper" blocks
+//If a block has already been referenced, it will truncate the file there so
+//as to minimize any damage caused
 int check_direct_refs(ospfs_inode_t * inode) {
 	int i;
 	for (i = 0; i < OSPFS_NDIRECT; i++)
@@ -304,6 +348,9 @@ int check_direct_refs(ospfs_inode_t * inode) {
 	return FS_OK;
 }
 
+//Checks the indirect block references and puts them in a set of "proper" blocks
+//If a block has already been referenced, it will truncate the file there so
+//as to minimize any damage caused
 int check_indirect_refs(ospfs_inode_t * inode) {
 	int i;
 	
@@ -333,6 +380,9 @@ int check_indirect_refs(ospfs_inode_t * inode) {
 	return FS_OK;
 }
 
+//Checks the doubly indirect block references and puts them in a set of "proper" blocks
+//If a block has already been referenced, it will truncate the file there so
+//as to minimize any damage caused
 int check_twice_indirect_refs(ospfs_inode_t * inode) {
 	int i, j, block_num;
 
@@ -374,6 +424,7 @@ int check_twice_indirect_refs(ospfs_inode_t * inode) {
 	return FS_OK;
 }
 
+//Truncates the inode to make the final size n blocks
 int truncates_inode(ospfs_inode_t *inode, int n) {
 	int i;
 	uint32_t max_file_size = n * OSPFS_BLKSIZE;
@@ -381,20 +432,24 @@ int truncates_inode(ospfs_inode_t *inode, int n) {
 	// Truncating within direct blocks.
 	if (n <= OSPFS_NDIRECT) 
 	{
+		//Set all blocks after to 0, including indirect and doubly indirect pointers
 		for (i = n; i < OSPFS_NDIRECT; i++)
 			inode->oi_direct[i] = 0;
-
 		inode->oi_indirect = inode->oi_indirect2 = 0;
 	}
+
+	//Truncating the indirect blocks
 	else if (n < OSPFS_NDIRECT + OSPFS_NINDIRECT) 
 	{
 		uint32_t *indirect_blocks = block_pointer(inode->oi_indirect);
 
+		//Set all blocks after to 0, including doubly indirect pointers
 		for (i = n - OSPFS_NDIRECT; i < OSPFS_NDIRECT + OSPFS_NINDIRECT; i++) 
 			indirect_blocks[i] = 0;
-
 		inode->oi_indirect2 = 0;
 	}
+
+	//Truncating the doubly indirect blocks
 	else if (n <= OSPFS_MAXFILEBLKS) 
 	{
 		uint32_t *twice_indirect_block = block_pointer(inode->oi_indirect2);
@@ -412,25 +467,28 @@ int truncates_inode(ospfs_inode_t *inode, int n) {
 			indirect_block[i] = 0;
 	}
 
-	// Updates the filesize if necessary.
+	//Checks if the file size needs to be changed
 	if (max_file_size < inode->oi_size) 
 	{
 		inode->oi_size = max_file_size;
+		FIXED("Inode size incorrect after truncation")
 		return FS_FIXED;
 	}
 
 	return FS_OK;
 }
 
+//Returns a pointer to the block number given
 void *block_pointer(uint32_t block_num){
 	return fs.buffer + (block_num * OSPFS_BLKSIZE);
 }
 
+//Returns a pointer to the block number + offset given
 void *block_offset(uint32_t block_num, uint32_t offset){
 	return fs.buffer + (block_num * OSPFS_BLKSIZE) + offset;
 }
 
-//Taken from ospfsmod.c
+//The following functions were taken from ospfsmod.c
 
 // ospfs_inode_blockno(oi, offset)
 //	Use this function to look up the blocks that are part of a file's
@@ -442,8 +500,7 @@ void *block_offset(uint32_t block_num, uint32_t offset){
 //	      of the file
 
 static inline uint32_t
-ospfs_inode_blockno(ospfs_inode_t *oi, uint32_t offset)
-{
+ospfs_inode_blockno(ospfs_inode_t *oi, uint32_t offset){
 	uint32_t blockno = offset / OSPFS_BLKSIZE;
 	if (offset >= oi->oi_size || oi->oi_ftype == OSPFS_FTYPE_SYMLINK)
 		return 0;
@@ -473,8 +530,7 @@ ospfs_inode_blockno(ospfs_inode_t *oi, uint32_t offset)
 //	and 'ospfs_block'.
 
 static inline void *
-ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset)
-{
+ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset){
 	uint32_t blockno = ospfs_inode_blockno(oi, offset);
 	return (uint8_t *) ospfs_block(blockno) + (offset % OSPFS_BLKSIZE);
 }
