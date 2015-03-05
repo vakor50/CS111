@@ -9,8 +9,10 @@
 
 //Define Error Messages
 #define ERROR(msg) printf("%s in %s, Line:%d\n", msg, __FILE__, __LINE__)
-#define FIXED(msg) printf("Fixed Error: %s\n", msg)
 #define UNFIXABLE(msg) printf("Error Unfixable: %s\n", msg)
+//Define success message
+#define FIXED(msg) printf("Fixed Error: %s\n", msg)
+//Define progress check messages
 #define CHECK(msg) printf("TESTING %s\n", msg)
 #define CORRECT(msg) printf("PASSED %s CHECKS\n", msg)
 
@@ -19,6 +21,7 @@
 #define FS_FIXED 1
 #define FS_BROKEN 2
 
+// holds info about file system, data read from input, and ospfs structures
 typedef struct file_system{
 	char filename[MAX_FILENAME_LEN + 1];
 	void *buffer;
@@ -31,16 +34,20 @@ typedef struct file_system{
 	void *bitmap;
 } file_system_t;
 
+// global structure that holds data for file system
 extern file_system_t fs;
 
+//runs primary functions to try and fix file system
 int fix_file_system();
 
+// primary functions to analyze and fix file system based on invariants
 static int checks_superblock();
 static int checks_inodes();
 static int checks_referenced_blocks();
 static int checks_directories();
 static int checks_bitmap();
 
+// helper functions
 static int bitmap_get(uint32_t block_num);
 static void bitmap_set(uint32_t block_num, int value);
 static int check_inode(uint32_t ino);
