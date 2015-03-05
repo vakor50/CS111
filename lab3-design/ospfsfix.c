@@ -16,7 +16,7 @@
 file_system_t fs;
 
 //This function analyzes the file system
-int fix_file_system(){
+int fix_file_system() {
 	int retval;
 	
 	// Superblock check
@@ -48,14 +48,14 @@ int fix_file_system(){
 }
 
 //Checks the superblock of the file system (Invariant 1, kind of)
-static int checks_superblock(){
+static int checks_superblock() {
 
 	CHECK("SUPERBLOCK");
 
 	int retval = FS_OK;
 
 	//Check size of FS, if space for superblock
-	if (fs.buffer_size < (2 * OSPFS_BLKSIZE)){
+	if (fs.buffer_size < (2 * OSPFS_BLKSIZE)) {
 		UNFIXABLE("Not enough space for superblock (Sanity Check)");
 		return FS_BROKEN;
 	}
@@ -64,14 +64,14 @@ static int checks_superblock(){
 
 	//Check the magic number
 	fs.super.os_magic = OSPFS_MAGIC;
-	if (super->os_magic != OSPFS_MAGIC){
+	if (super->os_magic != OSPFS_MAGIC) {
 		retval = FS_FIXED;
 		FIXED("Incorrect magic number (Sanity Check)");
 	}
 
 	//Check number of blocks in image
 	fs.super.os_nblocks = fs.buffer_size / OSPFS_BLKSIZE;
-	if (fs.buffer_size != super->os_nblocks * OSPFS_BLKSIZE){
+	if (fs.buffer_size != super->os_nblocks * OSPFS_BLKSIZE) {
 		retval = FS_FIXED;
 		FIXED("Incorrect number of blocks (Sanity Check)");
 	}
@@ -80,21 +80,21 @@ static int checks_superblock(){
 	uint32_t num_bitmap_blocks;
 	uint32_t num_bitmap_bytes = fs.super.os_nblocks / 8;
 	uint32_t block_mod = num_bitmap_bytes % OSPFS_BLKSIZE;
-	if (block_mod != 0){
+	if (block_mod != 0) {
 		num_bitmap_bytes -= block_mod;
 		num_bitmap_bytes += OSPFS_BLKSIZE;
 	}
 	num_bitmap_blocks = num_bitmap_bytes / OSPFS_BLKSIZE;
 	fs.num_bitmap_blocks = num_bitmap_bytes;
 	fs.super.os_firstinob = OSPFS_FREEMAP_BLK + num_bitmap_blocks;
-	if (fs.super.os_firstinob != super->os_firstinob){
+	if (fs.super.os_firstinob != super->os_firstinob) {
 		retval = FS_FIXED;
 		FIXED("First inode is incorrect (Sanity Check)");
 	}
 
 	//Number of inodes
 	uint32_t num_inodes = OSPFS_BLKINODES * (fs.super.os_nblocks - fs.super.os_firstinob - 1);
-	if (num_inodes < super->os_ninodes){
+	if (num_inodes < super->os_ninodes) {
 		UNFIXABLE("Filesystem contains too many inodes (Sanity Check)");
 		return FS_BROKEN;
 	} else
@@ -111,7 +111,7 @@ static int checks_superblock(){
 }
 
 //Checks all the inodes for errors (Invariant 1)
-static int checks_inodes(){
+static int checks_inodes() {
 	int retval = FS_OK;
 	uint32_t ino_no;
 
@@ -124,7 +124,7 @@ static int checks_inodes(){
 	//Goes through every inode, checking for all references.
 	//Also fills in the set of inodes that are being used to check directories later
 	int check;
-	for (ino_no = 1; ino_no < fs.super.os_ninodes; ino_no++){
+	for (ino_no = 1; ino_no < fs.super.os_ninodes; ino_no++) {
 		check = check_inode(ino_no);
 		if (check == FS_BROKEN)
 			return FS_BROKEN;
@@ -203,7 +203,7 @@ static int checks_referenced_blocks() {
 }
 
 //Checks directory inodes to ensure all inodes exist and there are no repeated filenames
-static int checks_directories(){
+static int checks_directories() {
 	int retval = FS_OK;
 	int i, direntry_num;
 	ospfs_inode_t *curr_inode;
@@ -216,7 +216,7 @@ static int checks_directories(){
 		fs.inodes[i].oi_nlink = 0;
 
 	//Checking every directory
-	for (i = 0; i < fs.super.os_ninodes; i++){
+	for (i = 0; i < fs.super.os_ninodes; i++) {
 		curr_inode = &fs.inodes[i];
 		
 		//We only want directory inodes becase they contain all the information
@@ -224,7 +224,7 @@ static int checks_directories(){
 			continue;
 
 		//Go through all the directory's entries
-		for (direntry_num = 0; direntry_num < curr_inode->oi_size; direntry_num+= OSPFS_DIRENTRY_SIZE){
+		for (direntry_num = 0; direntry_num < curr_inode->oi_size; direntry_num+= OSPFS_DIRENTRY_SIZE) {
 			curr_direntry = ospfs_inode_data(curr_inode, direntry_num);
 
 			//Empty directory, skip it
@@ -232,14 +232,14 @@ static int checks_directories(){
 				continue;
 
 			//Check to make sure inode referenced exists
-			if (fs.super.os_ninodes <= curr_direntry->od_ino){
+			if (fs.super.os_ninodes <= curr_direntry->od_ino) {
 				retval = FS_FIXED;
 				FIXED("Inode out of range (Invariant 2)");
 				continue;
 			}
 
 			//Check for a valid directory name, with the null byte at end
-			if (strchr(curr_direntry->od_name, '\0') == NULL){
+			if (strchr(curr_direntry->od_name, '\0') == NULL) {
 				retval = FS_FIXED;
 				FIXED("Invalid directory name (Sanity Check)");
 				continue;
@@ -258,7 +258,7 @@ static int checks_directories(){
 }
 
 //Checks the bitmap to make sure it is correct (Invariants 3, 4)
-static int checks_bitmap(){
+static int checks_bitmap() {
 	CHECK("FREE BLOCK BITMAP");
 
 	if (memcmp(fs.bitmap, block_pointer(2), fs.num_bitmap_blocks * OSPFS_BLKSIZE) == 0)
@@ -271,7 +271,7 @@ static int checks_bitmap(){
 }
 
 //Checks the inode whose number was passed in to check for validity
-static int check_inode(uint32_t ino){
+static int check_inode(uint32_t ino) {
 	int retval = FS_OK;
 	int i;
 	ospfs_symlink_inode_t *new_sym_inode, *fs_sym_inode;
@@ -286,12 +286,12 @@ static int check_inode(uint32_t ino){
 	new_inode = &fs.inodes[ino];
 
 	//Checks the type of inode
-	switch(fs_inode->oi_ftype){
+	switch(fs_inode->oi_ftype) {
 		//Regular files and directories have the same checks
 		case OSPFS_FTYPE_REG:
 		case OSPFS_FTYPE_DIR:
 			//Check the make sure the size is valid
-			if (fs_inode->oi_size > OSPFS_MAXFILESIZE){
+			if (fs_inode->oi_size > OSPFS_MAXFILESIZE) {
 				new_inode->oi_size = OSPFS_MAXFILESIZE;
 				FIXED("Inode size too large (Sanity Check)");
 				retval = FS_FIXED;
@@ -320,7 +320,7 @@ static int check_inode(uint32_t ino){
 
 			//Set the size to be 0 and then put in the size and destination manually
 			new_sym_inode->oi_size = 0;
-			for (i = 0; i < OSPFS_MAXSYMLINKLEN; i++){
+			for (i = 0; i < OSPFS_MAXSYMLINKLEN; i++) {
 				new_sym_inode->oi_symlink[i] = fs_sym_inode->oi_symlink[i];
 				if (fs_sym_inode->oi_symlink[i] == '\0')
 					break;
@@ -328,7 +328,7 @@ static int check_inode(uint32_t ino){
 					new_sym_inode->oi_size++;
 			}
 			//If the file name is too large, then it truncates it at the max
-			if (new_sym_inode->oi_symlink[i] != '\0'){
+			if (new_sym_inode->oi_symlink[i] != '\0') {
 				new_sym_inode->oi_symlink[i] = '\0';
 				FIXED("Symbolic link value too long (Sanity Check)");
 				retval = FS_FIXED;
@@ -360,7 +360,7 @@ static int bitmap_get(uint32_t block_num) {
 }
 
 //Sets the bit value in the bitmap location representing the block
-static void bitmap_set(uint32_t block_num, int value){
+static void bitmap_set(uint32_t block_num, int value) {
 	// Finds the byte to modify and creates a mask
 	uint8_t *byte = (uint8_t *) fs.bitmap + (block_num / 8);
 	uint8_t mask = 0x01 << (7 - (block_num % 8));
@@ -526,12 +526,12 @@ int truncates_inode(ospfs_inode_t *inode, int n) {
 }
 
 //Returns a pointer to the block number given
-void *block_pointer(uint32_t block_num){
+void *block_pointer(uint32_t block_num) {
 	return fs.buffer + (block_num * OSPFS_BLKSIZE);
 }
 
 //Returns a pointer to the block number + offset given
-void *block_offset(uint32_t block_num, uint32_t offset){
+void *block_offset(uint32_t block_num, uint32_t offset) {
 	return fs.buffer + (block_num * OSPFS_BLKSIZE) + offset;
 }
 
@@ -547,7 +547,7 @@ void *block_offset(uint32_t block_num, uint32_t offset){
 //	      of the file
 
 static inline uint32_t
-ospfs_inode_blockno(ospfs_inode_t *oi, uint32_t offset){
+ospfs_inode_blockno(ospfs_inode_t *oi, uint32_t offset) {
 	uint32_t blockno = offset / OSPFS_BLKSIZE;
 	if (offset >= oi->oi_size || oi->oi_ftype == OSPFS_FTYPE_SYMLINK)
 		return 0;
@@ -577,7 +577,7 @@ ospfs_inode_blockno(ospfs_inode_t *oi, uint32_t offset){
 //	and 'ospfs_block'.
 
 static inline void *
-ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset){
+ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset) {
 	uint32_t blockno = ospfs_inode_blockno(oi, offset);
 	return (uint8_t *) block_pointer(blockno) + (offset % OSPFS_BLKSIZE);
 }
