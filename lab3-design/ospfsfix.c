@@ -1,10 +1,10 @@
-// ospfsfixer.c
+// ospfsfix.c
 // This file is responsible for analyzing the filsystem and fixing it.
 // This should be the only file we use for filesystem analysis and fixing.
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "ospfsfixer.h"
+#include "ospfsfix.h"
 
 // This file holds the data for the filesystem.
 file_system_t fs;
@@ -477,31 +477,4 @@ ospfs_inode_data(ospfs_inode_t *oi, uint32_t offset)
 {
 	uint32_t blockno = ospfs_inode_blockno(oi, offset);
 	return (uint8_t *) ospfs_block(blockno) + (offset % OSPFS_BLKSIZE);
-}
-
-void load_file_system(int argc, char** argv){
-
-}
-void write_fixed_file_system(){
-
-}
-
-int main (int argc, char** argv){
-	printf("Running Filesystem Image Fixer\n");
-
-	switch(fix_file_system()){
-		case FS_OK:
-			printf("Filesystem has no errors\n");
-			break;
-		case FS_FIXED:
-			printf("All errors have been fixed\n");
-			break;
-		case FS_BROKEN:
-			printf("Errors with filesystem are unfixable\n");
-			break;
-		default:
-			ERROR("You broke the file system fixer");
-			exit(1);
-	}
-	return 0;
 }
